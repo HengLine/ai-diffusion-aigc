@@ -1,0 +1,121 @@
+{
+  "last_node_id": 7,
+  "last_link_id": 6,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "CheckpointLoaderSimple",
+      "pos": [0, 0],
+      "size": [300, 110],
+      "flags": {},
+      "order": 0,
+      "inputs": {
+        "ckpt_name": "sd15/model.safetensors"
+      },
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "links": [2]},
+        {"name": "CLIP", "type": "CLIP", "links": [1]},
+        {"name": "VAE", "type": "VAE", "links": [5]}
+      ],
+      "title": "CheckpointLoaderSimple"
+    },
+    {
+      "id": 2,
+      "type": "CLIPTextEncode",
+      "pos": [340, 0],
+      "size": [300, 140],
+      "flags": {},
+      "order": 1,
+      "inputs": {
+        "clip": [1, 1],
+        "text": "a beautiful landscape, high detailed, 4k, cinematic lighting, trending on artstation"
+      },
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [3]}
+      ],
+      "title": "CLIPTextEncode"
+    },
+    {
+      "id": 3,
+      "type": "CLIPTextEncode",
+      "pos": [340, 160],
+      "size": [300, 140],
+      "flags": {},
+      "order": 2,
+      "inputs": {
+        "clip": [1, 1],
+        "text": "low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres"
+      },
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [4]}
+      ],
+      "title": "CLIPTextEncode (Negative)"
+    },
+    {
+      "id": 4,
+      "type": "KSampler",
+      "pos": [680, 80],
+      "size": [300, 270],
+      "flags": {},
+      "order": 3,
+      "inputs": {
+        "model": [1, 0],
+        "positive": [2, 0],
+        "negative": [3, 0],
+        "seed": 42,
+        "steps": 20,
+        "cfg": 8,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1,
+        "batch_size": 1
+      },
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [5]}
+      ],
+      "title": "KSampler"
+    },
+    {
+      "id": 5,
+      "type": "VAEDecode",
+      "pos": [1020, 80],
+      "size": [300, 110],
+      "flags": {},
+      "order": 4,
+      "inputs": {
+        "samples": [4, 0],
+        "vae": [1, 2]
+      },
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [6]}
+      ],
+      "title": "VAEDecode"
+    },
+    {
+      "id": 6,
+      "type": "SaveImage",
+      "pos": [1360, 80],
+      "size": [300, 140],
+      "flags": {},
+      "order": 5,
+      "inputs": {
+        "images": [5, 0],
+        "filename_prefix": "text_to_image_output"
+      },
+      "outputs": [],
+      "title": "SaveImage"
+    }
+  ],
+  "links": [
+    {"id": 1, "source_node_id": 1, "source_output": 1, "target_node_id": 2, "target_input": 0},
+    {"id": 2, "source_node_id": 1, "source_output": 0, "target_node_id": 4, "target_input": 0},
+    {"id": 3, "source_node_id": 2, "source_output": 0, "target_node_id": 4, "target_input": 1},
+    {"id": 4, "source_node_id": 3, "source_output": 0, "target_node_id": 4, "target_input": 2},
+    {"id": 5, "source_node_id": 1, "source_output": 2, "target_node_id": 5, "target_input": 1},
+    {"id": 6, "source_node_id": 4, "source_output": 0, "target_node_id": 5, "target_input": 0}
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

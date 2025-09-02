@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIGC创意平台 - 基于ComfyUI的AI生成工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        header p {
+            margin: 0.5rem 0 0 0;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        .card-image {
+            height: 200px;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #495057;
+        }
+        .card-content {
+            padding: 1.5rem;
+        }
+        .card-title {
+            font-size: 1.5rem;
+            margin: 0 0 1rem 0;
+            color: #2c3e50;
+        }
+        .card-text {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+        .card-button {
+            display: inline-block;
+            background-color: #4a6fa5;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        .card-button:hover {
+            background-color: #3a5a85;
+        }
+        .features {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .features h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .feature-item {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #4a6fa5;
+        }
+        .feature-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+        .feature-text {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+        .config-status {
+            background-color: #e3f2fd;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 4px solid #1976d2;
+        }
+        .config-status p {
+            margin: 0;
+        }
+        .config-link {
+            background-color: #1976d2;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .config-link:hover {
+            background-color: #1565c0;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .config-status {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AIGC创意平台</h1>
+        <p>基于ComfyUI的AI图像和视频生成工具集</p>
+    </header>
+
+    <div class="config-status">
+        <p>
+            ComfyUI 配置状态: 
+            {% if config.comfyui.path %}
+                <strong style="color: #28a745;">已配置</strong>
+            {% else %}
+                <strong style="color: #dc3545;">未配置</strong>
+            {% endif %}
+        </p>
+        <a href="{{ url_for('configure') }}" class="config-link">管理配置</a>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-image">
+                📝
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">文生图</h3>
+                <p class="card-text">通过文字描述生成精美的图像，支持自定义提示词和参数设置。</p>
+                <a href="{{ url_for('text_to_image') }}" class="card-button">开始创作</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-image">
+                🖼️
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">图生图</h3>
+                <p class="card-text">以上传的图片为基础，结合提示词进行图像转换和风格迁移。</p>
+                <a href="{{ url_for('image_to_image') }}" class="card-button">上传处理</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-image">
+                🎞️
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">图生视频</h3>
+                <p class="card-text">将静态图片转换为动态视频，支持科幻风格和其他创意视频生成。</p>
+                <a href="{{ url_for('image_to_video') }}" class="card-button">生成视频</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="features">
+        <h2>平台特色</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">快速部署</h3>
+                <p class="feature-text">基于ComfyUI的高效工作流，一键启动AI创作环境。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🧠</div>
+                <h3 class="feature-title">多模型支持</h3>
+                <p class="feature-text">集成SD、SVD、Flux等多种AI模型，满足不同创作需求。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🎨</div>
+                <h3 class="feature-title">创意控制</h3>
+                <p class="feature-text">丰富的参数调节选项，实现精准的创意表达和风格控制。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔧</div>
+                <h3 class="feature-title">灵活配置</h3>
+                <p class="feature-text">可自定义ComfyUI路径和模型设置，适应不同的硬件环境。</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 AIGC创意平台 - 基于ComfyUI构建</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图生图 - AIGC创意平台</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            min-height: 100px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        .form-group input[type="file"] {
+            display: block;
+            margin-top: 0.5rem;
+        }
+        .file-input {
+            position: relative;
+            display: inline-block;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .file-input:hover {
+            background-color: #e9ecef;
+        }
+        .file-input input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .file-name {
+            display: inline-block;
+            margin-left: 0.5rem;
+            font-style: italic;
+            color: #6c757d;
+        }
+        .form-button {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .form-button:hover {
+            background-color: #3a5a85;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #4a6fa5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .status-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #28a745;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #dc3545;
+        }
+        .tips {
+            background-color: #fff3cd;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #ffc107;
+        }
+        .tips h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .tips ul {
+            margin-bottom: 0;
+            padding-left: 1.5rem;
+        }
+        .tips li {
+            margin-bottom: 0.5rem;
+        }
+        /* 预览区域 */
+        .preview-container {
+            display: none;
+            margin-top: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+        .preview-container.show {
+            display: block;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            display: block;
+            margin: 0 auto;
+            border-radius: 4px;
+        }
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 文件选择预览功能
+            const fileInput = document.getElementById('image');
+            const previewContainer = document.querySelector('.preview-container');
+            const previewImage = document.querySelector('.preview-image');
+            const fileName = document.querySelector('.file-name');
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // 显示文件名
+                    fileName.textContent = file.name;
+                    
+                    // 预览图片
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        previewImage.src = event.target.result;
+                        previewContainer.classList.add('show');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    fileName.textContent = '';
+                    previewContainer.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>图生图创作</h1>
+    </header>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="status-box status-{{ category }}">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="tips">
+            <h3>图生图指南</h3>
+            <ul>
+                <li>上传一张清晰的图片作为基础</li>
+                <li>编写提示词来引导图像转换</li>
+                <li>提示词应包括想要保留的元素和新增的风格</li>
+                <li>支持的图片格式：PNG、JPG、JPEG、GIF</li>
+            </ul>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="image">上传图片 (必填)</label>
+                <div class="file-input">
+                    选择文件
+                    <input type="file" id="image" name="image" accept="image/*">
+                </div>
+                <span class="file-name"></span>
+                <div class="preview-container">
+                    <img class="preview-image" src="" alt="图片预览">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="prompt">提示词 (必填)</label>
+                <textarea id="prompt" name="prompt" placeholder="请输入图像转换指令，例如：convert to oil painting style, vibrant colors, high detail"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="negative_prompt">负面提示词</label>
+                <textarea id="negative_prompt" name="negative_prompt" placeholder="请输入不想要的效果">{{ default_params.negative_prompt or 'low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres' }}</textarea>
+            </div>
+            
+            <button type="submit" class="form-button">生成图像</button>
+        </form>
+
+        <a href="{{ url_for('index') }}" class="back-link">← 返回首页</a>
+    </div>
+</body>
+</html>

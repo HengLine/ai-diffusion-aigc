@@ -1,0 +1,156 @@
+{
+  "last_node_id": 8,
+  "last_link_id": 9,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "CheckpointLoaderSimple",
+      "pos": [0, 0],
+      "size": [300, 110],
+      "flags": {},
+      "order": 0,
+      "inputs": {
+        "ckpt_name": "sd15/model.safetensors"
+      },
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "links": [2]},
+        {"name": "CLIP", "type": "CLIP", "links": [1, 3]},
+        {"name": "VAE", "type": "VAE", "links": [8]}
+      ],
+      "title": "CheckpointLoaderSimple"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [0, 130],
+      "size": [300, 140],
+      "flags": {},
+      "order": 1,
+      "inputs": {
+        "image": "input_image.png"
+      },
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [5]}
+      ],
+      "title": "LoadImage"
+    },
+    {
+      "id": 3,
+      "type": "CLIPTextEncode",
+      "pos": [340, 0],
+      "size": [300, 140],
+      "flags": {},
+      "order": 2,
+      "inputs": {
+        "clip": [1, 1],
+        "text": "convert to oil painting style, high detailed, artistic, vibrant colors"
+      },
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [4]}
+      ],
+      "title": "CLIPTextEncode"
+    },
+    {
+      "id": 4,
+      "type": "CLIPTextEncode",
+      "pos": [340, 160],
+      "size": [300, 140],
+      "flags": {},
+      "order": 3,
+      "inputs": {
+        "clip": [1, 1],
+        "text": "low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres"
+      },
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [6]}
+      ],
+      "title": "CLIPTextEncode (Negative)"
+    },
+    {
+      "id": 5,
+      "type": "VAEEncode",
+      "pos": [340, 320],
+      "size": [300, 110],
+      "flags": {},
+      "order": 4,
+      "inputs": {
+        "pixels": [2, 0],
+        "vae": [1, 2]
+      },
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [7]}
+      ],
+      "title": "VAEEncode"
+    },
+    {
+      "id": 6,
+      "type": "KSampler",
+      "pos": [680, 160],
+      "size": [300, 270],
+      "flags": {},
+      "order": 5,
+      "inputs": {
+        "model": [1, 0],
+        "positive": [3, 0],
+        "negative": [4, 0],
+        "latent_image": [5, 0],
+        "seed": 42,
+        "steps": 20,
+        "cfg": 7,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 0.7
+      },
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [9]}
+      ],
+      "title": "KSampler"
+    },
+    {
+      "id": 7,
+      "type": "VAEDecode",
+      "pos": [1020, 160],
+      "size": [300, 110],
+      "flags": {},
+      "order": 6,
+      "inputs": {
+        "samples": [6, 0],
+        "vae": [1, 2]
+      },
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [10]}
+      ],
+      "title": "VAEDecode"
+    },
+    {
+      "id": 8,
+      "type": "SaveImage",
+      "pos": [1360, 160],
+      "size": [300, 140],
+      "flags": {},
+      "order": 7,
+      "inputs": {
+        "images": [7, 0],
+        "filename_prefix": "image_to_image_output"
+      },
+      "outputs": [],
+      "title": "SaveImage"
+    }
+  ],
+  "links": [
+    {"id": 1, "source_node_id": 1, "source_output": 1, "target_node_id": 3, "target_input": 0},
+    {"id": 2, "source_node_id": 1, "source_output": 0, "target_node_id": 6, "target_input": 0},
+    {"id": 3, "source_node_id": 1, "source_output": 1, "target_node_id": 4, "target_input": 0},
+    {"id": 4, "source_node_id": 3, "source_output": 0, "target_node_id": 6, "target_input": 1},
+    {"id": 5, "source_node_id": 2, "source_output": 0, "target_node_id": 5, "target_input": 0},
+    {"id": 6, "source_node_id": 4, "source_output": 0, "target_node_id": 6, "target_input": 2},
+    {"id": 7, "source_node_id": 5, "source_output": 0, "target_node_id": 6, "target_input": 3},
+    {"id": 8, "source_node_id": 1, "source_output": 2, "target_node_id": 5, "target_input": 1},
+    {"id": 9, "source_node_id": 6, "source_output": 0, "target_node_id": 7, "target_input": 0},
+    {"id": 10, "source_node_id": 7, "source_output": 0, "target_node_id": 8, "target_input": 0}
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

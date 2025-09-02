@@ -1,0 +1,176 @@
+{
+  "presets": {
+    "text_to_image": {
+      "default": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "sampler": "dpmpp_2m_sde_karras",
+        "steps": 20,
+        "cfg": 7.0,
+        "width": 512,
+        "height": 512,
+        "batch_size": 1
+      },
+      "high_quality": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "sampler": "dpmpp_2m_sde_karras",
+        "steps": 30,
+        "cfg": 7.5,
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      },
+      "fast": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "sampler": "ddim",
+        "steps": 10,
+        "cfg": 6.0,
+        "width": 512,
+        "height": 512,
+        "batch_size": 1
+      }
+    },
+    "image_to_image": {
+      "default": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "sampler": "dpmpp_2m_sde_karras",
+        "steps": 20,
+        "cfg": 7.0,
+        "denoising_strength": 0.75,
+        "width": 512,
+        "height": 512
+      },
+      "preserve_details": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "sampler": "dpmpp_2m_sde_karras",
+        "steps": 25,
+        "cfg": 7.0,
+        "denoising_strength": 0.5,
+        "width": 512,
+        "height": 512
+      },
+      "creative": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "sampler": "k_dpm_2_ancestral",
+        "steps": 30,
+        "cfg": 6.5,
+        "denoising_strength": 0.85,
+        "width": 512,
+        "height": 512
+      }
+    },
+    "image_to_video": {
+      "default": {
+        "model": "svd.safetensors",
+        "motion_bucket_id": 127,
+        "noise_aug_strength": 0.02,
+        "num_frames": 16,
+        "fps": 8,
+        "decode_chunk_size": 8,
+        "width": 512,
+        "height": 320
+      },
+      "smooth": {
+        "model": "svd.safetensors",
+        "motion_bucket_id": 90,
+        "noise_aug_strength": 0.01,
+        "num_frames": 24,
+        "fps": 12,
+        "decode_chunk_size": 8,
+        "width": 512,
+        "height": 320
+      },
+      "dynamic": {
+        "model": "svd.safetensors",
+        "motion_bucket_id": 160,
+        "noise_aug_strength": 0.03,
+        "num_frames": 16,
+        "fps": 8,
+        "decode_chunk_size": 8,
+        "width": 512,
+        "height": 320
+      }
+    },
+    "ancient_clothing": {
+      "female": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "loras": [
+          {"name": "ancient_clothing_lora.safetensors", "strength": 1.0},
+          {"name": "chinese_style_lora.safetensors", "strength": 0.8}
+        ],
+        "sampler": "dpmpp_2m_sde_karras",
+        "steps": 25,
+        "cfg": 7.5,
+        "width": 512,
+        "height": 768,
+        "clip_skip": 2
+      },
+      "male": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "loras": [
+          {"name": "ancient_clothing_male_lora.safetensors", "strength": 1.0},
+          {"name": "chinese_style_lora.safetensors", "strength": 0.8}
+        ],
+        "sampler": "dpmpp_2m_sde_karras",
+        "steps": 25,
+        "cfg": 7.5,
+        "width": 512,
+        "height": 768,
+        "clip_skip": 2
+      },
+      "group": {
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
+        "loras": [
+          {"name": "ancient_clothing_lora.safetensors", "strength": 1.0},
+          {"name": "chinese_style_lora.safetensors", "strength": 0.8}
+        ],
+        "sampler": "dpmpp_2m_sde_karras",
+        "steps": 30,
+        "cfg": 8.0,
+        "width": 768,
+        "height": 512,
+        "clip_skip": 2
+      }
+    },
+    "sci_fi_video": {
+      "cityscape": {
+        "model": "svd.safetensors",
+        "motion_bucket_id": 127,
+        "noise_aug_strength": 0.02,
+        "num_frames": 16,
+        "fps": 8,
+        "decode_chunk_size": 8,
+        "width": 512,
+        "height": 320
+      },
+      "space_scene": {
+        "model": "svd.safetensors",
+        "motion_bucket_id": 140,
+        "noise_aug_strength": 0.03,
+        "num_frames": 16,
+        "fps": 8,
+        "decode_chunk_size": 8,
+        "width": 512,
+        "height": 320
+      },
+      "cyberpunk": {
+        "model": "svd.safetensors",
+        "motion_bucket_id": 150,
+        "noise_aug_strength": 0.025,
+        "num_frames": 24,
+        "fps": 12,
+        "decode_chunk_size": 8,
+        "width": 512,
+        "height": 320
+      }
+    }
+  }
+}

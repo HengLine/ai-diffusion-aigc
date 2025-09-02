@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成结果 - AIGC创意平台</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .result-header {
+            margin-bottom: 2rem;
+        }
+        .result-header h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .result-type-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        .badge-image {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        .badge-video {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+        .result-content {
+            margin-bottom: 2rem;
+        }
+        .result-image {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .result-video {
+            width: 100%;
+            max-height: 600px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .action-button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .download-button {
+            background-color: #28a745;
+            color: white;
+        }
+        .download-button:hover {
+            background-color: #218838;
+        }
+        .new-task-button {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        .new-task-button:hover {
+            background-color: #3a5a85;
+        }
+        .back-button {
+            background-color: #6c757d;
+            color: white;
+        }
+        .back-button:hover {
+            background-color: #5a6268;
+        }
+        .result-info {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 4px;
+            text-align: left;
+            border-left: 4px solid #4a6fa5;
+        }
+        .result-info h3 {
+            margin-top: 0;
+            color: #4a6fa5;
+        }
+        .result-info p {
+            margin: 0.5rem 0;
+        }
+        .share-options {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+        .share-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .share-icons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .share-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #f8f9fa;
+            color: #495057;
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .share-icon:hover {
+            transform: translateY(-3px);
+        }
+        .share-icon.wechat:hover {
+            background-color: #07C160;
+            color: white;
+        }
+        .share-icon.twitter:hover {
+            background-color: #1DA1F2;
+            color: white;
+        }
+        .share-icon.download:hover {
+            background-color: #28a745;
+            color: white;
+        }
+        /* 加载动画 */
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4a6fa5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem 0;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+            .action-button {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AIGC创意平台</h1>
+    </header>
+
+    <div class="container">
+        <div class="result-header">
+            {% if is_video %}
+                <span class="result-type-badge badge-video">视频结果</span>
+                <h2>视频生成完成！</h2>
+            {% else %}
+                <span class="result-type-badge badge-image">图像结果</span>
+                <h2>图像生成完成！</h2>
+            {% endif %}
+            <p>您的创作已经准备就绪，可以查看、下载或分享。</p>
+        </div>
+
+        <div class="result-content">
+            {% if is_video %}
+                <video class="result-video" controls>
+                    <source src="{{ url_for('serve_output', filename=filename) }}" type="video/mp4">
+                    您的浏览器不支持视频播放。
+                </video>
+            {% else %}
+                <img class="result-image" src="{{ url_for('serve_output', filename=filename) }}" alt="生成结果">
+            {% endif %}
+        </div>
+
+        <div class="action-buttons">
+            <a href="{{ url_for('serve_output', filename=filename) }}" class="action-button download-button" download>
+                下载结果
+            </a>
+            {% if task_type == 'text_to_image' %}
+                <a href="{{ url_for('text_to_image') }}" class="action-button new-task-button">
+                    生成新图像
+                </a>
+            {% elif task_type == 'image_to_image' %}
+                <a href="{{ url_for('image_to_image') }}" class="action-button new-task-button">
+                    转换新图像
+                </a>
+            {% elif task_type == 'image_to_video' %}
+                <a href="{{ url_for('image_to_video') }}" class="action-button new-task-button">
+                    生成新视频
+                </a>
+            {% endif %}
+            <a href="{{ url_for('index') }}" class="action-button back-button">
+                返回首页
+            </a>
+        </div>
+
+        <div class="result-info">
+            <h3>创作信息</h3>
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                <div>
+                    <p><strong>任务类型:</strong> 
+                        {% if task_type == 'text_to_image' %}文生图
+                        {% elif task_type == 'image_to_image' %}图生图
+                        {% elif task_type == 'image_to_video' %}图生视频
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p><strong>文件名称:</strong> {{ filename }}</p>
+                </div>
+                <div>
+                    <p><strong>生成时间:</strong> {{ current_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="share-options">
+            <div class="share-title">分享您的创作:</div>
+            <div class="share-icons">
+                <a href="#" class="share-icon wechat" title="分享到微信">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                </a>
+                <a href="#" class="share-icon twitter" title="分享到Twitter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>
+                </a>
+                <a href="{{ url_for('serve_output', filename=filename) }}" class="share-icon download" title="下载文件" download>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 预加载结果，避免白屏
+            const media = {% if is_video %}document.querySelector('.result-video'){% else %}document.querySelector('.result-image'){% endif %};
+            const loadingSpinner = document.createElement('div');
+            loadingSpinner.className = 'loading-spinner';
+            
+            if (media) {
+                // 添加加载动画
+                const parent = media.parentElement;
+                parent.insertBefore(loadingSpinner, media);
+                media.style.display = 'none';
+                
+                // 监听加载完成事件
+                media.onload = media.oncanplay = function() {
+                    loadingSpinner.style.display = 'none';
+                    media.style.display = 'block';
+                };
+                
+                // 监听错误事件
+                media.onerror = function() {
+                    loadingSpinner.style.display = 'none';
+                    const errorMessage = document.createElement('div');
+                    errorMessage.textContent = '无法加载结果文件，请稍后重试。';
+                    errorMessage.style.color = '#dc3545';
+                    errorMessage.style.fontWeight = 'bold';
+                    errorMessage.style.margin = '2rem 0';
+                    parent.appendChild(errorMessage);
+                };
+            }
+        });
+    </script>
+</body>
+</html>

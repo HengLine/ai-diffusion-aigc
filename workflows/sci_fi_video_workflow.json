@@ -1,0 +1,237 @@
+{
+  "last_node_id": 30,
+  "last_link_id": 42,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [0, 0],
+      "size": [320, 80],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": {
+        "image": "",
+        "upload": ""
+      },
+      "outputs": [
+        "IMAGE",
+        "MASK"
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      }
+    },
+    {
+      "id": 2,
+      "type": "SDXLPromptStyler",
+      "pos": [0, 100],
+      "size": [380, 140],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": {
+        "text_positive": "futuristic cityscape, flying cars, neon lights, detailed environment, cinematic lighting, science fiction, 4k, high quality",
+        "text_negative": "low quality, blurry, unrealistic, static, boring, pixelated",
+        "style": "Cinematic",
+        "log_prompt": true
+      },
+      "outputs": [
+        "POSITIVE",
+        "NEGATIVE"
+      ],
+      "properties": {
+        "Node name for S&R": "SDXLPromptStyler"
+      }
+    },
+    {
+      "id": 3,
+      "type": "StableVideoDiffusionLoader",
+      "pos": [340, 0],
+      "size": [320, 80],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": {
+        "ckpt_name": [
+          "SVD",
+          "svd.safetensors"
+        ]
+      },
+      "outputs": [
+        "MODEL",
+        "VAE"
+      ],
+      "properties": {
+        "Node name for S&R": "StableVideoDiffusionLoader"
+      }
+    },
+    {
+      "id": 4,
+      "type": "ImageScale",
+      "pos": [340, 100],
+      "size": [300, 100],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": {
+        "images": [
+          1,
+          "IMAGE"
+        ],
+        "width": 512,
+        "height": 320,
+        "upscale_method": "lanczos",
+        "crop": true
+      },
+      "outputs": [
+        "IMAGE"
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScale"
+      }
+    },
+    {
+      "id": 5,
+      "type": "StableVideoDiffusionSampler",
+      "pos": [340, 220],
+      "size": [400, 240],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": {
+        "model": [
+          3,
+          "MODEL"
+        ],
+        "image": [
+          4,
+          "IMAGE"
+        ],
+        "seed": 74928375,
+        "cfg": 2.5,
+        "motion_bucket_id": 127,
+        "noise_aug_strength": 0.02,
+        "num_frames": 16,
+        "decode_chunk_size": 8
+      },
+      "outputs": [
+        "IMAGE"
+      ],
+      "properties": {
+        "Node name for S&R": "StableVideoDiffusionSampler"
+      }
+    },
+    {
+      "id": 6,
+      "type": "VAEDecode",
+      "pos": [340, 480],
+      "size": [300, 80],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": {
+        "samples": [
+          5,
+          "IMAGE"
+        ],
+        "vae": [
+          3,
+          "VAE"
+        ]
+      },
+      "outputs": [
+        "IMAGE"
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      }
+    },
+    {
+      "id": 7,
+      "type": "SaveVideo",
+      "pos": [340, 580],
+      "size": [340, 100],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": {
+        "images": [
+          6,
+          "IMAGE"
+        ],
+        "fps": 8,
+        "filename_prefix": "sci_fi_video_"
+      },
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      }
+    },
+    {
+      "id": 8,
+      "type": "ControlNetLoader",
+      "pos": [680, 0],
+      "size": [320, 80],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": {
+        "control_net_name": [
+          "ControlNet",
+          "control_v11p_sd15_canny.pth"
+        ]
+      },
+      "outputs": [
+        "CONTROL_NET"
+      ],
+      "properties": {
+        "Node name for S&R": "ControlNetLoader"
+      }
+    },
+    {
+      "id": 9,
+      "type": "ControlNetApply",
+      "pos": [680, 100],
+      "size": [320, 100],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": {
+        "control_net": [
+          8,
+          "CONTROL_NET"
+        ],
+        "image": [
+          1,
+          "IMAGE"
+        ]
+      },
+      "outputs": [
+        "CONTROL_NET"
+      ],
+      "properties": {
+        "Node name for S&R": "ControlNetApply"
+      }
+    }
+  ],
+  "links": [
+    [1, "IMAGE", 4, "images", "IMAGE"],
+    [1, "IMAGE", 9, "image", "IMAGE"],
+    [3, "MODEL", 5, "model", "MODEL"],
+    [3, "VAE", 6, "vae", "VAE"],
+    [4, "IMAGE", 5, "image", "IMAGE"],
+    [5, "IMAGE", 6, "samples", "IMAGE"],
+    [6, "IMAGE", 7, "images", "IMAGE"],
+    [8, "CONTROL_NET", 9, "control_net", "CONTROL_NET"],
+    [9, "CONTROL_NET", 5, "control_net", "CONTROL_NET"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.5,
+      "offset": [0, 0]
+    }
+  }
+}

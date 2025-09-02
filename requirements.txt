@@ -1,0 +1,30 @@
+# AIGC项目依赖包
+
+# Web界面相关依赖
+flask>=3.0.0
+jinja2>=3.1.2
+werkzeug>=3.0.0
+
+# API交互相关依赖
+requests>=2.31.0
+
+# 图像处理相关依赖
+Pillow>=10.1.0
+opencv-python>=4.8.1.78
+
+# 视频处理相关依赖
+imageio>=2.31.6
+imageio-ffmpeg>=0.4.8
+
+# 其他工具依赖
+numpy>=1.26.2
+
+# 数据处理
+pandas>=2.1.0
+scikit-image>=0.22.0
+
+# 其他依赖
+pyyaml>=6.0.1
+packaging>=23.2
+
+streamlit>=1.15.0
