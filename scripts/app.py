@@ -47,9 +47,9 @@ class AIGCWebApp:
     def _configure_comfyui(self) -> None:
         """配置ComfyUI路径"""
         with st.expander("⚙️ ComfyUI配置"):
-            comfyui_path = st.text_input("ComfyUI安装路径", value=st.session_state.comfyui_path)
-            
-            if st.button("保存配置"):
+            comfyui_path = st.text_input("ComfyUI安装路径", value=st.session_state.comfyui_path, key="config_comfyui_path")
+
+            if st.button("保存配置", key="config_save_button"):
                 if os.path.exists(comfyui_path):
                     st.session_state.comfyui_path = comfyui_path
                     # 更新配置文件
@@ -78,16 +78,16 @@ class AIGCWebApp:
         # 用户输入
         col1, col2 = st.columns(2)
         with col1:
-            prompt = st.text_area("提示词", height=150)
-            negative_prompt = st.text_area("负面提示词", value="low quality, blurry, bad anatomy", height=100)
+            prompt = st.text_area("提示词", height=150, key="tti_prompt")
+            negative_prompt = st.text_area("负面提示词", value="low quality, blurry, bad anatomy", height=100, key="tti_negative_prompt")
         with col2:
-            width = st.slider("宽度", min_value=256, max_value=1024, value=default_width, step=64)
-            height = st.slider("高度", min_value=256, max_value=1024, value=default_height, step=64)
-            steps = st.slider("步数", min_value=1, max_value=50, value=default_steps, step=1)
-            cfg = st.slider("CFG Scale", min_value=1.0, max_value=15.0, value=default_cfg, step=0.5)
-            output_filename = st.text_input("输出文件名", value="text_to_image.png")
-        
-        if st.button("生成图像"):
+            width = st.slider("宽度", min_value=256, max_value=1024, value=default_width, step=64, key="tti_width")
+            height = st.slider("高度", min_value=256, max_value=1024, value=default_height, step=64, key="tti_height")
+            steps = st.slider("步数", min_value=1, max_value=50, value=default_steps, step=1, key="tti_steps")
+            cfg = st.slider("CFG Scale", min_value=1.0, max_value=15.0, value=default_cfg, step=0.5, key="tti_cfg")
+            output_filename = st.text_input("输出文件名", value="text_to_image.png", key="tti_output_filename")
+
+        if st.button("生成图像", key="tti_generate_button"):
             if not prompt:
                 st.error("请输入提示词")
                 return
@@ -132,21 +132,21 @@ class AIGCWebApp:
         # 用户输入
         col1, col2 = st.columns(2)
         with col1:
-            uploaded_file = st.file_uploader("上传图像", type=["png", "jpg", "jpeg"])
-            prompt = st.text_area("提示词", height=150)
-            negative_prompt = st.text_area("负面提示词", value="low quality, blurry, bad anatomy", height=100)
+            uploaded_file = st.file_uploader("上传图像", type=["png", "jpg", "jpeg"], key="iti_file_uploader")
+            prompt = st.text_area("提示词", height=150, key="iti_prompt")
+            negative_prompt = st.text_area("负面提示词", value="low quality, blurry, bad anatomy", height=100, key="iti_negative_prompt")
         with col2:
-            width = st.slider("宽度", min_value=256, max_value=1024, value=default_width, step=64)
-            height = st.slider("高度", min_value=256, max_value=1024, value=default_height, step=64)
-            steps = st.slider("步数", min_value=1, max_value=50, value=default_steps, step=1)
-            cfg = st.slider("CFG Scale", min_value=1.0, max_value=15.0, value=default_cfg, step=0.5)
-            denoising_strength = st.slider("去噪强度", min_value=0.1, max_value=1.0, value=default_denoising, step=0.05)
-            output_filename = st.text_input("输出文件名", value="image_to_image.png")
-        
+            width = st.slider("宽度", min_value=256, max_value=1024, value=default_width, step=64, key="iti_width")
+            height = st.slider("高度", min_value=256, max_value=1024, value=default_height, step=64, key="iti_height")
+            steps = st.slider("步数", min_value=1, max_value=50, value=default_steps, step=1, key="iti_steps")
+            cfg = st.slider("CFG Scale", min_value=1.0, max_value=15.0, value=default_cfg, step=0.5, key="iti_cfg")
+            denoising_strength = st.slider("去噪强度", min_value=0.1, max_value=1.0, value=default_denoising, step=0.05, key="iti_denoising")
+            output_filename = st.text_input("输出文件名", value="image_to_image.png", key="iti_output_filename")
+
         if uploaded_file is not None:
             st.image(uploaded_file, caption="上传的图像", use_column_width=True)
-        
-        if st.button("生成变体"):
+
+        if st.button("生成变体", key="iti_generate_button"):
             if not uploaded_file:
                 st.error("请先上传图像")
                 return
@@ -201,20 +201,20 @@ class AIGCWebApp:
         # 用户输入
         col1, col2 = st.columns(2)
         with col1:
-            uploaded_file = st.file_uploader("上传图像", type=["png", "jpg", "jpeg"])
-            prompt = st.text_area("提示词", height=150)
-            negative_prompt = st.text_area("负面提示词", value="low quality, blurry, unrealistic, static", height=100)
+            uploaded_file = st.file_uploader("上传图像", type=["png", "jpg", "jpeg"], key="itv_file_uploader")
+            prompt = st.text_area("提示词", height=150, key="itv_prompt")
+            negative_prompt = st.text_area("负面提示词", value="low quality, blurry, unrealistic, static", height=100, key="itv_negative_prompt")
         with col2:
-            width = st.slider("宽度", min_value=256, max_value=1024, value=default_width, step=64)
-            height = st.slider("高度", min_value=256, max_value=1024, value=default_height, step=64)
-            frames = st.slider("帧数", min_value=4, max_value=32, value=default_frames, step=1)
-            fps = st.slider("帧率", min_value=4, max_value=30, value=default_fps, step=1)
-            output_filename = st.text_input("输出文件名", value="image_to_video.mp4")
-        
+            width = st.slider("宽度", min_value=256, max_value=1024, value=default_width, step=64, key="itv_width")
+            height = st.slider("高度", min_value=256, max_value=1024, value=default_height, step=64, key="itv_height")
+            frames = st.slider("帧数", min_value=4, max_value=32, value=default_frames, step=1, key="itv_frames")
+            fps = st.slider("帧率", min_value=4, max_value=30, value=default_fps, step=1, key="itv_fps")
+            output_filename = st.text_input("输出文件名", value="image_to_video.mp4", key="itv_output_filename")
+
         if uploaded_file is not None:
             st.image(uploaded_file, caption="上传的图像", use_column_width=True)
-        
-        if st.button("生成视频"):
+
+        if st.button("生成视频", key="itv_generate_button"):
             if not uploaded_file:
                 st.error("请先上传图像")
                 return
@@ -267,12 +267,12 @@ class AIGCWebApp:
         # 用户输入
         col1, col2 = st.columns(2)
         with col1:
-            prompt = st.text_area("提示词", value=default_prompt, height=150)
-            negative_prompt = st.text_area("负面提示词", value=default_negative_prompt, height=100)
+            prompt = st.text_area("提示词", value=default_prompt, height=150, key="ac_prompt")
+            negative_prompt = st.text_area("负面提示词", value=default_negative_prompt, height=100, key="ac_negative_prompt")
         with col2:
-            output_filename = st.text_input("输出文件名", value="ancient_clothing.png")
-        
-        if st.button("生成古装图片"):
+              output_filename = st.text_input("输出文件名", value="ancient_clothing.png", key="ac_output_filename")
+
+        if st.button("生成古装图片", key="ac_generate_button"):
             if not st.session_state.comfyui_path:
                 st.error("请先配置ComfyUI路径")
                 return
@@ -308,15 +308,15 @@ class AIGCWebApp:
         # 用户输入
         col1, col2 = st.columns(2)
         with col1:
-            uploaded_file = st.file_uploader("上传图像", type=["png", "jpg", "jpeg"])
-            prompt = st.text_area("提示词", value=default_prompt, height=150)
+            uploaded_file = st.file_uploader("上传图像", type=["png", "jpg", "jpeg"], key="sfv_file_uploader")
+            prompt = st.text_area("提示词", value=default_prompt, height=150, key="sfv_prompt")
         with col2:
-            output_filename = st.text_input("输出文件名", value="sci_fi_video.mp4")
-        
+              output_filename = st.text_input("输出文件名", value="sci_fi_video.mp4", key="sfv_output_filename")
+
         if uploaded_file is not None:
             st.image(uploaded_file, caption="上传的图像", use_column_width=True)
-        
-        if st.button("生成科幻视频"):
+
+        if st.button("生成科幻视频", key="sfv_generate_button"):
             if not uploaded_file:
                 st.error("请先上传图像")
                 return

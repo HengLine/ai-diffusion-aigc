@@ -9,6 +9,7 @@ rem 安装依赖
 pip install -r requirements.txt
 
 rem 启动Web应用
-python scripts\app.py
+@REM python scripts\app.py
+streamlit run scripts\app.py
 
 pause
