@@ -1,7 +1,14 @@
 import os
+import sys
 import streamlit as st
 import time
 from scripts.run_workflow import ComfyUIRunner
+
+# 添加项目根目录到Python路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+# 导入自定义日志模块
+from scripts.utils.logger import info, error
 
 class TextToImageTab:
     def __init__(self, runner: ComfyUIRunner, config: dict):
@@ -12,7 +19,7 @@ class TextToImageTab:
         
     def render(self):
         """渲染文生图标签页"""
-        print("====== 进入[文生图]标签页 ======")
+        info("====== 进入[文生图]标签页 ======")
         st.subheader("文生图 (Text to Image)")
         
         # 创建表单
@@ -90,5 +97,5 @@ class TextToImageTab:
                     error_type = type(e).__name__
                     error_message = str(e)
                     error_traceback = traceback.format_exc()
-                    print(f"文生图生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
+                    error(f"文生图生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
                     st.error(f"生成失败: 类型={error_type}, 消息={error_message}\n请查看控制台日志获取详细堆栈信息")

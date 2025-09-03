@@ -19,6 +19,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入工作流运行器
 from scripts.run_workflow import ComfyUIRunner
+# 导入自定义日志模块
+from scripts.utils.logger import info, error, warning
 
 # 导入拆分后的路由模块
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -68,7 +70,7 @@ class WorkflowManager:
             try:
                 server_process = runner.start_comfyui_server()
             except Exception as e:
-                print(f"启动ComfyUI服务器失败: {str(e)}")
+                error(f"启动ComfyUI服务器失败: {str(e)}")
                 runner = None
                 return False
         return True
@@ -122,7 +124,7 @@ class WorkflowManager:
             
             # 检查工作流文件是否存在
             if not os.path.exists(workflow_path):
-                print(f"工作流文件不存在: {workflow_path}")
+                warning(f"工作流文件不存在: {workflow_path}")
                 return None
             
             # 加载和更新工作流
@@ -140,7 +142,7 @@ class WorkflowManager:
                 return os.path.join(OUTPUT_FOLDER, output_filename)
             return None
         except Exception as e:
-            print(f"文生图任务执行失败: {str(e)}")
+            error(f"文生图任务执行失败: {str(e)}")
             return None
     
     @staticmethod
@@ -160,7 +162,7 @@ class WorkflowManager:
             
             # 检查工作流文件是否存在
             if not os.path.exists(workflow_path):
-                print(f"工作流文件不存在: {workflow_path}")
+                warning(f"工作流文件不存在: {workflow_path}")
                 return None
             
             # 加载和更新工作流
@@ -179,7 +181,7 @@ class WorkflowManager:
                 return os.path.join(OUTPUT_FOLDER, output_filename)
             return None
         except Exception as e:
-            print(f"图生图任务执行失败: {str(e)}")
+            error(f"图生图任务执行失败: {str(e)}")
             return None
     
     @staticmethod
@@ -199,7 +201,7 @@ class WorkflowManager:
             
             # 检查工作流文件是否存在
             if not os.path.exists(workflow_path):
-                print(f"工作流文件不存在: {workflow_path}")
+                warning(f"工作流文件不存在: {workflow_path}")
                 return None
             
             # 加载和更新工作流
@@ -217,7 +219,7 @@ class WorkflowManager:
                 return os.path.join(OUTPUT_FOLDER, output_filename)
             return None
         except Exception as e:
-            print(f"图生视频任务执行失败: {str(e)}")
+            error(f"图生视频任务执行失败: {str(e)}")
             return None
     
     @staticmethod
@@ -237,7 +239,7 @@ class WorkflowManager:
             
             # 检查工作流文件是否存在
             if not os.path.exists(workflow_path):
-                print(f"工作流文件不存在: {workflow_path}")
+                warning(f"工作流文件不存在: {workflow_path}")
                 return None
             
             # 加载和更新工作流
@@ -254,7 +256,7 @@ class WorkflowManager:
                 return os.path.join(OUTPUT_FOLDER, output_filename)
             return None
         except Exception as e:
-            print(f"文生视频任务执行失败: {str(e)}")
+            error(f"文生视频任务执行失败: {str(e)}")
             return None
 
 # 注册拆分后的Blueprint

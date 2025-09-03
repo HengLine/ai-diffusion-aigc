@@ -13,6 +13,9 @@ from typing import Optional, Dict, Any
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# 导入自定义日志模块
+from scripts.utils.logger import info, error
+
 # 导入工作流运行器
 from scripts.run_workflow import ComfyUIRunner
 # 导入拆分后的标签页模块
@@ -70,7 +73,7 @@ class AIGCWebApp:
     
     def _text_to_image_tab(self) -> None:
         """文生图标签页"""
-        print("====== 进入文生图标签页 ======")
+        info("====== 进入文生图标签页 ======")
         st.subheader("📝 文生图")
         
         # 获取默认配置
@@ -146,12 +149,12 @@ class AIGCWebApp:
                 error_type = type(e).__name__
                 error_message = str(e)
                 error_traceback = traceback.format_exc()
-                print(f"文生图生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
+                error(f"文生图生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
                 st.error(f"生成失败: 类型={error_type}, 消息={error_message}\n请查看控制台日志获取详细堆栈信息")
     
     def _image_to_image_tab(self) -> None:
         """图生图标签页"""
-        print("====== 进入图生图标签页 ======")
+        info("====== 进入图生图标签页 ======")
         st.subheader("🖼️ 图生图")
         
         # 获取默认配置
@@ -246,12 +249,12 @@ class AIGCWebApp:
                 error_type = type(e).__name__
                 error_message = str(e)
                 error_traceback = traceback.format_exc()
-                print(f"图生图生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
+                error(f"图生图生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
                 st.error(f"生成失败: 类型={error_type}, 消息={error_message}\n请查看控制台日志获取详细堆栈信息")
     
     def _image_to_video_tab(self) -> None:
         """图生视频标签页"""
-        print("====== 进入图生视频标签页 ======")
+        info("====== 进入图生视频标签页 ======")
         st.subheader("🎬 图生视频")
         
         # 获取默认配置
@@ -343,7 +346,7 @@ class AIGCWebApp:
                 error_type = type(e).__name__
                 error_message = str(e)
                 error_traceback = traceback.format_exc()
-                print(f"图生视频生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
+                error(f"图生视频生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
                 st.error(f"生成失败: 类型={error_type}, 消息={error_message}\n请查看控制台日志获取详细堆栈信息")
     
 

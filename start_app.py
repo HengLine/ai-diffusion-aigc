@@ -12,6 +12,12 @@ import subprocess
 import time
 import shutil
 
+# 添加项目根目录到Python路径
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# 导入自定义日志模块
+from scripts.utils.logger import info, error, warning
+
 # 设置编码为UTF-8
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
@@ -22,27 +28,30 @@ REQUIREMENTS_FILE = "requirements.txt"
 APP_FILE = os.path.join("scripts", "app.py")
 
 
+# 使用自定义日志模块替代原来的打印函数
 def print_with_color(text, color_code=32):
-    """打印带颜色的文本"""
-    if os.name == 'nt':  # Windows系统
-        print(text)
-    else:  # 非Windows系统
-        print(f"\033[{color_code}m{text}\033[0m")
+    """打印带颜色的文本 - 已替换为日志模块"""
+    if color_code == 31:  # 错误 (红色)
+        error(text)
+    elif color_code == 33:  # 警告 (黄色)
+        warning(text)
+    else:  # 成功/信息 (绿色或其他)
+        info(text)
 
 
 def print_success(text):
-    """打印成功信息"""
-    print_with_color(f"[成功] {text}", 32)  # 绿色
+    """打印成功信息 - 已替换为日志模块"""
+    info(f"[成功] {text}")
 
 
 def print_warning(text):
-    """打印警告信息"""
-    print_with_color(f"[警告] {text}", 33)  # 黄色
+    """打印警告信息 - 已替换为日志模块"""
+    warning(f"[警告] {text}")
 
 
 def print_error(text):
-    """打印错误信息"""
-    print_with_color(f"[错误] {text}", 31)  # 红色
+    """打印错误信息 - 已替换为日志模块"""
+    error(f"[错误] {text}")
 
 
 def run_command(command, shell=True, capture_output=False, check=False):
@@ -69,7 +78,7 @@ def run_command(command, shell=True, capture_output=False, check=False):
 
 def check_python_installation():
     """检查Python是否安装"""
-    print("检查Python环境...")
+    info("检查Python环境...")
     result = run_command("python --version", capture_output=True)
     if result and hasattr(result, 'returncode') and result.returncode == 0:
         print_success(f"Python环境检查通过: {result.stdout.strip()}")
@@ -134,18 +143,18 @@ def start_application(python_exe):
         print_error(f"应用文件 {APP_FILE} 不存在！")
         return False
     
-    print(f"启动AIGC演示应用（{APP_FILE}）...")
-    print("====================================")
-    print("应用启动中，请不要关闭此窗口...")
-    print("如果需要停止应用，请按 Ctrl+C")
-    print("====================================")
+    info(f"启动AIGC演示应用（{APP_FILE}）...")
+    info("====================================")
+    info("应用启动中，请不要关闭此窗口...")
+    info("如果需要停止应用，请按 Ctrl+C")
+    info("====================================")
     
     try:
         # 使用call而不是run，以便让Streamlit在前台运行
         subprocess.call([python_exe, "-m", "streamlit", "run", APP_FILE])
         return True
     except KeyboardInterrupt:
-        print("\n应用已被用户中断。")
+        info("\n应用已被用户中断。")
         return True
     except Exception as e:
         print_error(f"应用程序启动失败！")
@@ -155,9 +164,9 @@ def start_application(python_exe):
 
 def main():
     """主函数"""
-    print("====================================")
-    print("     AIGC创意平台启动脚本（Python版本）     ")
-    print("====================================")
+    info("====================================")
+    info("     AIGC创意平台启动脚本（Python版本）     ")
+    info("====================================")
     
     # 检查Python安装
     if not check_python_installation():
@@ -181,8 +190,8 @@ def main():
     # 启动应用
     start_application(python_exe)
     
-    print("====================================")
-    print("应用程序已停止运行。")
+    info("====================================")
+    info("应用程序已停止运行。")
     input("按Enter键退出...")
 
 
