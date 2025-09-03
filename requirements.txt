@@ -1,5 +1,4 @@
-# AIGC项目依赖包
-
+# AIGC项目依赖
 # Web界面相关依赖
 flask>=3.0.0
 jinja2>=3.1.2
@@ -16,15 +15,12 @@ opencv-python>=4.8.1.78
 imageio>=2.31.6
 imageio-ffmpeg>=0.4.8
 
-# 其他工具依赖
-numpy>=1.26.2
-
 # 数据处理
+numpy>=1.26.2
 pandas>=2.1.0
 scikit-image>=0.22.0
 
 # 其他依赖
 pyyaml>=6.0.1
 packaging>=23.2
-
 streamlit>=1.15.0

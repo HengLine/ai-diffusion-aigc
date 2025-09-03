@@ -9,7 +9,10 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 text_to_video_bp = Blueprint('text_to_video', __name__)
 
 # 导入WorkflowManager和配置
-from ..app_flask import WorkflowManager, config
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.utils.workflow_utils import workflow_manager, config
 
 @text_to_video_bp.route('/text_to_video', methods=['GET', 'POST'])
 def text_to_video():
@@ -27,18 +30,21 @@ def text_to_video():
             return redirect(url_for('text_to_video.text_to_video'))
         
         # 执行文生视频任务
-        result_path = WorkflowManager.text_to_video(
+        result = workflow_manager.process_text_to_video(
             prompt,
-            output_filename=None
+            "",  # 使用空字符串作为negative_prompt
+            video_length,
+            fps
         )
         
-        if result_path:
+        if result and result.get('success'):
             # 获取结果文件名
             import os
-            result_filename = os.path.basename(result_path)
+            result_filename = os.path.basename(result['output_path'])
             return redirect(url_for('result', filename=result_filename, task_type='text_to_video'))
         else:
-            flash('生成失败，请检查ComfyUI配置！', 'error')
+            error_message = result.get('message', '生成失败，请检查ComfyUI配置！') if result else '生成失败，请检查ComfyUI配置！'
+            flash(error_message, 'error')
             return redirect(url_for('text_to_video.text_to_video'))
     
     # 获取默认参数

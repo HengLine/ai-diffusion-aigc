@@ -1,5 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from ..app_flask import WorkflowManager, config
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.utils.workflow_utils import workflow_manager, config
 
 text_to_image_bp = Blueprint('text_to_image', __name__)
 
@@ -20,7 +23,7 @@ def text_to_image():
             return redirect(url_for('text_to_image.text_to_image'))
         
         # 执行文生图任务
-        result_path = WorkflowManager.text_to_image(
+        result = workflow_manager.process_text_to_image(
             prompt, 
             negative_prompt,
             width,
@@ -29,13 +32,14 @@ def text_to_image():
             cfg_scale
         )
         
-        if result_path:
+        if result and result.get('success'):
             # 获取结果文件名
             import os
-            result_filename = os.path.basename(result_path)
+            result_filename = os.path.basename(result['output_path'])
             return redirect(url_for('result', filename=result_filename, task_type='text_to_image'))
         else:
-            flash('生成失败，请检查ComfyUI配置！', 'error')
+            error_message = result.get('message', '生成失败，请检查ComfyUI配置！') if result else '生成失败，请检查ComfyUI配置！'
+            flash(error_message, 'error')
             return redirect(url_for('text_to_image.text_to_image'))
     
     # 获取默认参数
