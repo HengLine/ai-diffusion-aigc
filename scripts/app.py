@@ -144,7 +144,7 @@ class AIGCWebApp:
             output_filename = st.text_input("输出文件名", value="image_to_image.png", key="iti_output_filename")
 
         if uploaded_file is not None:
-            st.image(uploaded_file, caption="上传的图像", use_column_width=True)
+            st.image(uploaded_file, caption="上传的图像", use_container_width=True)
 
         if st.button("生成变体", key="iti_generate_button"):
             if not uploaded_file:
@@ -212,7 +212,7 @@ class AIGCWebApp:
             output_filename = st.text_input("输出文件名", value="image_to_video.mp4", key="itv_output_filename")
 
         if uploaded_file is not None:
-            st.image(uploaded_file, caption="上传的图像", use_column_width=True)
+            st.image(uploaded_file, caption="上传的图像", use_container_width=True)
 
         if st.button("生成视频", key="itv_generate_button"):
             if not uploaded_file:
@@ -314,7 +314,7 @@ class AIGCWebApp:
               output_filename = st.text_input("输出文件名", value="sci_fi_video.mp4", key="sfv_output_filename")
 
         if uploaded_file is not None:
-            st.image(uploaded_file, caption="上传的图像", use_column_width=True)
+            st.image(uploaded_file, caption="上传的图像", use_container_width=True)
 
         if st.button("生成科幻视频", key="sfv_generate_button"):
             if not uploaded_file:
