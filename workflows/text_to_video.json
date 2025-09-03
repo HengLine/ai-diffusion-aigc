@@ -1,0 +1,175 @@
+{
+  "last_node_id": 15,
+  "last_link_id": 18,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "CheckpointLoaderSimple",
+      "pos": [0, 0],
+      "size": [300, 110],
+      "flags": {},
+      "order": 0,
+      "inputs": {
+        "ckpt_name": "v1-5-pruned-emaonly-fp16.safetensors"
+      },
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "links": [2]},
+        {"name": "CLIP", "type": "CLIP", "links": [1, 3]},
+        {"name": "VAE", "type": "VAE", "links": [9]}
+      ],
+      "title": "CheckpointLoaderSimple"
+    },
+    {
+      "id": 2,
+      "type": "CLIPTextEncode",
+      "pos": [340, 0],
+      "size": [300, 140],
+      "flags": {},
+      "order": 1,
+      "inputs": {
+        "clip": [1, 1],
+        "text": "${prompt}"
+      },
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [4]}
+      ],
+      "title": "CLIPTextEncode"
+    },
+    {
+      "id": 3,
+      "type": "CLIPTextEncode",
+      "pos": [340, 160],
+      "size": [300, 140],
+      "flags": {},
+      "order": 2,
+      "inputs": {
+        "clip": [1, 1],
+        "text": "text, watermark, low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres"
+      },
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [5]}
+      ],
+      "title": "CLIPTextEncode (Negative)"
+    },
+    {
+      "id": 4,
+      "type": "EmptyLatentImage",
+      "pos": [0, 130],
+      "size": [300, 140],
+      "flags": {},
+      "order": 3,
+      "inputs": {
+        "width": 512,
+        "height": 512,
+        "batch_size": 1
+      },
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [6]}
+      ],
+      "title": "EmptyLatentImage"
+    },
+    {
+      "id": 5,
+      "type": "KSampler",
+      "pos": [680, 100],
+      "size": [300, 270],
+      "flags": {},
+      "order": 4,
+      "inputs": {
+        "model": [1, 0],
+        "positive": [2, 0],
+        "negative": [3, 0],
+        "latent_image": [4, 0],
+        "seed": 42,
+        "steps": 20,
+        "cfg": 8,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1
+      },
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [7]}
+      ],
+      "title": "KSampler"
+    },
+    {
+      "id": 6,
+      "type": "VAEDecode",
+      "pos": [1020, 100],
+      "size": [300, 110],
+      "flags": {},
+      "order": 5,
+      "inputs": {
+        "samples": [5, 0],
+        "vae": [1, 2]
+      },
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [8]}
+      ],
+      "title": "VAEDecode"
+    },
+    {
+      "id": 7,
+      "type": "StableVideoDiffusion",
+      "pos": [1360, 100],
+      "size": [300, 270],
+      "flags": {},
+      "order": 6,
+      "inputs": {
+        "image": [6, 0],
+        "motion_bucket_id": "${motion_bucket_id}",
+        "noise_aug_strength": "${noise_aug_strength}",
+        "num_frames": "${frames}"
+      },
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [9]}
+      ],
+      "title": "StableVideoDiffusion"
+    },
+    {
+      "id": 8,
+      "type": "VideoCombine",
+      "pos": [1700, 100],
+      "size": [300, 140],
+      "flags": {},
+      "order": 7,
+      "inputs": {
+        "images": [7, 0],
+        "fps": "${fps}"
+      },
+      "outputs": [
+        {"name": "VIDEO", "type": "VIDEO", "links": [10]}
+      ],
+      "title": "VideoCombine"
+    },
+    {
+      "id": 9,
+      "type": "SaveVideo",
+      "pos": [2040, 100],
+      "size": [300, 140],
+      "flags": {},
+      "order": 8,
+      "inputs": {
+        "video": [8, 0],
+        "filename_prefix": "text_to_video"
+      },
+      "outputs": [],
+      "title": "SaveVideo"
+    }
+  ],
+  "links": [
+    [1, 1, 1, 2, 0],
+    [2, 1, 0, 5, 0],
+    [3, 1, 1, 3, 0],
+    [4, 2, 0, 5, 1],
+    [5, 3, 0, 5, 2],
+    [6, 4, 0, 5, 4],
+    [7, 5, 0, 6, 0],
+    [8, 6, 0, 7, 0],
+    [9, 7, 0, 8, 0],
+    [10, 8, 0, 9, 0]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {}
+}

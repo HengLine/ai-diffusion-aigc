@@ -18,7 +18,14 @@ from werkzeug.utils import secure_filename
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入工作流运行器
-from scripts.run_workflow import ComfyUIRunner, AIGCApplication
+from scripts.run_workflow import ComfyUIRunner
+
+# 导入拆分后的路由模块
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from flask_web.text_to_image_route import text_to_image_bp
+from flask_web.image_to_image_route import image_to_image_bp
+from flask_web.image_to_video_route import image_to_video_bp
+from flask_web.text_to_video_route import text_to_video_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='templates')
@@ -44,7 +51,6 @@ with open(config_path, 'r', encoding='utf-8') as f:
 # 全局变量存储ComfyUI路径和运行器实例
 comfyui_path = config['comfyui']['path']
 runner = None
-app_instance = None
 server_process = None
 
 class WorkflowManager:
@@ -53,11 +59,10 @@ class WorkflowManager:
     @staticmethod
     def init_runner():
         """初始化工作流运行器"""
-        global runner, app_instance, server_process, comfyui_path
+        global runner, server_process, comfyui_path
         
         if not runner and comfyui_path:
             runner = ComfyUIRunner(comfyui_path, OUTPUT_FOLDER)
-            app_instance = AIGCApplication(runner)
             
             # 启动ComfyUI服务器
             try:
@@ -65,20 +70,18 @@ class WorkflowManager:
             except Exception as e:
                 print(f"启动ComfyUI服务器失败: {str(e)}")
                 runner = None
-                app_instance = None
                 return False
         return True
     
     @staticmethod
     def stop_runner():
         """停止工作流运行器"""
-        global runner, app_instance, server_process
+        global runner, server_process
         
         if server_process:
             runner.stop_comfyui_server(server_process)
             server_process = None
         runner = None
-        app_instance = None
     
     @staticmethod
     def allowed_file(filename):
@@ -115,12 +118,7 @@ class WorkflowManager:
             
             # 加载工作流 - 使用基础文生图工作流
             workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
-                                        "workflows", "text_to_image_basic.json")
-            
-            # 如果基础工作流不存在，尝试使用古装工作流作为备选
-            if not os.path.exists(workflow_path):
-                workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
-                                           "workflows", "ancient_clothing_workflow.json")
+                                        "workflows", "text_to_image.json")
             
             # 检查工作流文件是否存在
             if not os.path.exists(workflow_path):
@@ -195,16 +193,75 @@ class WorkflowManager:
             if not output_filename:
                 output_filename = f"image_to_video_{int(time.time())}.mp4"
             
-            # 调用科幻视频生成应用
-            if app_instance:
-                success = app_instance.generate_sci_fi_video(prompt, image_path, output_filename)
-                
-                if success:
-                    return os.path.join(OUTPUT_FOLDER, output_filename)
+            # 加载图生视频工作流
+            workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
+                                        "workflows", "image_to_video_basic.json")
+            
+            # 检查工作流文件是否存在
+            if not os.path.exists(workflow_path):
+                print(f"工作流文件不存在: {workflow_path}")
+                return None
+            
+            # 加载和更新工作流
+            workflow = runner.load_workflow(workflow_path)
+            params = {
+                "prompt": prompt,
+                "image_path": image_path
+            }
+            updated_workflow = runner.update_workflow_params(workflow, params)
+            
+            # 运行工作流
+            success = runner.run_workflow(updated_workflow, output_filename)
+            
+            if success:
+                return os.path.join(OUTPUT_FOLDER, output_filename)
             return None
         except Exception as e:
             print(f"图生视频任务执行失败: {str(e)}")
             return None
+    
+    @staticmethod
+    def text_to_video(prompt, output_filename=None):
+        """执行文生视频任务"""
+        if not WorkflowManager.init_runner():
+            return None
+        
+        try:
+            # 生成唯一的输出文件名
+            if not output_filename:
+                output_filename = f"text_to_video_{int(time.time())}.mp4"
+            
+            # 加载文生视频工作流
+            workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
+                                        "workflows", "text_to_video.json")
+            
+            # 检查工作流文件是否存在
+            if not os.path.exists(workflow_path):
+                print(f"工作流文件不存在: {workflow_path}")
+                return None
+            
+            # 加载和更新工作流
+            workflow = runner.load_workflow(workflow_path)
+            params = {
+                "prompt": prompt
+            }
+            updated_workflow = runner.update_workflow_params(workflow, params)
+            
+            # 运行工作流
+            success = runner.run_workflow(updated_workflow, output_filename)
+            
+            if success:
+                return os.path.join(OUTPUT_FOLDER, output_filename)
+            return None
+        except Exception as e:
+            print(f"文生视频任务执行失败: {str(e)}")
+            return None
+
+# 注册拆分后的Blueprint
+app.register_blueprint(text_to_image_bp)
+app.register_blueprint(image_to_image_bp)
+app.register_blueprint(image_to_video_bp)
+app.register_blueprint(text_to_video_bp)
 
 # 路由定义
 @app.route('/')
@@ -240,114 +297,8 @@ def configure():
     
     return render_template('config.html', comfyui_path=comfyui_path)
 
-@app.route('/text_to_image', methods=['GET', 'POST'])
-def text_to_image():
-    """文生图页面路由"""
-    if request.method == 'POST':
-        prompt = request.form.get('prompt', '')
-        negative_prompt = request.form.get('negative_prompt', 'low quality, blurry, bad anatomy')
-        
-        if not prompt:
-            flash('请输入提示词！', 'error')
-            return redirect(url_for('text_to_image'))
-        
-        # 执行文生图任务
-        result_path = WorkflowManager.text_to_image(prompt, negative_prompt)
-        
-        if result_path:
-            # 获取结果文件名
-            result_filename = os.path.basename(result_path)
-            return redirect(url_for('result', filename=result_filename, task_type='text_to_image'))
-        else:
-            flash('生成失败，请检查ComfyUI配置！', 'error')
-            return redirect(url_for('text_to_image'))
-    
-    # 获取默认参数
-    default_params = config['settings']['text_to_image']
-    return render_template('text_to_image.html', default_params=default_params)
-
-@app.route('/image_to_image', methods=['GET', 'POST'])
-def image_to_image():
-    """图生图页面路由"""
-    if request.method == 'POST':
-        prompt = request.form.get('prompt', '')
-        negative_prompt = request.form.get('negative_prompt', 'low quality, blurry, bad anatomy')
-        
-        # 检查是否有文件上传
-        if 'image' not in request.files:
-            flash('请上传图像！', 'error')
-            return redirect(url_for('image_to_image'))
-        
-        file = request.files['image']
-        if file.filename == '':
-            flash('请选择一个文件！', 'error')
-            return redirect(url_for('image_to_image'))
-        
-        if not prompt:
-            flash('请输入提示词！', 'error')
-            return redirect(url_for('image_to_image'))
-        
-        # 保存上传的文件
-        image_path = WorkflowManager.save_uploaded_file(file)
-        if not image_path:
-            flash('文件类型不支持！', 'error')
-            return redirect(url_for('image_to_image'))
-        
-        # 执行图生图任务
-        result_path = WorkflowManager.image_to_image(prompt, negative_prompt, image_path)
-        
-        if result_path:
-            # 获取结果文件名
-            result_filename = os.path.basename(result_path)
-            return redirect(url_for('result', filename=result_filename, task_type='image_to_image'))
-        else:
-            flash('生成失败，请检查ComfyUI配置！', 'error')
-            return redirect(url_for('image_to_image'))
-    
-    # 获取默认参数
-    default_params = config['settings']['image_to_image']
-    return render_template('image_to_image.html', default_params=default_params)
-
-@app.route('/image_to_video', methods=['GET', 'POST'])
-def image_to_video():
-    """图生视频页面路由"""
-    if request.method == 'POST':
-        prompt = request.form.get('prompt', '')
-        
-        # 检查是否有文件上传
-        if 'image' not in request.files:
-            flash('请上传图像！', 'error')
-            return redirect(url_for('image_to_video'))
-        
-        file = request.files['image']
-        if file.filename == '':
-            flash('请选择一个文件！', 'error')
-            return redirect(url_for('image_to_video'))
-        
-        if not prompt:
-            flash('请输入提示词！', 'error')
-            return redirect(url_for('image_to_video'))
-        
-        # 保存上传的文件
-        image_path = WorkflowManager.save_uploaded_file(file)
-        if not image_path:
-            flash('文件类型不支持！', 'error')
-            return redirect(url_for('image_to_video'))
-        
-        # 执行图生视频任务
-        result_path = WorkflowManager.image_to_video(prompt, image_path)
-        
-        if result_path:
-            # 获取结果文件名
-            result_filename = os.path.basename(result_path)
-            return redirect(url_for('result', filename=result_filename, task_type='image_to_video'))
-        else:
-            flash('生成失败，请检查ComfyUI配置！', 'error')
-            return redirect(url_for('image_to_video'))
-    
-    # 获取默认参数
-    default_params = config['settings']['image_to_video']
-    return render_template('image_to_video.html', default_params=default_params)
+# 注意：文生图、图生图和图生视频的路由处理已拆分到flask_web目录下的单独文件中
+# 请参考text_to_image_route.py, image_to_image_route.py和image_to_video_route.py文件
 
 @app.route('/result')
 def result():

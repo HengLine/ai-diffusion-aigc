@@ -1,6 +1,17 @@
 {
+  "workflows": {
+    "text_to_image": "workflows/text_to_image.json",
+    "image_to_image": "workflows/image_to_image.json",
+    "image_to_video": "workflows/text_to_video.json",
+    "text_to_video": "workflows/text_to_video.json"
+  },
+  "paths": {
+    "temp_folder": "uploads",
+    "output_folder": "outputs",
+    "workflows_dir": "workflows"
+  },
   "comfyui": {
-    "path": "E:\\Projects\\AI\\ComfyUI",
+    "path": "../ComfyUI",
     "api_url": "http://127.0.0.1:8188",
     "auto_start_server": true
   },
@@ -54,6 +65,8 @@
       "height": 512,
       "steps": 5,
       "cfg": 3.0,
+      "prompt": "a beautiful sunset over a mountain range",
+      "negative_prompt": "low quality, blurry, unrealistic, static, boring",
       "sampler": "DPM++ 2M Karras"
     },
     "image_to_image": {
@@ -72,13 +85,14 @@
       "motion_bucket_id": 127,
       "noise_aug_strength": 0.02
     },
-    "ancient_clothing": {
-      "default_prompt": "beautiful woman in traditional Chinese clothing, detailed face, elegant posture, ancient Chinese background",
-      "negative_prompt": "modern, low quality, blurry, bad anatomy, disfigured, poor details"
-    },
-    "sci_fi_video": {
-      "default_prompt": "futuristic cityscape, flying cars, neon lights, detailed environment, cinematic lighting",
-      "negative_prompt": "low quality, blurry, unrealistic, static, boring"
+    "text_to_video": {
+      "width": 512,
+      "height": 512,
+      "frames": 16,
+      "fps": 8,
+      "motion_bucket_id": 127,
+      "noise_aug_strength": 0.02,
+      "default_prompt": "beautiful forest scene with a river and mountains in the background, sunlight filtering through the trees"
     }
   }
 }
