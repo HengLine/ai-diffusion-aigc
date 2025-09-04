@@ -5,8 +5,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scripts.utils.workflow_utils import workflow_manager, config
 from scripts.utils.file_utils import save_uploaded_file
 
-# 定义上传目录
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'uploads')
+# 从配置文件获取上传目录
+UPLOAD_FOLDER = config['paths']['temp_folder']
 
 image_to_image_bp = Blueprint('image_to_image', __name__)
 
@@ -14,11 +14,14 @@ image_to_image_bp = Blueprint('image_to_image', __name__)
 def image_to_image():
     """图生图页面路由"""
     if request.method == 'POST':
+        # 从配置文件获取默认参数
+        default_params = config['settings']['image_to_image']
+        
         prompt = request.form.get('prompt', '')
-        negative_prompt = request.form.get('negative_prompt', '')
-        strength = float(request.form.get('strength', 0.6))
-        steps = int(request.form.get('steps', 30))
-        cfg_scale = float(request.form.get('cfg_scale', 8.0))
+        negative_prompt = request.form.get('negative_prompt', default_params.get('negative_prompt', ''))
+        strength = float(request.form.get('strength', default_params.get('strength', 0.6)))
+        steps = int(request.form.get('steps', default_params.get('steps', 30)))
+        cfg_scale = float(request.form.get('cfg_scale', default_params.get('cfg', 8.0)))
         
         # 检查是否有文件上传
         if 'image' not in request.files:

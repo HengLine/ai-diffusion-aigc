@@ -10,12 +10,15 @@ text_to_image_bp = Blueprint('text_to_image', __name__)
 def text_to_image():
     """文生图页面路由"""
     if request.method == 'POST':
+        # 从配置文件获取默认参数
+        default_params = config['settings']['text_to_image']
+        
         prompt = request.form.get('prompt', '')
-        negative_prompt = request.form.get('negative_prompt', '')
-        width = int(request.form.get('width', 1024))
-        height = int(request.form.get('height', 1024))
-        steps = int(request.form.get('steps', 30))
-        cfg_scale = float(request.form.get('cfg_scale', 8.0))
+        negative_prompt = request.form.get('negative_prompt', default_params.get('negative_prompt', ''))
+        width = int(request.form.get('width', default_params.get('width', 512)))
+        height = int(request.form.get('height', default_params.get('height', 512)))
+        steps = int(request.form.get('steps', default_params.get('steps', 5)))
+        cfg_scale = float(request.form.get('cfg_scale', default_params.get('cfg', 2.0)))
         
         # 验证输入
         if not prompt:

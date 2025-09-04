@@ -33,19 +33,24 @@ from flask_web.text_to_video_route import text_to_video_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='flask_templates')
-app.secret_key = 'supersecretkey'
 
-# 配置文件上传
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
-OUTPUT_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'outputs')
-TEMP_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'temp')
+# 从配置文件读取Flask配置
+app.secret_key = config.get('flask', {}).get('secret_key', 'default-fallback-key')
+app.debug = config.get('flask', {}).get('debug', False)
+
+# 从配置文件读取路径配置
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+UPLOAD_FOLDER = os.path.join(project_root, config.get('paths', {}).get('temp_folder', 'uploads'))
+OUTPUT_FOLDER = os.path.join(project_root, config.get('paths', {}).get('output_folder', 'outputs'))
+TEMP_FOLDER = os.path.join(project_root, 'temp')  # 使用固定的临时目录
 
 # 确保目录存在
 for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, TEMP_FOLDER]:
     os.makedirs(folder, exist_ok=True)
 
-# 允许上传的文件类型
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+# 从配置文件读取允许上传的文件类型
+allowed_extensions_list = config.get('flask', {}).get('allowed_extensions', ['png', 'jpg', 'jpeg', 'gif'])
+ALLOWED_EXTENSIONS = set(allowed_extensions_list)
 
 # 全局变量存储ComfyUI路径和运行器实例
 comfyui_path = config['comfyui']['path']

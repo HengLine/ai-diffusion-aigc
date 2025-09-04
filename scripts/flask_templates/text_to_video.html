@@ -138,12 +138,16 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 表单提交时显示进度信息
+            // 表单提交时显示进度信息和禁用按钮
             const form = document.querySelector('form');
             const progressInfo = document.querySelector('.progress-info');
+            const generateButton = document.getElementById('generateButton');
             
             form.addEventListener('submit', function() {
                 progressInfo.classList.add('show');
+                // 禁用按钮防止重复点击
+                generateButton.disabled = true;
+                generateButton.textContent = '生成中...';
             });
         });
     </script>
@@ -180,7 +184,7 @@
                 <textarea id="prompt" name="prompt" placeholder="请输入视频内容描述，例如：beautiful forest scene with a river and mountains in the background, sunlight filtering through the trees, subtle movement of leaves and water">{{ default_params.default_prompt }}</textarea>
             </div>
             
-            <button type="submit" class="form-button">生成视频</button>
+            <button type="submit" class="form-button" id="generateButton">生成视频</button>
         </form>
         
         <div class="progress-info">

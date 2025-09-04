@@ -5,7 +5,7 @@
         "model": "v1-5-pruned-emaonly.safetensors",
         "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
         "sampler": "dpmpp_2m_sde_karras",
-        "steps": 20,
+        "steps": 5,
         "cfg": 7.0,
         "width": 512,
         "height": 512,

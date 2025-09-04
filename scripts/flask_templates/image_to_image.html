@@ -253,7 +253,40 @@
                 <textarea id="negative_prompt" name="negative_prompt" placeholder="请输入不想要的效果">{{ default_params.negative_prompt or 'low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres' }}</textarea>
             </div>
             
-            <button type="submit" class="form-button">生成图像</button>
+            <button type="submit" class="form-button" id="generateButton">生成图像</button>
+            <div id="loadingIndicator" style="display: none; margin-top: 10px; color: #4a6fa5;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #4a6fa5; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <span style="margin-left: 10px;">正在生成图像，请稍候...</span>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // 防止重复点击功能
+                    const generateButton = document.getElementById('generateButton');
+                    const loadingIndicator = document.getElementById('loadingIndicator');
+                    const form = document.querySelector('form');
+                    
+                    form.addEventListener('submit', function() {
+                        // 禁用按钮防止重复点击
+                        generateButton.disabled = true;
+                        generateButton.textContent = '生成中...';
+                        // 显示加载指示器
+                        loadingIndicator.style.display = 'block';
+                    });
+                });
+                
+                // 添加加载动画样式
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            </script>
         </form>
 
         <a href="{{ url_for('index') }}" class="back-link">← 返回首页</a>

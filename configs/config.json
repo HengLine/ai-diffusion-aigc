@@ -1,4 +1,9 @@
 {
+  "flask": {
+    "secret_key": "your-secret-key-here",
+    "debug": true,
+    "allowed_extensions": ["png", "jpg", "jpeg", "gif"]
+  },
   "workflows": {
     "text_to_image": "workflows/text_to_image.json",
     "image_to_image": "workflows/image_to_image.json",

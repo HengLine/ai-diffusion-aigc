@@ -227,15 +227,15 @@
                 下载结果
             </a>
             {% if task_type == 'text_to_image' %}
-                <a href="{{ url_for('text_to_image') }}" class="action-button new-task-button">
+                <a href="{{ url_for('text_to_image.text_to_image') }}" class="action-button new-task-button">
                     生成新图像
                 </a>
             {% elif task_type == 'image_to_image' %}
-                <a href="{{ url_for('image_to_image') }}" class="action-button new-task-button">
+                <a href="{{ url_for('image_to_image.image_to_image') }}" class="action-button new-task-button">
                     转换新图像
                 </a>
             {% elif task_type == 'image_to_video' %}
-                <a href="{{ url_for('image_to_video') }}" class="action-button new-task-button">
+                <a href="{{ url_for('image_to_video.image_to_video') }}" class="action-button new-task-button">
                     生成新视频
                 </a>
             {% endif %}

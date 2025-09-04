@@ -5,8 +5,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scripts.utils.workflow_utils import workflow_manager, config
 from scripts.utils.file_utils import save_uploaded_file
 
-# 定义上传目录
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'uploads')
+# 从配置文件获取上传目录
+UPLOAD_FOLDER = config['paths']['temp_folder']
 
 image_to_video_bp = Blueprint('image_to_video', __name__)
 
@@ -14,11 +14,14 @@ image_to_video_bp = Blueprint('image_to_video', __name__)
 def image_to_video():
     """图生视频页面路由"""
     if request.method == 'POST':
+        # 从配置文件获取默认参数
+        default_params = config['settings']['image_to_video']
+        
         prompt = request.form.get('prompt', '')
-        video_length = int(request.form.get('video_length', 16))
-        motion_amount = float(request.form.get('motion_amount', 0.5))
-        fps = int(request.form.get('fps', 16))
-        consistency_scale = float(request.form.get('consistency_scale', 1.0))
+        video_length = int(request.form.get('video_length', default_params.get('video_length', 16)))
+        motion_amount = float(request.form.get('motion_amount', default_params.get('motion_amount', 0.5)))
+        fps = int(request.form.get('fps', default_params.get('fps', 16)))
+        consistency_scale = float(request.form.get('consistency_scale', default_params.get('consistency_scale', 1.0)))
         
         # 检查是否有文件上传
         if 'image' not in request.files:
