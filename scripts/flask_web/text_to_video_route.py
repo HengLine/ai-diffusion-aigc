@@ -35,19 +35,27 @@ def text_to_video():
         # 执行文生视频任务
         result = workflow_manager.process_text_to_video(
             prompt,
-            "",  # 使用空字符串作为negative_prompt
-            video_length,
-            fps
+            negative_prompt,
+            steps=steps
         )
         
-        if result and result.get('success'):
-            # 获取结果文件名
-            import os
-            result_filename = os.path.basename(result['output_path'])
-            return redirect(url_for('result', filename=result_filename, task_type='text_to_video'))
+        if result:
+            if result.get('success'):
+                # 获取结果文件名
+                import os
+                result_filename = os.path.basename(result['output_path'])
+                return redirect(url_for('result', filename=result_filename, task_type='text_to_video'))
+            elif result.get('queued'):
+                # 任务已排队，显示排队信息
+                flash(result.get('message'), 'info')
+                return redirect(url_for('text_to_video.text_to_video'))
+            else:
+                # 任务执行失败
+                error_message = result.get('message', '生成失败，请检查ComfyUI配置！')
+                flash(error_message, 'error')
+                return redirect(url_for('text_to_video.text_to_video'))
         else:
-            error_message = result.get('message', '生成失败，请检查ComfyUI配置！') if result else '生成失败，请检查ComfyUI配置！'
-            flash(error_message, 'error')
+            flash('生成失败，请检查ComfyUI配置！', 'error')
             return redirect(url_for('text_to_video.text_to_video'))
     
     # 获取默认参数

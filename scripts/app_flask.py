@@ -30,6 +30,7 @@ from flask_web.text_to_image_route import text_to_image_bp
 from flask_web.image_to_image_route import image_to_image_bp
 from flask_web.image_to_video_route import image_to_video_bp
 from flask_web.text_to_video_route import text_to_video_bp
+from flask_web.task_queue_route import task_queue_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='flask_templates')
@@ -68,6 +69,7 @@ app.register_blueprint(text_to_image_bp)
 app.register_blueprint(image_to_image_bp)
 app.register_blueprint(image_to_video_bp)
 app.register_blueprint(text_to_video_bp)
+app.register_blueprint(task_queue_bp)
 
 # 路由定义
 @app.route('/')

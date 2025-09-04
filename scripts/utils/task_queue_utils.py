@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+任务队列管理模块
+用于管理生图和生视频任务的排队执行
+"""
+
+import queue
+import threading
+import time
+from typing import Dict, Any, Callable, Tuple, Optional
+import uuid
+from datetime import datetime
+
+from .logger import info, error, debug
+
+class Task:
+    """表示一个任务的类"""
+    def __init__(self, task_type: str, task_id: str, timestamp: float, params: Dict[str, Any], callback: Callable):
+        self.task_type = task_type  # 任务类型: text_to_image, image_to_image, text_to_video, image_to_video
+        self.task_id = task_id      # 任务唯一ID
+        self.timestamp = timestamp  # 任务创建时间戳
+        self.params = params        # 任务参数
+        self.callback = callback    # 任务完成后的回调函数
+        self.start_time = None      # 任务开始执行时间
+        self.end_time = None        # 任务结束时间
+        self.status = "queued"      # 任务状态: queued, running, completed, failed
+
+    def __lt__(self, other):
+        # 任务排序基于时间戳，确保先进先出
+        return self.timestamp < other.timestamp
+
+class TaskQueueManager:
+    """任务队列管理器类"""
+    def __init__(self, max_concurrent_tasks: int = 5):
+        """
+        初始化任务队列管理器
+        
+        Args:
+            max_concurrent_tasks: 最大并发任务数，默认为5
+        """
+        self.max_concurrent_tasks = max_concurrent_tasks
+        self.task_queue = queue.PriorityQueue()  # 优先队列，按时间戳排序
+        self.running_tasks = {}  # 当前运行中的任务 {task_id: Task}
+        self.lock = threading.Lock()  # 用于线程同步的锁
+        self.task_history = {}  # 任务历史记录 {task_id: Task}
+        self.average_task_durations = {
+            "text_to_image": 60.0,  # 默认平均文生图任务时长（秒）
+            "image_to_image": 70.0,  # 默认平均图生图任务时长（秒）
+            "text_to_video": 300.0,  # 默认平均文生视频任务时长（秒）
+            "image_to_video": 320.0  # 默认平均图生视频任务时长（秒）
+        }
+        
+        # 启动任务处理线程
+        self.running = True
+        self.worker_thread = threading.Thread(target=self._process_tasks)
+        self.worker_thread.daemon = True
+        self.worker_thread.start()
+        
+        info(f"任务队列管理器已启动，最大并发任务数: {max_concurrent_tasks}")
+    
+    def enqueue_task(self, task_type: str, params: Dict[str, Any], callback: Callable) -> Tuple[str, int, float]:
+        """
+        将任务加入队列
+        
+        Args:
+            task_type: 任务类型
+            params: 任务参数
+            callback: 任务完成后的回调函数
+        
+        Returns:
+            Tuple[str, int, float]: (任务ID, 队列中的位置, 预估等待时间(秒))
+        """
+        with self.lock:
+            # 生成唯一任务ID
+            task_id = str(uuid.uuid4())
+            timestamp = time.time()
+            
+            # 创建任务对象
+            task = Task(
+                task_type=task_type,
+                task_id=task_id,
+                timestamp=timestamp,
+                params=params,
+                callback=callback
+            )
+            
+            # 将任务加入队列
+            self.task_queue.put(task)
+            
+            # 计算队列中的位置（包括正在运行的任务）
+            queue_position = len(self.running_tasks) + self.task_queue.qsize()
+            
+            # 计算预估等待时间
+            waiting_time = self._estimate_waiting_time(task_type, queue_position)
+            
+            info(f"任务已加入队列: {task_id}, 类型: {task_type}, 队列位置: {queue_position}, 预估等待时间: {waiting_time:.1f}秒")
+            
+            return task_id, queue_position, waiting_time
+    
+    def _estimate_waiting_time(self, task_type: str, queue_position: int) -> float:
+        """
+        预估任务等待时间
+        
+        Args:
+            task_type: 任务类型
+            queue_position: 任务在队列中的位置
+        
+        Returns:
+            float: 预估等待时间（秒）
+        """
+        # 如果队列位置小于等于最大并发数，无需等待
+        if queue_position <= self.max_concurrent_tasks:
+            return 0.0
+        
+        # 计算前面有多少个任务在等待
+        waiting_tasks = queue_position - self.max_concurrent_tasks
+        
+        # 获取该类型任务的平均执行时间
+        avg_duration = self.average_task_durations.get(task_type, 60.0)
+        
+        # 预估等待时间 = 前面等待的任务数 * 该类型任务的平均执行时间
+        estimated_waiting_time = waiting_tasks * avg_duration
+        
+        return estimated_waiting_time
+    
+    def _process_tasks(self):
+        """处理队列中的任务"""
+        while self.running:
+            with self.lock:
+                # 检查是否可以开始新任务
+                if len(self.running_tasks) < self.max_concurrent_tasks and not self.task_queue.empty():
+                    # 获取下一个任务
+                    task = self.task_queue.get()
+                    
+                    # 更新任务状态
+                    task.status = "running"
+                    task.start_time = time.time()
+                    self.running_tasks[task.task_id] = task
+                    
+                    # 记录到历史
+                    self.task_history[task.task_id] = task
+                    
+                    info(f"开始执行任务: {task.task_id}, 类型: {task.task_type}")
+                    
+                    # 启动任务线程
+                    task_thread = threading.Thread(
+                        target=self._execute_task, 
+                        args=(task,)
+                    )
+                    task_thread.daemon = True
+                    task_thread.start()
+            
+            # 短暂休眠，避免CPU占用过高
+            time.sleep(0.1)
+    
+    def _execute_task(self, task: Task):
+        """执行单个任务"""
+        try:
+            # 执行任务回调函数
+            result = task.callback(task.params)
+            
+            # 更新任务状态
+            with self.lock:
+                task.status = "completed"
+                task.end_time = time.time()
+                
+                # 更新平均执行时间
+                if task.end_time and task.start_time:
+                    duration = task.end_time - task.start_time
+                    # 使用移动平均更新平均执行时间
+                    self._update_average_duration(task.task_type, duration)
+                
+                # 从运行中任务列表移除
+                self.running_tasks.pop(task.task_id, None)
+                
+            info(f"任务执行完成: {task.task_id}, 类型: {task.task_type}")
+            
+        except Exception as e:
+            error(f"任务执行失败: {task.task_id}, 错误: {str(e)}")
+            
+            # 更新任务状态
+            with self.lock:
+                task.status = "failed"
+                task.end_time = time.time()
+                
+                # 从运行中任务列表移除
+                self.running_tasks.pop(task.task_id, None)
+    
+    def _update_average_duration(self, task_type: str, duration: float):
+        """更新任务类型的平均执行时间"""
+        # 使用简单移动平均，权重为0.8（旧值）和0.2（新值）
+        old_avg = self.average_task_durations.get(task_type, 60.0)
+        new_avg = old_avg * 0.8 + duration * 0.2
+        self.average_task_durations[task_type] = new_avg
+        
+        debug(f"更新任务类型 {task_type} 的平均执行时间: 旧值={old_avg:.1f}秒, 新值={new_avg:.1f}秒")
+    
+    def get_queue_status(self) -> Dict[str, Any]:
+        """
+        获取队列状态
+        
+        Returns:
+            Dict[str, Any]: 队列状态信息
+        """
+        with self.lock:
+            return {
+                "running_tasks_count": len(self.running_tasks),
+                "queued_tasks_count": self.task_queue.qsize(),
+                "max_concurrent_tasks": self.max_concurrent_tasks,
+                "average_task_durations": self.average_task_durations
+            }
+    
+    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """
+        获取指定任务的状态
+        
+        Args:
+            task_id: 任务ID
+        
+        Returns:
+            Optional[Dict[str, Any]]: 任务状态信息，如果任务不存在则返回None
+        """
+        with self.lock:
+            task = self.task_history.get(task_id)
+            if not task:
+                return None
+            
+            status_info = {
+                "task_id": task.task_id,
+                "task_type": task.task_type,
+                "status": task.status,
+                "timestamp": task.timestamp,
+                "queue_position": len(self.running_tasks) + self.task_queue.qsize()
+            }
+            
+            # 添加开始和结束时间
+            if task.start_time:
+                status_info["start_time"] = task.start_time
+            if task.end_time:
+                status_info["end_time"] = task.end_time
+                if task.start_time:
+                    status_info["duration"] = task.end_time - task.start_time
+            
+            return status_info
+    
+    def shutdown(self):
+        """关闭任务队列管理器"""
+        self.running = False
+        if self.worker_thread.is_alive():
+            self.worker_thread.join(timeout=5)
+        info("任务队列管理器已关闭")
+        
+    def get_all_tasks(self):
+        """
+        获取所有任务历史记录
+        
+        Returns:
+            List[Dict[str, Any]]: 所有任务的状态信息列表
+        """
+        with self.lock:
+            all_tasks = []
+            for task in self.task_history.values():
+                task_info = {
+                    "task_id": task.task_id,
+                    "task_type": task.task_type,
+                    "status": task.status,
+                    "timestamp": task.timestamp,
+                    "queue_position": len(self.running_tasks) + self.task_queue.qsize()
+                }
+                
+                # 添加开始和结束时间
+                if task.start_time:
+                    task_info["start_time"] = task.start_time
+                if task.end_time:
+                    task_info["end_time"] = task.end_time
+                    if task.start_time:
+                        task_info["duration"] = task.end_time - task.start_time
+                
+                # 添加任务参数信息（不包含敏感数据）
+                if task.params:
+                    # 只保留非敏感的参数信息
+                    task_info["prompt"] = task.params.get("prompt", "")
+                    task_info["negative_prompt"] = task.params.get("negative_prompt", "")
+                
+                all_tasks.append(task_info)
+            
+            # 按时间戳降序排序（最新的任务在前）
+            all_tasks.sort(key=lambda x: x["timestamp"], reverse=True)
+            
+            return all_tasks
+
+# 全局任务队列管理器实例
+task_queue_manager = TaskQueueManager(1)

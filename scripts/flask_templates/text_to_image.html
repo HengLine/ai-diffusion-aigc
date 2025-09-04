@@ -5,6 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文生图 - AIGC创意平台</title>
     <style>
+        /* 导航栏样式 */
+        nav {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-item a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+        }
+        
+        .nav-item a:hover {
+            opacity: 0.8;
+        }
+        
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .task-indicator {
+            position: relative;
+        }
+        
+        .task-count {
+            background-color: #dc3545;
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-weight: 600;
+        }
+        
+        .my-tasks-button {
+            background-color: #ffffff;
+            color: #4a6fa5;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .my-tasks-button:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* 移动端导航菜单 */
+        .mobile-menu-button {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: #4a6fa5;
+                flex-direction: column;
+                padding: 1rem 0;
+                margin-top: 0.5rem;
+                border-radius: 0 0 8px 8px;
+            }
+            
+            .nav-menu.show {
+                display: flex;
+            }
+            
+            .mobile-menu-button {
+                display: block;
+            }
+            
+            .nav-container {
+                position: relative;
+                flex-wrap: wrap;
+            }
+        }
+    
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
@@ -103,6 +223,61 @@
             color: #721c24;
             border-color: #dc3545;
         }
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-color: #ffc107;
+        }
+        .status-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-color: #17a2b8;
+        }
+        .queue-status {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        .queue-status h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+        .queue-status p {
+            margin: 5px 0;
+            color: #6c757d;
+        }
+        .task-progress {
+            margin-top: 15px;
+        }
+        .task-progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .task-progress-fill {
+            height: 100%;
+            background-color: #4a6fa5;
+            transition: width 0.3s ease;
+        }
+        .task-progress-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c3e50;
+            font-weight: 500;
+        }
         .tips {
             background-color: #fff3cd;
             padding: 1rem;
@@ -130,9 +305,30 @@
     </style>
 </head>
 <body>
-    <header>
-        <h1>文生图创作</h1>
-    </header>
+    <!-- 导航栏 -->
+    <nav>
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand">AIGC创意平台</a>
+            
+            <button class="mobile-menu-button" onclick="toggleMobileMenu()">☰</button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item"><a href="{{ url_for('index') }}">首页</a></li>
+                <li class="nav-item"><a href="{{ url_for('text_to_image.text_to_image') }}">文生图</a></li>
+                <li class="nav-item"><a href="{{ url_for('image_to_image.image_to_image') }}">图生图</a></li>
+                <li class="nav-item"><a href="{{ url_for('text_to_video.text_to_video') }}">文生视频</a></li>
+                <li class="nav-item"><a href="{{ url_for('image_to_video.image_to_video') }}">图生视频</a></li>
+            </ul>
+            
+            <div class="nav-right">
+                <div class="task-indicator">
+                    <span id="queueTaskCount">0</span>
+                    <span class="task-count" id="queueTaskBadge" style="display: none;">0</span>
+                </div>
+                <button class="my-tasks-button" onclick="openTaskModal()">我的任务</button>
+            </div>
+        </div>
+    </nav>
 
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -164,6 +360,31 @@
             <div class="form-group">
                 <label for="negative_prompt">负面提示词</label>
                 <textarea id="negative_prompt" name="negative_prompt" placeholder="请输入不想要的效果，例如：low quality, blurry, bad anatomy, extra limbs">{{ default_params.negative_prompt or 'low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres, signature, watermark, username' }}</textarea>
+            </div>
+            
+            <!-- 模型参数设置 -->
+            <div class="form-group">
+                <label for="width">宽度 (像素)</label>
+                <input type="number" id="width" name="width" min="256" max="1024" step="64" value="{{ default_params.width or 512 }}">
+                <small>生成图像的宽度，推荐值：256-1024</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="height">高度 (像素)</label>
+                <input type="number" id="height" name="height" min="256" max="1024" step="64" value="{{ default_params.height or 512 }}">
+                <small>生成图像的高度，推荐值：256-1024</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="steps">生成步数</label>
+                <input type="number" id="steps" name="steps" min="5" max="100" value="{{ default_params.steps or 30 }}">
+                <small>步数越多，细节越丰富，但生成时间越长</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="cfg_scale">CFG Scale</label>
+                <input type="number" id="cfg_scale" name="cfg_scale" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}">
+                <small>值越高，越严格遵循提示词</small>
             </div>
             
             <button type="submit" class="form-button" id="generateButton">生成图像</button>
@@ -198,10 +419,359 @@
                     }
                 `;
                 document.head.appendChild(style);
+                
+                // 页面加载完成后自动启动任务队列状态轮询
+                startQueueStatusPolling();
             </script>
         </form>
+        
+        <!-- 任务队列状态显示区域 -->
+        <div id="queueStatusContainer" class="queue-status" style="display: none;">
+            <h3>任务队列状态</h3>
+            <div id="queueStatus"></div>
+            <div class="task-progress">
+                <div class="task-progress-bar">
+                    <div class="task-progress-fill"></div>
+                    <div class="task-progress-text">等待中</div>
+                </div>
+            </div>
+        </div>
 
         <a href="{{ url_for('index') }}" class="back-link">← 返回首页</a>
     </div>
-</body>
+    
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // 移动端菜单切换功能
+            function toggleMobileMenu() {
+                const navMenu = document.getElementById('navMenu');
+                navMenu.classList.toggle('show');
+            }
+            
+            // 任务队列状态轮询逻辑
+            let pollingInterval = null;
+            
+            function startQueueStatusPolling() {
+                // 先停止现有的轮询
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                }
+                
+                // 立即执行一次查询
+                updateQueueStatus();
+                
+                // 设置轮询间隔 (每3秒一次)
+                pollingInterval = setInterval(updateQueueStatus, 3000);
+            }
+            
+            async function updateQueueStatus() {
+                try {
+                    const response = await fetch('/api/task_queue/status');
+                    const data = await response.json();
+                    
+                    // 确保数据结构正确
+                    if (!data.success || !data.data) {
+                        throw new Error('无效的API响应');
+                    }
+                    
+                    const queueData = data.data;
+                    // 使用正确的字段名
+                    const runningTasks = queueData.running_tasks_count || 0;
+                    const waitingTasks = queueData.queued_tasks_count || 0;
+                    const totalTasks = runningTasks + waitingTasks;
+                    
+                    // 更新任务计数
+                    const taskCountElement = document.getElementById('queueTaskCount');
+                    const taskBadgeElement = document.getElementById('queueTaskBadge');
+                    const queueStatusContainer = document.getElementById('queueStatusContainer');
+                    const queueStatus = document.getElementById('queueStatus');
+                    const progressFill = document.querySelector('.task-progress-fill');
+                    const progressText = document.querySelector('.task-progress-text');
+                    
+                    // 显示队列状态容器，无论是否有任务排队
+                    queueStatusContainer.style.display = 'block';
+                    
+                    if (waitingTasks > 0) {
+                        // 更新任务计数
+                        taskCountElement.textContent = '有任务';
+                        taskBadgeElement.textContent = waitingTasks;
+                        taskBadgeElement.style.display = 'inline-block';
+                        
+                        // 计算预计等待时间
+                        const avgDurations = queueData.average_task_durations || {};
+                        const avgTextToImageDuration = avgDurations.text_to_image || 70; // 秒
+                        const estimatedWaitTimeMinutes = Math.ceil((waitingTasks * avgTextToImageDuration) / 60);
+                        
+                        // 更新队列状态信息
+                        queueStatus.innerHTML = `
+                            <p>当前有 ${runningTasks} 个任务正在处理</p>
+                            <p>您的任务排在第 ${waitingTasks} 位</p>
+                            <p>预计需要等待约 ${estimatedWaitTimeMinutes} 分钟</p>
+                        `;
+                        
+                        // 更新进度条
+                        const progressPercentage = Math.max(0, Math.min(100, 100 - (waitingTasks * 10)));
+                        progressFill.style.width = `${progressPercentage}%`;
+                        progressText.textContent = `排队中 (${progressPercentage}%)`;
+                        progressText.style.color = '#2c3e50';
+                    } else {
+                        // 没有任务在排队
+                        if (runningTasks > 0) {
+                            taskCountElement.textContent = '有任务';
+                            taskBadgeElement.style.display = 'none';
+                            
+                            // 更新队列状态信息
+                            queueStatus.innerHTML = `
+                                <p>当前有 ${runningTasks} 个任务正在处理</p>
+                                <p>您的任务将在队列空闲后立即开始</p>
+                            `;
+                            
+                            // 更新进度条
+                            progressFill.style.width = '100%';
+                            progressFill.style.backgroundColor = '#007bff'; // 蓝色表示准备中
+                            progressText.textContent = '准备中';
+                            progressText.style.color = 'white';
+                        } else {
+                            taskCountElement.textContent = '0';
+                            taskBadgeElement.style.display = 'none';
+                            
+                            // 更新队列状态信息
+                            queueStatus.innerHTML = `
+                                <p>当前队列为空</p>
+                                <p>您的任务将立即开始处理</p>
+                            `;
+                            
+                            // 更新进度条
+                            progressFill.style.width = '100%';
+                            progressFill.style.backgroundColor = '#28a745'; // 绿色表示完成
+                            progressText.textContent = '就绪';
+                            progressText.style.color = 'white';
+                        }
+                    }
+                } catch (error) {
+                    console.error('获取任务队列状态失败:', error);
+                    
+                    // 显示错误信息
+                    const queueStatusContainer = document.getElementById('queueStatusContainer');
+                    const queueStatus = document.getElementById('queueStatus');
+                    
+                    queueStatusContainer.style.display = 'block';
+                    queueStatus.innerHTML = `<p style="color: #dc3545;">无法获取队列状态，请刷新页面重试</p>`;
+                }
+            }
+            
+            // 打开任务模态框
+            function openTaskModal() {
+                // 显示模态框
+                const modal = document.getElementById('taskModal');
+                modal.style.display = 'block';
+                
+                // 添加关闭事件
+                const closeSpan = modal.querySelector('.close');
+                const closeButton = modal.querySelector('.close-button');
+                
+                if (closeSpan) {
+                    closeSpan.onclick = function() {
+                        modal.style.display = 'none';
+                    };
+                }
+                
+                if (closeButton) {
+                    closeButton.onclick = function() {
+                        modal.style.display = 'none';
+                    };
+                }
+                
+                // 点击模态框外部关闭
+                window.onclick = function(event) {
+                    if (event.target == modal) {
+                        modal.style.display = 'none';
+                    }
+                };
+                
+                // 首次加载任务列表
+                loadTaskList();
+            }
+            
+            // 加载任务列表
+            async function loadTaskList() {
+                try {
+                    const response = await fetch('/api/task_queue/all_tasks');
+                    const tasks = await response.json();
+                    
+                    const taskListElement = document.getElementById('taskList');
+                    taskListElement.innerHTML = '';
+                    
+                    if (tasks.length === 0) {
+                        taskListElement.innerHTML = '<p class="no-tasks">暂无任务记录</p>';
+                        return;
+                    }
+                    
+                    tasks.forEach(task => {
+                        const taskItem = document.createElement('div');
+                        taskItem.className = 'task-item';
+                        
+                        // 格式化任务信息
+                        const statusClass = getStatusClass(task.status);
+                        const formattedTime = new Date(task.timestamp).toLocaleString('zh-CN');
+                        let resultHtml = '';
+                        
+                        if (task.status === 'completed' && task.result) {
+                            resultHtml = '<button class="view-result-btn" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>';
+                        }
+                        
+                        taskItem.innerHTML = `
+                            <div class="task-header">
+                                <span class="task-type">${task.task_type}</span>
+                                <span class="status-badge ${statusClass}">${getStatusText(task.status)}</span>
+                            </div>
+                            <div class="task-info">
+                                <p class="task-id">ID: ${task.task_id}</p>
+                                <p class="task-time">时间: ${formattedTime}</p>
+                                ${task.duration ? `<p class="task-duration">耗时: ${task.duration}秒</p>` : ''}
+                            </div>
+                            <div class="task-params">
+                                ${formatTaskParams(task.params)}
+                            </div>
+                            <div class="task-actions">
+                                ${resultHtml}
+                            </div>
+                        `;
+                        
+                        taskListElement.appendChild(taskItem);
+                    });
+                } catch (error) {
+                    console.error('加载任务列表失败:', error);
+                    document.getElementById('taskList').innerHTML = '<p class="error-message">加载任务列表失败</p>';
+                }
+            }
+            
+            // 辅助函数：获取状态样式类
+            function getStatusClass(status) {
+                const statusClasses = {
+                    'queued': 'status-queued',
+                    'processing': 'status-processing',
+                    'completed': 'status-completed',
+                    'error': 'status-error'
+                };
+                return statusClasses[status] || '';
+            }
+            
+            // 辅助函数：获取状态文本
+            function getStatusText(status) {
+                const statusTexts = {
+                    'queued': '排队中',
+                    'processing': '处理中',
+                    'completed': '已完成',
+                    'error': '失败'
+                };
+                return statusTexts[status] || status;
+            }
+            
+            // 辅助函数：格式化任务参数
+            function formatTaskParams(params) {
+                if (!params || typeof params !== 'object') {
+                    return '';
+                }
+                
+                let result = '<div class="params-list">';
+                Object.entries(params).forEach(([key, value]) => {
+                    // 避免显示敏感信息或过长内容
+                    if (key.toLowerCase().includes('password') || key.toLowerCase().includes('token') || key.toLowerCase().includes('secret')) {
+                        value = '****';
+                    } else if (typeof value === 'string' && value.length > 50) {
+                        value = value.substring(0, 50) + '...';
+                    }
+                    result += `<div class="param-item"><strong>${key}:</strong> ${value}</div>`;
+                });
+                result += '</div>';
+                return result;
+            }
+            
+            // 查看任务结果
+            // 查看任务结果 - 将在task_modal.html中定义
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.querySelector('form');
+                
+                // 启动任务队列状态轮询
+                startQueueStatusPolling();
+                
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    // 获取表单数据并转换为JSON格式
+                    const prompt = document.getElementById('prompt').value;
+                    const negativePrompt = document.getElementById('negative_prompt').value;
+                    
+                    // 验证提示词不能为空
+                    if (!prompt.trim()) {
+                        alert('请输入提示词！');
+                        return;
+                    }
+                    
+                    // 获取新添加的参数
+                    const width = document.getElementById('width').value;
+                    const height = document.getElementById('height').value;
+                    const steps = document.getElementById('steps').value;
+                    const cfgScale = document.getElementById('cfg_scale').value;
+                    
+                    // 准备JSON数据 - 注意：文生图不需要strength参数
+                    const jsonData = {
+                        prompt: prompt,
+                        negative_prompt: negativePrompt,
+                        width: parseInt(width),
+                        height: parseInt(height),
+                        steps: parseInt(steps),
+                        cfg_scale: parseFloat(cfgScale)
+                    };
+                    
+                    try {
+                        const response = await fetch('/api/text_to_image', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json' // 正确设置Content-Type
+                            },
+                            body: JSON.stringify(jsonData) // 转换为JSON字符串
+                        });
+                        
+                        if (!response.ok) {
+                            // 获取错误详情
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || '请求失败');
+                        }
+                        
+                        const data = await response.json();
+                        
+                        // 处理响应
+                        if (data.success) {
+                            // 如果任务成功，重定向到结果页面
+                            window.location.href = '/result?filename=' + data.data.filename + '&task_type=text_to_image';
+                        } else if (data.queued) {
+                            // 显示队列状态容器
+                            document.getElementById('queueStatusContainer').style.display = 'block';
+                            // 显示排队信息
+                            document.getElementById('queueStatus').innerHTML = `<p>${data.message}</p>`;
+                        }
+                    } catch (error) {
+                        alert(`请求失败: ${error.message}`);
+                        // 恢复按钮状态
+                        document.getElementById('generateButton').disabled = false;
+                        document.getElementById('generateButton').textContent = '生成图像';
+                        document.getElementById('loadingIndicator').style.display = 'none';
+                    }
+                });
+            });
+            
+            // 页面卸载时停止轮询
+            window.addEventListener('beforeunload', function() {
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                }
+            });
+        </script>
+        
+        <!-- 引入任务模态框 -->
+        {% include 'task_modal.html' %}
+    </body>
 </html>

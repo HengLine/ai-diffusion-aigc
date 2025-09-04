@@ -1,0 +1,134 @@
+from flask import Blueprint, jsonify
+from scripts.utils.task_queue_utils import task_queue_manager
+
+# 创建任务队列管理的蓝图
+task_queue_bp = Blueprint('task_queue', __name__)
+
+@task_queue_bp.route('/api/task_queue/status', methods=['GET'])
+def get_task_queue_status():
+    """
+    获取任务队列状态的API端点
+    返回当前正在执行的任务数、排队任务数以及平均任务执行时间
+    """
+    try:
+        # 获取队列状态
+        queue_status = task_queue_manager.get_queue_status()
+        
+        # 返回队列状态信息
+        return jsonify({
+            'success': True,
+            'data': queue_status
+        }), 200
+    except Exception as e:
+        # 处理异常并返回错误信息
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@task_queue_bp.route('/api/task_queue/all_tasks', methods=['GET'])
+def get_all_tasks():
+    """
+    获取所有任务历史记录的API端点
+    返回所有已提交任务的列表，包括状态和基本信息
+    """
+    try:
+        # 获取所有任务
+        all_tasks = task_queue_manager.get_all_tasks()
+        
+        # 返回任务列表
+        return jsonify({
+            'success': True,
+            'data': all_tasks
+        }), 200
+    except Exception as e:
+        # 处理异常并返回错误信息
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@task_queue_bp.route('/api/task_queue/status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    """
+    获取指定任务状态的API端点
+    """
+    try:
+        # 获取任务状态
+        task_status = task_queue_manager.get_task_status(task_id)
+        
+        if task_status:
+            return jsonify({
+                'success': True,
+                'data': task_status
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': '任务不存在'
+            }), 404
+    except Exception as e:
+        # 处理异常并返回错误信息
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@task_queue_bp.route('/api/task_queue/result/<task_id>', methods=['GET'])
+def get_task_result(task_id):
+    """
+    获取指定任务结果的API端点
+    """
+    try:
+        # 获取任务状态
+        task_status = task_queue_manager.get_task_status(task_id)
+        
+        if not task_status:
+            return jsonify({
+                'success': False,
+                'message': '任务不存在'
+            }), 404
+        
+        # 从task_history中获取原始任务对象，以获取完整的参数信息
+        with task_queue_manager.lock:
+            task = task_queue_manager.task_history.get(task_id)
+            prompt = task.params.get("prompt", "") if task and task.params else ""
+            negative_prompt = task.params.get("negative_prompt", "") if task and task.params else ""
+        
+        # 为了支持前端显示结果，我们需要构建result_path
+        # 假设任务完成后，结果文件保存在outputs目录下，命名格式为{task_id}.{extension}
+        # 根据任务类型确定扩展名
+        extensions = {
+            'text_to_image': 'png',
+            'image_to_image': 'png',
+            'text_to_video': 'mp4',
+            'image_to_video': 'mp4'
+        }
+        
+        extension = extensions.get(task_status['task_type'], 'png')
+        result_filename = f"{task_status['task_id']}.{extension}"
+        
+        # 返回完整的任务结果数据
+        return jsonify({
+            'success': True,
+            'data': {
+                'task_id': task_status['task_id'],
+                'task_type': task_status['task_type'],
+                'status': task_status['status'],
+                'timestamp': task_status['timestamp'],
+                'start_time': task_status.get('start_time'),
+                'end_time': task_status.get('end_time'),
+                'duration': task_status.get('duration'),
+                'queue_position': task_status.get('queue_position'),
+                'prompt': prompt,
+                'negative_prompt': negative_prompt,
+                'filename': result_filename,  # 只返回文件名，由前端构建URL
+                'task_type': task_status['task_type']  # 确保task_type在data中
+            }
+        }), 200
+    except Exception as e:
+        # 处理异常并返回错误信息
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500

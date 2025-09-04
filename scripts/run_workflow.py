@@ -142,8 +142,9 @@ class ComfyUIRunner:
                 elif node_data["type"] == "KSampler":
                     if "steps" in params and "steps" in node_data["inputs"]:
                         node_data["inputs"]["steps"] = params["steps"]
-                    if "cfg" in params and "cfg" in node_data["inputs"]:
-                        node_data["inputs"]["cfg"] = params["cfg"]
+                    # 支持两种参数名：cfg和cfg_scale
+                    if ("cfg" in params or "cfg_scale" in params) and "cfg" in node_data["inputs"]:
+                        node_data["inputs"]["cfg"] = params.get("cfg_scale", params.get("cfg"))
                     if "denoising_strength" in params and "denoising_strength" in node_data["inputs"]:
                         node_data["inputs"]["denoising_strength"] = params["denoising_strength"]
                 
@@ -151,6 +152,10 @@ class ComfyUIRunner:
                 elif node_data["type"] == "LoadImage" and "image_path" in params:
                     if "image" in node_data["inputs"]:
                         node_data["inputs"]["image"] = params["image_path"]
+                
+                # 处理Denoise强度参数（可能在多个节点中）
+                elif "denoising_strength" in params and "denoising_strength" in node_data.get("inputs", {}):
+                    node_data["inputs"]["denoising_strength"] = params["denoising_strength"]
         
         info(f"工作流参数已更新: {params}")
         return updated_workflow

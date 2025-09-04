@@ -1,0 +1,455 @@
+<!-- 我的任务模态框 -->
+<div id="taskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>我的任务</h2>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="taskList">
+                <!-- 任务列表将通过JavaScript动态加载 -->
+                <div class="loading">加载任务列表中...</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="close-button">关闭</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 模态框样式 */
+    .modal {
+        display: none; /* 默认隐藏 */
+        position: fixed; /* 固定定位 */
+        z-index: 1000; /* 置于顶层 */
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        padding-top: 60px;
+    }
+    
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .modal-header {
+        padding: 10px 0;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header h2 {
+        margin: 0;
+        color: #2c3e50;
+    }
+    
+    .close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover,
+    .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 0;
+    }
+    
+    .modal-footer {
+        padding: 10px 0;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .close-button {
+        background-color: #4a6fa5;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .close-button:hover {
+        background-color: #3a5a85;
+    }
+    
+    /* 任务列表样式 */
+    .task-item {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+        background-color: #f8f9fa;
+    }
+    
+    .task-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .task-type {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .task-status {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-queued {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-running {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-completed {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-failed {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .task-details {
+        margin-bottom: 10px;
+    }
+    
+    .task-prompt {
+        font-size: 0.95rem;
+        color: #6c757d;
+        word-break: break-word;
+        margin-bottom: 5px;
+    }
+    
+    .task-info {
+        font-size: 0.85rem;
+        color: #868e96;
+        margin-bottom: 5px;
+    }
+    
+    .task-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .view-result-button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+    }
+    
+    .view-result-button:hover {
+        background-color: #218838;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 20px;
+        color: #6c757d;
+    }
+    
+    .no-tasks {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取模态框元素
+        const taskModal = document.getElementById('taskModal');
+        const closeButtons = document.querySelectorAll('.close, .close-button');
+        const taskList = document.getElementById('taskList');
+        
+        // 打开模态框
+        window.openTaskModal = function() {
+            taskModal.style.display = 'block';
+            loadTaskList();
+        };
+        
+        // 关闭模态框
+        function closeTaskModal() {
+            taskModal.style.display = 'none';
+        }
+        
+        // 为关闭按钮添加事件监听
+        closeButtons.forEach(button => {
+            button.addEventListener('click', closeTaskModal);
+        });
+        
+        // 点击模态框外部关闭
+        window.addEventListener('click', function(event) {
+            if (event.target === taskModal) {
+                closeTaskModal();
+            }
+        });
+        
+        // 加载任务列表
+        function loadTaskList() {
+            taskList.innerHTML = '<div class="loading">加载任务列表中...</div>';
+            
+            fetch('/api/task_queue/all_tasks')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const tasks = data.data;
+                        
+                        if (tasks.length === 0) {
+                            taskList.innerHTML = '<div class="no-tasks">暂无任务记录</div>';
+                            return;
+                        }
+                        
+                        let taskHTML = '';
+                        tasks.forEach(task => {
+                            // 格式化时间
+                            const createTime = new Date(task.timestamp * 1000).toLocaleString('zh-CN');
+                            let startTime = '-';
+                            let endTime = '-';
+                            let duration = '-';
+                            
+                            if (task.start_time) {
+                                startTime = new Date(task.start_time * 1000).toLocaleString('zh-CN');
+                            }
+                            
+                            if (task.end_time) {
+                                endTime = new Date(task.end_time * 1000).toLocaleString('zh-CN');
+                                if (task.start_time) {
+                                    duration = Math.round(task.duration) + '秒';
+                                }
+                            }
+                            
+                            // 获取任务类型的中文名称
+                            const taskTypeNames = {
+                                'text_to_image': '文生图',
+                                'image_to_image': '图生图',
+                                'text_to_video': '文生视频',
+                                'image_to_video': '图生视频'
+                            };
+                            
+                            const taskTypeName = taskTypeNames[task.task_type] || task.task_type;
+                            
+                            // 构建任务项HTML
+                            taskHTML += `
+                                <div class="task-item">
+                                    <div class="task-item-header">
+                                        <span class="task-type">${taskTypeName}</span>
+                                        <span class="task-status status-${task.status}">${getStatusText(task.status)}</span>
+                                    </div>
+                                    <div class="task-details">
+                                        <div class="task-prompt">提示词: ${task.prompt || '无'}</div>
+                                        <div class="task-info">创建时间: ${createTime}</div>
+                                        <div class="task-info">开始时间: ${startTime}</div>
+                                        <div class="task-info">结束时间: ${endTime}</div>
+                                        <div class="task-info">执行时长: ${duration}</div>
+                                    </div>
+                                    <div class="task-actions">
+                                        ${task.status === 'completed' ? 
+                                            '<button class="view-result-button" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>' : 
+                                            ''
+                                        }
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        taskList.innerHTML = taskHTML;
+                    } else {
+                        taskList.innerHTML = '<div class="error">加载任务失败: ' + (data.message || '未知错误') + '</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('加载任务列表失败:', error);
+                    taskList.innerHTML = '<div class="error">加载任务列表失败，请刷新页面重试</div>';
+                });
+        }
+        
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusTexts = {
+                'queued': '排队中',
+                'running': '运行中',
+                'completed': '已完成',
+                'failed': '失败'
+            };
+            return statusTexts[status] || status;
+        }
+        
+        // 查看任务结果
+        window.viewTaskResult = function(taskId) {
+            // 获取任务结果
+            fetch(`/api/task_queue/result/${taskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const resultData = data.data;
+                        
+                        // 创建结果模态框
+                        const resultModal = document.createElement('div');
+                        resultModal.className = 'modal';
+                        resultModal.id = 'resultModal';
+                        
+                        // 构建结果模态框内容
+                        let resultContent = '';
+                        
+                        // 构建正确的结果URL
+                        const resultUrl = '/outputs/' + resultData.filename;
+                        
+                        // 根据任务类型显示不同的结果
+                        if (resultData.task_type.includes('video')) {
+                            // 视频结果
+                            resultContent = `
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h2>任务结果</h2>
+                                        <span class="close" onclick="document.getElementById('resultModal').remove()">&times;</span>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="result-info">
+                                            <p><strong>任务类型:</strong> ${resultData.task_type}</p>
+                                            <p><strong>提示词:</strong> ${resultData.prompt || '无'}</p>
+                                            <p><strong>生成时间:</strong> ${new Date(resultData.end_time * 1000).toLocaleString('zh-CN')}</p>
+                                        </div>
+                                        <div class="result-content">
+                                            <video controls style="width: 100%; max-height: 500px; object-fit: contain;">
+                                                <source src="${resultUrl}" type="video/mp4">
+                                                您的浏览器不支持视频播放
+                                            </video>
+                                        </div>
+                                        <div class="result-actions">
+                                            <a href="${resultUrl}" class="download-button" download>下载视频</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            // 图像结果
+                            resultContent = `
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h2>任务结果</h2>
+                                        <span class="close" onclick="document.getElementById('resultModal').remove()">&times;</span>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="result-info">
+                                            <p><strong>任务类型:</strong> ${resultData.task_type}</p>
+                                            <p><strong>提示词:</strong> ${resultData.prompt || '无'}</p>
+                                            <p><strong>生成时间:</strong> ${new Date(resultData.end_time * 1000).toLocaleString('zh-CN')}</p>
+                                        </div>
+                                        <div class="result-content">
+                                            <img src="${resultUrl}" style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto;">
+                                        </div>
+                                        <div class="result-actions">
+                                            <a href="${resultUrl}" class="download-button" download>下载图像</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        resultModal.innerHTML = resultContent;
+                        document.body.appendChild(resultModal);
+                        resultModal.style.display = 'block';
+                        
+                        // 点击模态框外部关闭
+                        resultModal.addEventListener('click', function(event) {
+                            if (event.target === resultModal) {
+                                resultModal.remove();
+                            }
+                        });
+                    } else {
+                        alert('获取任务结果失败: ' + (data.message || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    console.error('获取任务结果失败:', error);
+                    alert('获取任务结果失败，请稍后重试');
+                });
+        };
+        
+        // 添加结果模态框和下载按钮样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .result-info {
+                margin-bottom: 20px;
+                padding: 15px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+            }
+            
+            .result-info p {
+                margin: 5px 0;
+                color: #495057;
+            }
+            
+            .result-content {
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            
+            .result-actions {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            
+            .download-button {
+                background-color: #28a745;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 4px;
+                text-decoration: none;
+                font-weight: 500;
+                display: inline-block;
+                text-align: center;
+            }
+            
+            .download-button:hover {
+                background-color: #218838;
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>

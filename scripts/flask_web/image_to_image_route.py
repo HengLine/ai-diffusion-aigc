@@ -19,9 +19,11 @@ def image_to_image():
         
         prompt = request.form.get('prompt', '')
         negative_prompt = request.form.get('negative_prompt', default_params.get('negative_prompt', ''))
-        strength = float(request.form.get('strength', default_params.get('strength', 0.6)))
-        steps = int(request.form.get('steps', default_params.get('steps', 30)))
-        cfg_scale = float(request.form.get('cfg_scale', default_params.get('cfg', 8.0)))
+        width = int(request.form.get('width', default_params.get('width', 512)))
+        height = int(request.form.get('height', default_params.get('height', 512)))
+        denoising_strength = float(request.form.get('denoising_strength', default_params.get('denoising_strength', 0.75)))
+        steps = int(request.form.get('steps', default_params.get('steps', 5)))
+        cfg_scale = float(request.form.get('cfg_scale', default_params.get('cfg', 3.0)))
         
         # 检查是否有文件上传
         if 'image' not in request.files:
@@ -48,18 +50,30 @@ def image_to_image():
             image_path,
             prompt,
             negative_prompt,
+            width=width,
+            height=height,
             steps=steps,
-            cfg_scale=cfg_scale
+            cfg_scale=cfg_scale,
+            denoising_strength=denoising_strength
         )
         
-        if result and result.get('success'):
-            # 获取结果文件名
-            import os
-            result_filename = os.path.basename(result['output_path'])
-            return redirect(url_for('result', filename=result_filename, task_type='image_to_image'))
+        if result:
+            if result.get('success'):
+                # 获取结果文件名
+                import os
+                result_filename = os.path.basename(result['output_path'])
+                return redirect(url_for('result', filename=result_filename, task_type='image_to_image'))
+            elif result.get('queued'):
+                # 任务已排队，显示排队信息
+                flash(result.get('message'), 'info')
+                return redirect(url_for('image_to_image.image_to_image'))
+            else:
+                # 任务执行失败
+                error_message = result.get('message', '生成失败，请检查ComfyUI配置！')
+                flash(error_message, 'error')
+                return redirect(url_for('image_to_image.image_to_image'))
         else:
-            error_message = result.get('message', '生成失败，请检查ComfyUI配置！') if result else '生成失败，请检查ComfyUI配置！'
-            flash(error_message, 'error')
+            flash('生成失败，请检查ComfyUI配置！', 'error')
             return redirect(url_for('image_to_image.image_to_image'))
     
     # 获取默认参数
