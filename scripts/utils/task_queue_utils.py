@@ -27,6 +27,7 @@ class Task:
         self.start_time = None      # 任务开始执行时间
         self.end_time = None        # 任务结束时间
         self.status = "queued"      # 任务状态: queued, running, completed, failed
+        self.output_filename = None  # 任务输出文件名
 
     def __lt__(self, other):
         # 任务排序基于时间戳，确保先进先出
@@ -186,6 +187,14 @@ class TaskQueueManager:
                 task.status = "completed"
                 task.end_time = time.time()
                 
+                # 保存输出文件名
+                if result and isinstance(result, dict):
+                    if 'output_path' in result:
+                        # 从output_path中提取文件名
+                        task.output_filename = os.path.basename(result['output_path'])
+                    elif 'filename' in result:
+                        task.output_filename = result['filename']
+                
                 # 更新平均执行时间
                 if task.end_time and task.start_time:
                     duration = task.end_time - task.start_time
@@ -297,7 +306,8 @@ class TaskQueueManager:
                     'task_type': task.task_type,
                     'timestamp': task.timestamp,
                     'params': task.params,
-                    'status': task.status
+                    'status': task.status,
+                    'output_filename': task.output_filename
                 }
                 
                 # 添加可选字段
@@ -370,6 +380,10 @@ class TaskQueueManager:
                             params=task_data.get('params', {}),
                             callback=lambda params: None  # 加载的任务不需要回调函数
                         )
+                        
+                        # 恢复输出文件名
+                        if 'output_filename' in task_data:
+                            task.output_filename = task_data['output_filename']
                         
                         # 恢复任务状态
                         task.status = task_data.get('status', 'queued')

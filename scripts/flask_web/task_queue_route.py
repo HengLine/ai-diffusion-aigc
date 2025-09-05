@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, url_for
 from scripts.utils.task_queue_utils import task_queue_manager
 
 # 创建任务队列管理的蓝图
@@ -95,18 +95,26 @@ def get_task_result(task_id):
             prompt = task.params.get("prompt", "") if task and task.params else ""
             negative_prompt = task.params.get("negative_prompt", "") if task and task.params else ""
         
-        # 为了支持前端显示结果，我们需要构建result_path
-        # 假设任务完成后，结果文件保存在outputs目录下，命名格式为{task_id}.{extension}
-        # 根据任务类型确定扩展名
-        extensions = {
-            'text_to_image': 'png',
-            'image_to_image': 'png',
-            'text_to_video': 'mp4',
-            'image_to_video': 'mp4'
-        }
+        # 使用实际的输出文件名
+        result_filename = None
+        if task and hasattr(task, 'output_filename'):
+            result_filename = task.output_filename
+            
+        # 如果没有保存输出文件名，尝试使用旧的命名方式
+        if not result_filename:
+            # 根据任务类型确定扩展名
+            extensions = {
+                'text_to_image': 'png',
+                'image_to_image': 'png',
+                'text_to_video': 'mp4',
+                'image_to_video': 'mp4'
+            }
+            
+            extension = extensions.get(task_status['task_type'], 'png')
+            result_filename = f"{task_status['task_id']}.{extension}"
         
-        extension = extensions.get(task_status['task_type'], 'png')
-        result_filename = f"{task_status['task_id']}.{extension}"
+        # 构建完整的结果URL
+        result_url = url_for('serve_output', filename=result_filename, _external=True)
         
         # 返回完整的任务结果数据
         return jsonify({
@@ -122,8 +130,9 @@ def get_task_result(task_id):
                 'queue_position': task_status.get('queue_position'),
                 'prompt': prompt,
                 'negative_prompt': negative_prompt,
-                'filename': result_filename,  # 只返回文件名，由前端构建URL
-                'task_type': task_status['task_type']  # 确保task_type在data中
+                'filename': result_filename,
+                'result_url': result_url,  # 返回完整的URL路径
+                'task_type': task_status['task_type']
             }
         }), 200
     except Exception as e:
