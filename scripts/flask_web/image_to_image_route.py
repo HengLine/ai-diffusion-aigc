@@ -21,9 +21,9 @@ def image_to_image():
         negative_prompt = request.form.get('negative_prompt', default_params.get('negative_prompt', ''))
         width = int(request.form.get('width', default_params.get('width', 512)))
         height = int(request.form.get('height', default_params.get('height', 512)))
-        denoising_strength = float(request.form.get('denoising_strength', default_params.get('denoising_strength', 0.75)))
-        steps = int(request.form.get('steps', default_params.get('steps', 5)))
-        cfg_scale = float(request.form.get('cfg_scale', default_params.get('cfg', 3.0)))
+        denoising_strength = float(request.form.get('strength', default_params.get('strength', 0.6)))
+        steps = int(request.form.get('steps', default_params.get('steps', 30)))
+        cfg_scale = float(request.form.get('cfg_scale', default_params.get('cfg', 8.0)))
         
         # 检查是否有文件上传
         if 'image' not in request.files:

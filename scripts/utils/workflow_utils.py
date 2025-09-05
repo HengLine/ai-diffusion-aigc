@@ -187,7 +187,8 @@ class WorkflowManager:
                 "width": width,
                 "height": height,
                 "steps": steps,
-                "cfg_scale": cfg_scale
+                "cfg_scale": cfg_scale,
+                "denoising_strength": denoising_strength
             }
             updated_workflow = self.runner.update_workflow_params(workflow, update_params)
             

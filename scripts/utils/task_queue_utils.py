@@ -8,7 +8,9 @@
 import queue
 import threading
 import time
-from typing import Dict, Any, Callable, Tuple, Optional
+import json
+import os
+from typing import Dict, Any, Callable, Tuple, Optional, List
 import uuid
 from datetime import datetime
 
@@ -51,6 +53,15 @@ class TaskQueueManager:
             "image_to_video": 320.0  # 默认平均图生视频任务时长（秒）
         }
         
+        # 持久化配置
+        self.data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
+        
+        # 确保数据目录存在
+        os.makedirs(self.data_dir, exist_ok=True)
+        
+        # 加载已保存的任务历史
+        self._load_task_history()
+        
         # 启动任务处理线程
         self.running = True
         self.worker_thread = threading.Thread(target=self._process_tasks)
@@ -58,6 +69,7 @@ class TaskQueueManager:
         self.worker_thread.start()
         
         info(f"任务队列管理器已启动，最大并发任务数: {max_concurrent_tasks}")
+        info(f"已加载任务历史记录: {len(self.task_history)} 个任务")
     
     def enqueue_task(self, task_type: str, params: Dict[str, Any], callback: Callable) -> Tuple[str, int, float]:
         """
@@ -93,6 +105,12 @@ class TaskQueueManager:
             
             # 计算预估等待时间
             waiting_time = self._estimate_waiting_time(task_type, queue_position)
+            
+            # 将任务添加到历史记录
+            self.task_history[task_id] = task
+            
+            # 保存任务历史
+            self._save_task_history()
             
             info(f"任务已加入队列: {task_id}, 类型: {task_type}, 队列位置: {queue_position}, 预估等待时间: {waiting_time:.1f}秒")
             
@@ -141,6 +159,9 @@ class TaskQueueManager:
                     # 记录到历史
                     self.task_history[task.task_id] = task
                     
+                    # 保存任务历史，确保状态和时间更新被持久化
+                    self._save_task_history()
+                    
                     info(f"开始执行任务: {task.task_id}, 类型: {task.task_type}")
                     
                     # 启动任务线程
@@ -174,6 +195,9 @@ class TaskQueueManager:
                 # 从运行中任务列表移除
                 self.running_tasks.pop(task.task_id, None)
                 
+                # 保存任务历史
+                self._save_task_history()
+            
             info(f"任务执行完成: {task.task_id}, 类型: {task.task_type}")
             
         except Exception as e:
@@ -186,6 +210,9 @@ class TaskQueueManager:
                 
                 # 从运行中任务列表移除
                 self.running_tasks.pop(task.task_id, None)
+                
+                # 保存任务历史
+                self._save_task_history()
     
     def _update_average_duration(self, task_type: str, duration: float):
         """更新任务类型的平均执行时间"""
@@ -247,9 +274,122 @@ class TaskQueueManager:
     def shutdown(self):
         """关闭任务队列管理器"""
         self.running = False
+        # 保存任务历史
+        self._save_task_history()
         if self.worker_thread.is_alive():
             self.worker_thread.join(timeout=5)
         info("任务队列管理器已关闭")
+        
+    def _save_task_history(self):
+        """保存任务历史到按日期分类的文件"""
+        try:
+            # 按日期分组任务
+            tasks_by_date = {}
+            for task in self.task_history.values():
+                # 根据任务创建时间确定日期
+                task_date = datetime.fromtimestamp(task.timestamp).strftime('%Y-%m-%d')
+                if task_date not in tasks_by_date:
+                    tasks_by_date[task_date] = []
+                
+                # 创建可序列化的任务数据
+                task_data = {
+                    'task_id': task.task_id,
+                    'task_type': task.task_type,
+                    'timestamp': task.timestamp,
+                    'params': task.params,
+                    'status': task.status
+                }
+                
+                # 添加可选字段
+                if task.start_time:
+                    task_data['start_time'] = task.start_time
+                if task.end_time:
+                    task_data['end_time'] = task.end_time
+                    if task.start_time:
+                        task_data['duration'] = task.end_time - task.start_time
+                
+                tasks_by_date[task_date].append(task_data)
+            
+            # 保存每个日期的任务到对应文件
+            for date, tasks in tasks_by_date.items():
+                date_file = os.path.join(self.data_dir, f'task_history_{date}.json')
+                
+                # 如果文件已存在，先读取现有内容
+                existing_tasks = []
+                if os.path.exists(date_file):
+                    try:
+                        with open(date_file, 'r', encoding='utf-8') as f:
+                            existing_tasks = json.load(f)
+                    except:
+                        existing_tasks = []
+                
+                # 合并任务数据（避免重复）
+                task_dict = {t['task_id']: t for t in existing_tasks}
+                for task in tasks:
+                    task_dict[task['task_id']] = task
+                
+                # 按时间戳排序
+                sorted_tasks = sorted(task_dict.values(), key=lambda x: x['timestamp'])
+                
+                # 保存到文件
+                with open(date_file, 'w', encoding='utf-8') as f:
+                    json.dump(sorted_tasks, f, ensure_ascii=False, indent=2)
+                
+            info(f"已保存任务历史到按日期分类的文件")
+        except Exception as e:
+            error(f"保存任务历史失败: {str(e)}")
+            
+    def _load_task_history(self):
+        """从按日期分类的文件加载任务历史"""
+        try:
+            # 查找所有符合格式的任务历史文件
+            history_files = []
+            if os.path.exists(self.data_dir):
+                for filename in os.listdir(self.data_dir):
+                    if filename.startswith('task_history_') and filename.endswith('.json'):
+                        history_files.append(os.path.join(self.data_dir, filename))
+            
+            if not history_files:
+                info(f"没有找到任务历史文件")
+                return
+            
+            total_tasks = 0
+            # 加载每个文件中的任务
+            for file_path in history_files:
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        serializable_tasks = json.load(f)
+                    
+                    # 重建任务对象
+                    for task_data in serializable_tasks:
+                        # 创建任务对象
+                        task = Task(
+                            task_type=task_data['task_type'],
+                            task_id=task_data['task_id'],
+                            timestamp=task_data['timestamp'],
+                            params=task_data.get('params', {}),
+                            callback=lambda params: None  # 加载的任务不需要回调函数
+                        )
+                        
+                        # 恢复任务状态
+                        task.status = task_data.get('status', 'queued')
+                        
+                        # 恢复时间信息
+                        if 'start_time' in task_data:
+                            task.start_time = task_data['start_time']
+                        if 'end_time' in task_data:
+                            task.end_time = task_data['end_time']
+                        
+                        # 将任务添加到历史记录
+                        self.task_history[task.task_id] = task
+                        total_tasks += 1
+                    
+                except Exception as file_error:
+                    error(f"加载任务历史文件 {file_path} 失败: {str(file_error)}")
+            
+            info(f"已从文件加载 {total_tasks} 个任务历史记录")
+        except Exception as e:
+            error(f"加载任务历史失败: {str(e)}")
         
     def get_all_tasks(self):
         """
@@ -291,4 +431,4 @@ class TaskQueueManager:
             return all_tasks
 
 # 全局任务队列管理器实例
-task_queue_manager = TaskQueueManager(1)
+task_queue_manager = TaskQueueManager(2)

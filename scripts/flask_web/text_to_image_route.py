@@ -85,11 +85,10 @@ def api_text_to_image():
     
     try:
         # 记录所有请求头，用于调试
-        logger.info(f"[{request_id}] 请求头: {dict(request.headers)}")
+        logger.debug(f"[{request_id}] 请求头: {dict(request.headers)}")
         
         # 检查Content-Type - 宽松检查，允许包含额外参数如charset
         content_type = request.headers.get('Content-Type')
-        logger.info(f"[{request_id}] Content-Type: {content_type}")
         if not content_type or not content_type.startswith('application/json'):
             logger.warning(f"[{request_id}] 不支持的Content-Type: {content_type}")
             return jsonify({

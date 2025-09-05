@@ -731,13 +731,14 @@
         startQueueStatusPolling();
     });
     
-    // 页面卸载时停止轮询
-    window.addEventListener('beforeunload', function() {
-        stopQueueStatusPolling();
-    });
-</script>
 </head>
 <body>
+    <script>
+        // 页面卸载时停止轮询
+        window.addEventListener('beforeunload', function() {
+            stopQueueStatusPolling();
+        });
+    </script>
     <!-- 导航栏 -->
     <nav>
         <div class="nav-container">

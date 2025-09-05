@@ -1,0 +1,50 @@
+[
+  {
+    "task_id": "d6b0ee7e-09d0-4dbe-980b-a100fdd20b94",
+    "task_type": "text_to_image",
+    "timestamp": 1757083398.539376,
+    "params": {
+      "prompt": "a girl",
+      "negative_prompt": "low quality, blurry, unrealistic, static, boring",
+      "width": 512,
+      "height": 512,
+      "steps": 10,
+      "cfg_scale": 8.0
+    },
+    "status": "completed",
+    "start_time": 1757083398.6079,
+    "end_time": 1757083809.6983392,
+    "duration": 411.0904393196106
+  },
+  {
+    "task_id": "abb48c0d-7a6f-40b4-b9c5-8ee3dff3b636",
+    "task_type": "image_to_image",
+    "timestamp": 1757083437.7816079,
+    "params": {
+      "image_path": "uploads\\a-dog.jpg",
+      "prompt": "a dog",
+      "negative_prompt": "low quality, blurry, unrealistic, static, boring",
+      "width": 512,
+      "height": 512,
+      "steps": 5,
+      "cfg_scale": 8.0,
+      "denoising_strength": 0.6
+    },
+    "status": "running",
+    "start_time": 1757083437.8509934
+  },
+  {
+    "task_id": "10bde84a-ddca-4641-acdb-b023aa0b3f9e",
+    "task_type": "text_to_image",
+    "timestamp": 1757083469.7643402,
+    "params": {
+      "prompt": "white dog",
+      "negative_prompt": "low quality, blurry, unrealistic, static, boring",
+      "width": 512,
+      "height": 512,
+      "steps": 6,
+      "cfg_scale": 8.0
+    },
+    "status": "queued"
+  }
+]

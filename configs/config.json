@@ -68,8 +68,8 @@
     "text_to_image": {
       "width": 512,
       "height": 512,
-      "steps": 5,
-      "cfg": 3.0,
+      "steps": 30,
+      "cfg": 8.0,
       "prompt": "a beautiful sunset over a mountain range",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
       "sampler": "DPM++ 2M Karras"
@@ -77,8 +77,8 @@
     "image_to_image": {
       "width": 512,
       "height": 512,
-      "steps": 5,
-      "cfg": 3.0,
+      "steps": 30,
+      "cfg": 8.0,
       "prompt": "The sunrise over the sea of clouds reflects on the mountain peaks",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
       "denoising_strength": 0.75,

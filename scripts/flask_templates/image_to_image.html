@@ -474,6 +474,18 @@
                 <small>值越高，越严格遵循提示词</small>
             </div>
             
+            <div class="form-group">
+                <label for="width">输出宽度 (像素)</label>
+                <input type="number" id="width" name="width" min="128" max="2048" step="16" value="{{ default_params.width or 512 }}">
+                <small>建议值：512, 768, 1024</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="height">输出高度 (像素)</label>
+                <input type="number" id="height" name="height" min="128" max="2048" step="16" value="{{ default_params.height or 512 }}">
+                <small>建议值：512, 768, 1024</small>
+            </div>
+            
             <button type="submit" class="form-button" id="generateButton">生成图像</button>
             <div id="loadingIndicator" style="display: none; margin-top: 10px; color: #4a6fa5;">
                 <div style="display: flex; align-items: center;">
