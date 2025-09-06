@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, url_for
+from flask import Blueprint, jsonify, url_for, request
 from scripts.utils.task_queue_utils import task_queue_manager
 
 # 创建任务队列管理的蓝图
@@ -31,10 +31,14 @@ def get_all_tasks():
     """
     获取所有任务历史记录的API端点
     返回所有已提交任务的列表，包括状态和基本信息
+    支持按日期筛选任务
     """
     try:
-        # 获取所有任务
-        all_tasks = task_queue_manager.get_all_tasks()
+        # 获取日期参数
+        date = request.args.get('date')
+        
+        # 获取任务列表（可能按日期筛选）
+        all_tasks = task_queue_manager.get_all_tasks(date=date)
         
         # 返回任务列表
         return jsonify({

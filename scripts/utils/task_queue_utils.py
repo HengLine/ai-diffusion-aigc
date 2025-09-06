@@ -405,16 +405,26 @@ class TaskQueueManager:
         except Exception as e:
             error(f"加载任务历史失败: {str(e)}")
         
-    def get_all_tasks(self):
+    def get_all_tasks(self, date=None):
         """
-        获取所有任务历史记录
+        获取所有任务历史记录，可选按日期筛选
+        
+        Args:
+            date: 可选的日期字符串，格式为'YYYY-MM-DD'
         
         Returns:
-            List[Dict[str, Any]]: 所有任务的状态信息列表
+            List[Dict[str, Any]]: 任务的状态信息列表
         """
         with self.lock:
             all_tasks = []
             for task in self.task_history.values():
+                # 如果提供了日期参数，则只返回该日期的任务
+                if date:
+                    # 将任务时间戳转换为日期格式
+                    task_date = datetime.fromtimestamp(task.timestamp).strftime('%Y-%m-%d')
+                    if task_date != date:
+                        continue
+                
                 task_info = {
                     "task_id": task.task_id,
                     "task_type": task.task_type,

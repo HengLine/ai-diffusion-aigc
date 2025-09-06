@@ -3,6 +3,10 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2>我的任务</h2>
+            <div class="date-filter">
+                <label for="taskDateFilter">选择日期：</label>
+                <input type="date" id="taskDateFilter" name="taskDateFilter" value="" max="">
+            </div>
             <span class="close">&times;</span>
         </div>
         <div class="modal-body">
@@ -52,6 +56,26 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 20px;
+    }
+    
+    /* 日期选择框样式 */
+    .date-filter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .date-filter label {
+        font-size: 0.9rem;
+        color: #495057;
+    }
+    
+    .date-filter input[type="date"] {
+        padding: 6px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.9rem;
     }
     
     .modal-header h2 {
@@ -206,6 +230,18 @@
         // 打开模态框
         window.openTaskModal = function() {
             taskModal.style.display = 'block';
+            
+            // 设置日期选择框默认值为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('taskDateFilter').value = today;
+            // 设置最大可选日期为今天
+            document.getElementById('taskDateFilter').max = today;
+            
+            // 添加日期变化事件监听
+            document.getElementById('taskDateFilter').addEventListener('change', function() {
+                loadTaskList();
+            });
+            
             loadTaskList();
         };
         
@@ -230,7 +266,16 @@
         function loadTaskList() {
             taskList.innerHTML = '<div class="loading">加载任务列表中...</div>';
             
-            fetch('/api/task_queue/all_tasks')
+            // 获取选择的日期
+            const selectedDate = document.getElementById('taskDateFilter').value;
+            
+            // 构建请求URL，添加日期参数
+            let url = '/api/task_queue/all_tasks';
+            if (selectedDate) {
+                url += '?date=' + selectedDate;
+            }
+            
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.data) {
