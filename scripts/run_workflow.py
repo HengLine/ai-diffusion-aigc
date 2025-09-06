@@ -108,11 +108,52 @@ class ComfyUIRunner:
         import copy
         updated_workflow = copy.deepcopy(workflow)
         
-        # 检查是否存在nodes数组
-        if "nodes" in updated_workflow:
-            # 标记是否已经处理了正向提示词
-            positive_prompt_processed = False
-            
+        # 标记是否已经处理了正向提示词
+        positive_prompt_processed = False
+        
+        # 优先处理原始格式：直接在prompt节点下更新参数
+        if "prompt" in updated_workflow:
+            for node_id, node_data in updated_workflow["prompt"].items():
+                if "inputs" in node_data:
+                    # 处理提示词节点 (CLIPTextEncode)
+                    if node_data.get("class_type") == "CLIPTextEncode":
+                        if "text" in node_data["inputs"]:
+                            # 处理正向提示词节点（通常是第一个CLIPTextEncode）
+                            if not positive_prompt_processed and "prompt" in params:
+                                node_data["inputs"]["text"] = params["prompt"]
+                                positive_prompt_processed = True
+                            # 处理反向提示词节点（通常是第二个CLIPTextEncode）
+                            elif "negative_prompt" in params:
+                                node_data["inputs"]["text"] = params["negative_prompt"]
+                    
+                    # 处理采样器节点 (KSampler)
+                    elif node_data.get("class_type") == "KSampler":
+                        if "steps" in params and "steps" in node_data["inputs"]:
+                            node_data["inputs"]["steps"] = params["steps"]
+                        # 支持两种参数名：cfg和cfg_scale
+                        if ("cfg" in params or "cfg_scale" in params) and "cfg" in node_data["inputs"]:
+                            node_data["inputs"]["cfg"] = params.get("cfg_scale", params.get("cfg"))
+                        if "denoise" in node_data["inputs"] and ("denoising_strength" in params or "denoise" in params):
+                            node_data["inputs"]["denoise"] = params.get("denoising_strength", params.get("denoise"))
+                    
+                    # 处理图像大小节点 (EmptyLatentImage)
+                    elif node_data.get("class_type") == "EmptyLatentImage":
+                        if "width" in params and "width" in node_data["inputs"]:
+                            node_data["inputs"]["width"] = params["width"]
+                        if "height" in params and "height" in node_data["inputs"]:
+                            node_data["inputs"]["height"] = params["height"]
+                    
+                    # 处理图像加载节点 (LoadImage)  
+                    elif node_data.get("class_type") == "LoadImage" and "image_path" in params:
+                        if "image" in node_data["inputs"]:
+                            node_data["inputs"]["image"] = params["image_path"]
+                    
+                    # 处理通用的Denoise强度参数
+                    elif "denoising_strength" in params and "denoising_strength" in node_data.get("inputs", {}):
+                        node_data["inputs"]["denoising_strength"] = params["denoising_strength"]
+        
+        # 保持兼容性：继续支持nodes数组格式
+        elif "nodes" in updated_workflow:
             # 遍历工作流中的所有节点
             for node_data in updated_workflow["nodes"]:
                 # 确保节点有class_type属性，如果没有则从type属性复制
