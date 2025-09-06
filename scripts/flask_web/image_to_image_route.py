@@ -28,22 +28,22 @@ def image_to_image():
         # 检查是否有文件上传
         if 'image' not in request.files:
             flash('请上传图像！', 'error')
-            return redirect(url_for('image_to_image.image_to_image'))
+            return render_template('image_to_image.html', default_params=default_params)
         
         file = request.files['image']
         if file.filename == '':
             flash('请选择一个文件！', 'error')
-            return redirect(url_for('image_to_image.image_to_image'))
+            return render_template('image_to_image.html', default_params=default_params)
         
         if not prompt:
             flash('请输入提示词！', 'error')
-            return redirect(url_for('image_to_image.image_to_image'))
+            return render_template('image_to_image.html', default_params=default_params)
         
         # 保存上传的文件
         image_path = save_uploaded_file(file, UPLOAD_FOLDER)
         if not image_path:
             flash('文件类型不支持！', 'error')
-            return redirect(url_for('image_to_image.image_to_image'))
+            return render_template('image_to_image.html', default_params=default_params)
         
         # 执行图生图任务
         result = workflow_manager.process_image_to_image(
@@ -58,23 +58,29 @@ def image_to_image():
         )
         
         if result:
-            if result.get('success'):
-                # 获取结果文件名
-                import os
-                result_filename = os.path.basename(result['output_path'])
-                return redirect(url_for('result', filename=result_filename, task_type='image_to_image'))
-            elif result.get('queued'):
+            if result.get('queued'):
                 # 任务已排队，显示排队信息
                 flash(result.get('message'), 'info')
-                return redirect(url_for('image_to_image.image_to_image'))
+                return render_template('image_to_image.html', default_params=default_params)
+            elif result.get('success'):
+                # 任务立即完成（这种情况在异步模式下不会发生）
+                if 'output_path' in result:
+                    import os
+                    result_filename = os.path.basename(result['output_path'])
+                    # 不重定向，显示成功信息
+                    flash('任务提交成功，已生成结果', 'success')
+                    return render_template('image_to_image.html', default_params=default_params)
+                else:
+                    flash('任务提交成功，请在"我的任务"中查看进度', 'success')
+                    return render_template('image_to_image.html', default_params=default_params)
             else:
                 # 任务执行失败
                 error_message = result.get('message', '生成失败，请检查ComfyUI配置！')
                 flash(error_message, 'error')
-                return redirect(url_for('image_to_image.image_to_image'))
+                return render_template('image_to_image.html', default_params=default_params)
         else:
             flash('生成失败，请检查ComfyUI配置！', 'error')
-            return redirect(url_for('image_to_image.image_to_image'))
+            return render_template('image_to_image.html', default_params=default_params)
     
     # 获取默认参数
     default_params = config['settings']['image_to_image']

@@ -30,33 +30,43 @@ def text_to_video():
         # 验证输入
         if not prompt:
             flash('请输入提示词！', 'error')
-            return redirect(url_for('text_to_video.text_to_video'))
+            return render_template('text_to_video.html', default_params=default_params)
+        
+        # 获取正确的参数
+        negative_prompt = request.form.get('negative_prompt', '')
+        duration = video_length  # 视频长度（秒）
         
         # 执行文生视频任务
         result = workflow_manager.process_text_to_video(
             prompt,
             negative_prompt,
-            steps=steps
+            duration=duration,
+            fps=fps
         )
         
         if result:
-            if result.get('success'):
-                # 获取结果文件名
-                import os
-                result_filename = os.path.basename(result['output_path'])
-                return redirect(url_for('result', filename=result_filename, task_type='text_to_video'))
-            elif result.get('queued'):
+            if result.get('queued'):
                 # 任务已排队，显示排队信息
                 flash(result.get('message'), 'info')
-                return redirect(url_for('text_to_video.text_to_video'))
+                return render_template('text_to_video.html', default_params=default_params)
+            elif result.get('success'):
+                # 任务立即完成（这种情况在异步模式下不会发生）
+                if 'output_path' in result:
+                    import os
+                    result_filename = os.path.basename(result['output_path'])
+                    flash('任务提交成功，已生成结果', 'success')
+                    return render_template('text_to_video.html', default_params=default_params)
+                else:
+                    flash('任务提交成功，请在"我的任务"中查看进度', 'success')
+                    return render_template('text_to_video.html', default_params=default_params)
             else:
                 # 任务执行失败
                 error_message = result.get('message', '生成失败，请检查ComfyUI配置！')
                 flash(error_message, 'error')
-                return redirect(url_for('text_to_video.text_to_video'))
+                return render_template('text_to_video.html', default_params=default_params)
         else:
             flash('生成失败，请检查ComfyUI配置！', 'error')
-            return redirect(url_for('text_to_video.text_to_video'))
+            return render_template('text_to_video.html', default_params=default_params)
     
     # 获取默认参数
     default_params = config['settings'].get('text_to_video', {
