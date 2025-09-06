@@ -1,0 +1,125 @@
+<!-- 页脚组件 -->
+<style>
+    /* 页脚样式 */
+    footer {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        padding: 2rem 0;
+        margin-top: 3rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .footer-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .footer-info,
+    .footer-links,
+    .footer-contact {
+        flex: 1;
+        min-width: 250px;
+        margin-bottom: 2rem;
+    }
+    
+    .footer-info h3 {
+        color: white;
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .footer-info p {
+        color: #bdc3c7;
+        line-height: 1.6;
+    }
+    
+    .footer-links h4,
+    .footer-contact h4 {
+        color: white;
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .footer-links ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .footer-links li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .footer-links a {
+        color: #bdc3c7;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .footer-links a:hover {
+        color: white;
+    }
+    
+    .footer-contact p {
+        color: #bdc3c7;
+        margin: 0;
+    }
+    
+    .footer-bottom {
+        background-color: #34495e;
+        padding: 1rem 0;
+        text-align: center;
+    }
+    
+    .footer-bottom p {
+        margin: 0;
+        color: #bdc3c7;
+        font-size: 0.9rem;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .footer-container {
+            flex-direction: column;
+        }
+        
+        .footer-info,
+        .footer-links,
+        .footer-contact {
+            margin-bottom: 1.5rem;
+        }
+    }
+</style>
+
+<footer>
+    <div class="footer-container">
+        <div class="footer-info">
+            <h3>AIGC创意平台</h3>
+            <p>一个集成了文生图、图生图、文生视频和图生视频功能的创意平台</p>
+        </div>
+        <div class="footer-links">
+            <h4>快速链接</h4>
+            <ul>
+                <li><a href="/">首页</a></li>
+                <li><a href="/text_to_image">文生图</a></li>
+                <li><a href="/image_to_image">图生图</a></li>
+                <li><a href="/text_to_video">文生视频</a></li>
+                <li><a href="/image_to_video">图生视频</a></li>
+                <li><a href="/config">配置</a></li>
+            </ul>
+        </div>
+        <div class="footer-contact">
+            <h4>联系我们</h4>
+            <p>如有问题或建议，请联系我们</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2023 AIGC创意平台. 保留所有权利.</p>
+    </div>
+</footer>

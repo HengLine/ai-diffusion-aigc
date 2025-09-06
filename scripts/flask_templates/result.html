@@ -5,126 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>生成结果 - AIGC创意平台</title>
     <style>
-        /* 导航栏样式 */
-        nav {
-            background-color: #4a6fa5;
-            color: white;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .nav-brand {
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-decoration: none;
-            color: white;
-        }
-        
-        .nav-menu {
-            display: flex;
-            gap: 1.5rem;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .nav-item a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: opacity 0.3s ease;
-        }
-        
-        .nav-item a:hover {
-            opacity: 0.8;
-        }
-        
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .task-indicator {
-            position: relative;
-        }
-        
-        .task-count {
-            background-color: #dc3545;
-            color: white;
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 10px;
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            font-weight: 600;
-        }
-        
-        .my-tasks-button {
-            background-color: #ffffff;
-            color: #4a6fa5;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-        }
-        
-        .my-tasks-button:hover {
-            background-color: #f8f9fa;
-        }
-        
-        /* 移动端导航菜单 */
-        .mobile-menu-button {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        
-        @media (max-width: 768px) {
-            .nav-menu {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background-color: #4a6fa5;
-                flex-direction: column;
-                padding: 1rem 0;
-                margin-top: 0.5rem;
-                border-radius: 0 0 8px 8px;
-            }
-            
-            .nav-menu.show {
-                display: flex;
-            }
-            
-            .mobile-menu-button {
-                display: block;
-            }
-            
-            .nav-container {
-                position: relative;
-                flex-wrap: wrap;
-            }
-        }
-        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
@@ -315,30 +195,9 @@
     </style>
 </head>
 <body>
-    <!-- 导航栏 -->
-    <nav>
-        <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="nav-brand">AIGC创意平台</a>
-            
-            <button class="mobile-menu-button" onclick="toggleMobileMenu()">☰</button>
-            
-            <ul class="nav-menu" id="navMenu">
-                <li class="nav-item"><a href="{{ url_for('index') }}">首页</a></li>
-                <li class="nav-item"><a href="{{ url_for('text_to_image.text_to_image') }}">文生图</a></li>
-                <li class="nav-item"><a href="{{ url_for('image_to_image.image_to_image') }}">图生图</a></li>
-                <li class="nav-item"><a href="{{ url_for('text_to_video.text_to_video') }}">文生视频</a></li>
-                <li class="nav-item"><a href="{{ url_for('image_to_video.image_to_video') }}">图生视频</a></li>
-            </ul>
-            
-            <div class="nav-right">
-                <div class="task-indicator">
-                    <span id="queueTaskCount">0</span>
-                    <span class="task-count" id="queueTaskBadge" style="display: none;">0</span>
-                </div>
-                <button class="my-tasks-button" onclick="openTaskModal()">我的任务</button>
-            </div>
-        </div>
-    </nav>
+    <!-- 引入公共组件 -->
+    {% include 'components/header.html' %}
+    {% include 'components/common_scripts.html'
 
     <div class="container">
         <div class="result-header">
@@ -468,71 +327,16 @@
                 };
             }
         });
-        
-        // 移动端菜单切换
-        function toggleMobileMenu() {
-            const navMenu = document.getElementById('navMenu');
-            navMenu.classList.toggle('show');
-        }
-        
-        // 任务队列状态轮询
-        let queuePollingInterval = null;
-        
-        function startQueueStatusPolling() {
-            if (queuePollingInterval) {
-                clearInterval(queuePollingInterval);
-            }
-            
-            // 立即查询一次
-            updateQueueStatus();
-            
-            // 每3秒查询一次
-            queuePollingInterval = setInterval(updateQueueStatus, 3000);
-        }
-        
-        function updateQueueStatus() {
-            fetch('/api/task_queue/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.data) {
-                        const queueData = data.data;
-                        // 使用正确的字段名
-                        const runningTasks = queueData.running_tasks_count || 0;
-                        const waitingTasks = queueData.queued_tasks_count || 0;
-                        const totalTasks = runningTasks + waitingTasks;
-                        
-                        // 更新队列任务计数
-                        const queueTaskCount = document.getElementById('queueTaskCount');
-                        const queueTaskBadge = document.getElementById('queueTaskBadge');
-                        
-                        // 显示任务计数（如果有任务在排队）
-                        if (waitingTasks > 0) {
-                            queueTaskBadge.textContent = waitingTasks;
-                            queueTaskBadge.style.display = 'inline';
-                            queueTaskCount.textContent = '任务';
-                        } else {
-                            queueTaskBadge.style.display = 'none';
-                            queueTaskCount.textContent = totalTasks > 0 ? '有任务' : '0';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('获取队列状态失败:', error);
-                });
-        }
-        
-        // 启动任务队列状态轮询
-        startQueueStatusPolling();
-        
-        // 页面卸载时停止轮询
-        window.addEventListener('beforeunload', function() {
-            if (queuePollingInterval) {
-                clearInterval(queuePollingInterval);
-            }
-        });
     </script>
     
+    <!-- 引入公共组件 -->
+    {% include 'components/notification.html' %}
+    {% include 'components/task_queue_status.html' %}
+    
     <!-- 引入任务模态框 -->
-    {% include 'task_modal.html' %}
+    {% include 'components/task_modal.html' %}
+    
+    <!-- 引入页脚 -->
+    {% include 'components/footer.html' %}
 </body>
 </html>

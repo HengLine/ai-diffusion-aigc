@@ -1,0 +1,200 @@
+<!-- 通用JavaScript功能组件 -->
+<script>
+/**
+ * 显示自动关闭的通知
+ * @param {string} message - 通知消息
+ * @param {string} type - 通知类型：success, error, info, warning
+ * @param {number} duration - 显示持续时间（毫秒）
+ */
+function showNotification(message, type = 'info', duration = 3000) {
+    // 确保notification组件已加载
+    if (!window.showAutoCloseNotification) {
+        console.warn('Notification system not initialized');
+        alert(message);
+        return;
+    }
+    
+    window.showAutoCloseNotification(message, type, duration);
+}
+
+/**
+ * 发送AJAX请求
+ * @param {string} url - 请求URL
+ * @param {Object} options - 请求选项
+ * @returns {Promise} 请求结果Promise
+ */
+async function ajaxRequest(url, options = {}) {
+    try {
+        const defaultOptions = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        };
+        
+        const mergedOptions = { ...defaultOptions, ...options };
+        
+        // 如果有body并且是对象，转换为JSON字符串
+        if (mergedOptions.body && typeof mergedOptions.body === 'object') {
+            mergedOptions.body = JSON.stringify(mergedOptions.body);
+        }
+        
+        const response = await fetch(url, mergedOptions);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        // 尝试解析JSON响应
+        try {
+            return await response.json();
+        } catch (e) {
+            return await response.text();
+        }
+    } catch (error) {
+        showNotification(`请求失败: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+/**
+ * 提交表单数据
+ * @param {string} url - 提交URL
+ * @param {FormData|Object} data - 表单数据
+ * @param {string} method - 请求方法
+ * @returns {Promise} 提交结果Promise
+ */
+async function submitForm(url, data, method = 'POST') {
+    try {
+        const options = {
+            method,
+            credentials: 'same-origin'
+        };
+        
+        // 如果是FormData对象，直接使用
+        if (data instanceof FormData) {
+            options.body = data;
+            // 移除Content-Type，让浏览器自动设置
+            options.headers = {};
+        } else if (typeof data === 'object') {
+            // 否则转换为JSON
+            options.headers = {
+                'Content-Type': 'application/json'
+            };
+            options.body = JSON.stringify(data);
+        }
+        
+        const response = await fetch(url, options);
+        
+        if (!response.ok) {
+            throw new Error(`提交失败! Status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        showNotification(`提交失败: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+/**
+ * 处理文件上传预览
+ * @param {HTMLInputElement} inputElement - 文件输入元素
+ * @param {HTMLImageElement} previewElement - 预览图像元素
+ */
+function setupFilePreview(inputElement, previewElement) {
+    if (!inputElement || !previewElement) return;
+    
+    inputElement.addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                previewElement.src = event.target.result;
+                previewElement.style.display = 'block';
+            }
+            
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+}
+
+/**
+ * 显示加载状态
+ * @param {boolean} isLoading - 是否显示加载状态
+ * @param {HTMLElement} targetElement - 目标元素
+ */
+function showLoading(isLoading, targetElement = document.body) {
+    let loadingElement = document.getElementById('globalLoading');
+    
+    if (!loadingElement) {
+        // 创建加载元素
+        loadingElement = document.createElement('div');
+        loadingElement.id = 'globalLoading';
+        loadingElement.className = 'global-loading';
+        loadingElement.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 9999;
+            display: none;
+        `;
+        loadingElement.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div>处理中...</div>
+        `;
+        document.body.appendChild(loadingElement);
+    }
+    
+    loadingElement.style.display = isLoading ? 'block' : 'none';
+}
+
+/**
+ * 生成唯一ID
+ * @returns {string} 唯一ID
+ */
+function generateUniqueId() {
+    return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+/**
+ * 防抖函数
+ * @param {Function} func - 要防抖的函数
+ * @param {number} wait - 等待时间（毫秒）
+ * @returns {Function} 防抖后的函数
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * 节流函数
+ * @param {Function} func - 要节流的函数
+ * @param {number} limit - 限制时间（毫秒）
+ * @returns {Function} 节流后的函数
+ */
+function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+</script>

@@ -10,6 +10,8 @@ import json
 import argparse
 import subprocess
 import time
+import uuid
+
 import requests
 from typing import Dict, Any, Optional
 
@@ -205,6 +207,7 @@ class ComfyUIRunner:
         """运行工作流并保存结果"""
         try:
             info(f"运行工作流...")
+            debug(f"--------原工作流: {workflow}")
             
             # 确保ComfyUI服务器正在运行
             server_running = self._check_server_running()
@@ -233,11 +236,12 @@ class ComfyUIRunner:
             else:
                 # 已经是正确的格式，直接使用
                 comfyui_workflow = workflow
-            
+
+            debug(f"--------改后工作流: {comfyui_workflow}")
             # 发送工作流到ComfyUI API
             prompt_data = {
                 "prompt": comfyui_workflow,
-                "client_id": "aigc_demo_app"
+                "client_id": uuid.uuid4().hex
             }
             
             # 发送POST请求运行工作流

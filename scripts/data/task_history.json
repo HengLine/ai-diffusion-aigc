@@ -12,6 +12,7 @@
       "cfg_scale": 8.0
     },
     "status": "completed",
+    "output_filename": "text_to_image_1757170923_91a73039.png",
     "start_time": 1757083398.6079,
     "end_time": 1757083809.6983392,
     "duration": 411.0904393196106
@@ -21,7 +22,6 @@
     "task_type": "image_to_image",
     "timestamp": 1757083437.7816079,
     "params": {
-      "image_path": "uploads\\a-dog.jpg",
       "prompt": "a dog",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
       "width": 512,

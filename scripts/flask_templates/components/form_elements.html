@@ -1,0 +1,67 @@
+<!-- 通用表单元素组件 -->
+
+<!-- 提示词输入框 -->
+<div class="form-group">
+    <label for="prompt">提示词 <span class="required">*</span></label>
+    <textarea id="prompt" name="prompt" rows="3" placeholder="请输入您的创意提示词..."></textarea>
+    <small>提示词越详细，生成的结果越符合您的预期</small>
+</div>
+
+<!-- 否定提示词输入框 -->
+<div class="form-group">
+    <label for="negative_prompt">否定提示词</label>
+    <textarea id="negative_prompt" name="negative_prompt" rows="2" placeholder="请输入您不希望在结果中出现的内容..."></textarea>
+    <small>用于排除您不喜欢的元素</small>
+</div>
+
+<script>
+/**
+ * 设置表单元素的值
+ * @param {Object} values - 包含表单字段值的对象
+ */
+function setFormValues(values) {
+    if (!values) return;
+    
+    // 设置提示词
+    if (values.prompt && document.getElementById('prompt')) {
+        document.getElementById('prompt').value = values.prompt;
+    }
+    
+    // 设置否定提示词
+    if (values.negative_prompt && document.getElementById('negative_prompt')) {
+        document.getElementById('negative_prompt').value = values.negative_prompt;
+    }
+    
+    // 设置其他通用字段
+    const commonFields = ['width', 'height', 'steps', 'cfg_scale', 'strength', 'video_length', 'motion_amount', 'fps', 'consistency_scale'];
+    commonFields.forEach(field => {
+        if (values[field] !== undefined && document.getElementById(field)) {
+            document.getElementById(field).value = values[field];
+        }
+    });
+}
+
+/**
+ * 验证表单
+ * @returns {Object} 包含验证结果和错误消息的对象
+ */
+function validateForm() {
+    const errors = {};
+    const hasErrors = false;
+    
+    // 验证提示词
+    const prompt = document.getElementById('prompt')?.value?.trim();
+    if (!prompt) {
+        errors.prompt = '请输入提示词';
+        hasErrors = true;
+    }
+    
+    // 验证其他可能的必填字段
+    // 这里可以根据需要添加更多验证规则
+    
+    return {
+        hasErrors,
+        errors
+    };
+}
+</script>

@@ -1,0 +1,338 @@
+<!-- 导航栏组件 -->
+<style>
+    /* 导航栏样式 */
+    nav {
+        background-color: #4a6fa5;
+        color: white;
+        padding: 1rem 0;
+        margin-bottom: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .nav-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-decoration: none;
+        color: white;
+    }
+    
+    .nav-menu {
+        display: flex;
+        gap: 1.5rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .nav-item a {
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: opacity 0.3s ease;
+    }
+    
+    .nav-item a:hover {
+        opacity: 0.8;
+    }
+    
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .tasks-button {
+        background-color: #ffffff;
+        color: #4a6fa5;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+    
+    .tasks-button:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .task-badge {
+        background-color: #dc3545;
+        color: white;
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 4px;
+        font-weight: 600;
+    }
+    
+    /* 移动端导航菜单 */
+    .mobile-menu-button {
+        display: none;
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+    
+    .mobile-menu {
+        background-color: #4a6fa5;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem 20px;
+        border-radius: 0 0 8px 8px;
+        display: none;
+    }
+    
+    .mobile-menu ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .mobile-menu li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .mobile-menu a {
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        display: block;
+        padding: 0.5rem 0;
+    }
+    
+    @media (max-width: 768px) {
+        .nav-menu {
+            display: none;
+        }
+        
+        .mobile-menu-button {
+            display: block;
+        }
+    }
+</style>
+
+<nav>
+    <div class="nav-container">
+        <a href="/" class="nav-brand">AIGC创意平台</a>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="/">首页</a></li>
+            <li class="nav-item"><a href="/text_to_image">文生图</a></li>
+            <li class="nav-item"><a href="/image_to_image">图生图</a></li>
+            <li class="nav-item"><a href="/text_to_video">文生视频</a></li>
+            <li class="nav-item"><a href="/image_to_video">图生视频</a></li>
+            <li class="nav-item"><a href="/config">配置</a></li>
+        </ul>
+        <div class="nav-right">
+            <button id="tasksButton" class="tasks-button">
+                我的任务 <span id="queueTaskBadge" class="task-badge" style="display: none;">0</span>
+            </button>
+            <button id="mobileMenuButton" class="mobile-menu-button">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12H21M3 6H21M3 18H21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <!-- 移动端菜单 -->
+    <div id="mobileMenu" class="mobile-menu" style="display: none;">
+        <ul>
+            <li><a href="/">首页</a></li>
+            <li><a href="/text_to_image">文生图</a></li>
+            <li><a href="/image_to_image">图生图</a></li>
+            <li><a href="/text_to_video">文生视频</a></li>
+            <li><a href="/image_to_video">图生视频</a></li>
+            <li><a href="/config">配置</a></li>
+        </ul>
+    </div>
+</nav>
+
+<script>
+// 移动端菜单切换函数
+function toggleMobileMenu() {
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileMenu.style.display = mobileMenu.style.display === 'none' || mobileMenu.style.display === '' ? 'block' : 'none';
+}
+
+// 为移动端菜单按钮添加点击事件
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobileMenuButton');
+    if (mobileMenuButton) {
+        mobileMenuButton.addEventListener('click', toggleMobileMenu);
+    }
+});
+
+// 获取状态文本函数 - 从task_modal.html中复制的完整实现
+function getStatusText(status) {
+    const statusTexts = {
+        'queued': '排队中',
+        'running': '运行中',
+        'completed': '已完成',
+        'failed': '失败'
+    };
+    return statusTexts[status] || status;
+}
+
+// 加载任务列表函数 - 从task_modal.html中复制的完整实现
+function loadTaskList() {
+    const taskList = document.getElementById('taskList');
+    const dateFilter = document.getElementById('taskDateFilter');
+    
+    if (!taskList || !dateFilter) {
+        console.error('任务列表或日期筛选器元素未找到');
+        return;
+    }
+    
+    taskList.innerHTML = '<div class="loading">加载任务列表中...</div>';
+    
+    // 获取选择的日期
+    const selectedDate = dateFilter.value;
+    
+    // 构建请求URL，添加日期参数
+    let url = '/api/task_queue/all_tasks';
+    if (selectedDate) {
+        url += '?date=' + selectedDate;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                const tasks = data.data;
+                
+                if (tasks.length === 0) {
+                    taskList.innerHTML = '<div class="no-tasks">暂无任务记录</div>';
+                    return;
+                }
+                
+                let taskHTML = '';
+                tasks.forEach(task => {
+                    // 格式化时间
+                    const createTime = new Date(task.timestamp * 1000).toLocaleString('zh-CN');
+                    let startTime = '-';
+                    let endTime = '-';
+                    let duration = '-';
+                    
+                    if (task.start_time) {
+                        startTime = new Date(task.start_time * 1000).toLocaleString('zh-CN');
+                    }
+                    
+                    if (task.end_time) {
+                        endTime = new Date(task.end_time * 1000).toLocaleString('zh-CN');
+                        if (task.start_time) {
+                            duration = Math.round(task.duration) + '秒';
+                        }
+                    }
+                    
+                    // 获取任务类型的中文名称
+                    const taskTypeNames = {
+                        'text_to_image': '文生图',
+                        'image_to_image': '图生图',
+                        'text_to_video': '文生视频',
+                        'image_to_video': '图生视频'
+                    };
+                    
+                    const taskTypeName = taskTypeNames[task.task_type] || task.task_type;
+                    
+                    // 构建任务项HTML
+                    taskHTML += `
+                        <div class="task-item">
+                            <div class="task-item-header">
+                                <span class="task-type">${taskTypeName}</span>
+                                <span class="task-status status-${task.status}">${getStatusText(task.status)}</span>
+                            </div>
+                            <div class="task-details">
+                                <div class="task-prompt">提示词: ${task.prompt || '无'}</div>
+                                <div class="task-info">创建时间: ${createTime}</div>
+                                <div class="task-info">开始时间: ${startTime}</div>
+                                <div class="task-info">结束时间: ${endTime}</div>
+                                <div class="task-info">执行时长: ${duration}</div>
+                            </div>
+                            <div class="task-actions">
+                                ${task.status === 'completed' ? 
+                                    '<button class="view-result-button" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>' : 
+                                    ''
+                                }
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                taskList.innerHTML = taskHTML;
+            } else {
+                taskList.innerHTML = '<div class="error">加载任务失败: ' + (data.message || '未知错误') + '</div>';
+            }
+        })
+        .catch(error => {
+            console.error('加载任务列表失败:', error);
+            taskList.innerHTML = '<div class="error">加载任务列表失败，请刷新页面重试</div>';
+        });
+}
+
+// 为任务按钮添加点击事件 - 使用完整的功能实现
+function openTaskModalWrapper() {
+    try {
+        // 首先检查全局的openTaskModal函数是否存在
+        if (typeof window.openTaskModal === 'function') {
+            window.openTaskModal();
+            return;
+        }
+        
+        // 如果全局函数不存在，我们自己实现打开模态框和加载任务列表的逻辑
+        const taskModal = document.getElementById('taskModal');
+        if (!taskModal) {
+            console.error('任务模态框元素未找到');
+            alert('无法找到任务列表组件，请刷新页面重试');
+            return;
+        }
+        
+        // 显示模态框
+        taskModal.style.display = 'block';
+        
+        // 设置日期选择框默认值为今天
+        const today = new Date().toISOString().split('T')[0];
+        const dateFilter = document.getElementById('taskDateFilter');
+        if (dateFilter) {
+            dateFilter.value = today;
+            dateFilter.max = today;
+            
+            // 添加日期变化事件监听
+            dateFilter.removeEventListener('change', loadTaskList); // 防止重复添加
+            dateFilter.addEventListener('change', loadTaskList);
+        }
+        
+        // 加载任务列表
+        loadTaskList();
+        
+        // 确保结果查看函数可用
+        if (typeof window.viewTaskResult !== 'function') {
+            window.viewTaskResult = function(taskId) {
+                alert('查看结果功能需要刷新页面才能使用');
+            };
+        }
+        
+    } catch (error) {
+        console.error('打开任务模态框失败:', error);
+        alert('无法打开任务列表，请刷新页面重试');
+    }
+}
+
+// 确保DOM加载完成后添加点击事件
+document.addEventListener('DOMContentLoaded', function() {
+    const tasksButton = document.getElementById('tasksButton');
+    if (tasksButton) {
+        tasksButton.addEventListener('click', openTaskModalWrapper);
+    }
+});
+</script>
