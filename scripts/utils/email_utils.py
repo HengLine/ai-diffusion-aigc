@@ -33,13 +33,32 @@ class EmailSender:
             from_name: 发件人名称
         """
         # 优先从传入参数获取配置，如果没有则从环境变量获取，最后使用默认值
-        self.smtp_server = smtp_server or os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
-        self.smtp_port = smtp_port or int(os.environ.get('SMTP_PORT', '587'))
+        self.smtp_server = smtp_server or os.environ.get('SMTP_SERVER', '')
+        self.smtp_port = smtp_port or int(os.environ.get('SMTP_PORT', ''))
         self.username = username or os.environ.get('SMTP_USERNAME', '')
         self.password = password or os.environ.get('SMTP_PASSWORD', '')
         self.from_email = from_email or os.environ.get('FROM_EMAIL', '')
-        self.from_name = from_name or os.environ.get('FROM_NAME', 'AIGC Demo')
         
+        email_config = _get_email_config()
+
+        if not self.smtp_server:
+            self.smtp_server = email_config.get('smtp_server', 'smtp.gmail.com')
+        if not self.smtp_port:
+            self.smtp_port = int(email_config.get('smtp_port', '587'))
+        if not self.from_email:
+            from_email = email_config.get('from_email', '')
+        if not self.from_name:
+            self.from_name = email_config.get('from_name', 'AIGC 创意平台')
+        if not self.username:
+            self.username = email_config.get('username', 'HangLine')
+        if not self.password:
+            self.password = email_config.get('password', '')
+
+        # 验证配置
+        if not all([self.smtp_server, self.username, self.password, self.from_email]):
+            error("SMTP配置不完整，无法初始化EmailSender")
+            return
+
         # 连接状态
         self.server = None
         
@@ -214,8 +233,9 @@ def init_email_sender(config: Optional[Dict] = None) -> None:
     else:
         email_sender = EmailSender()
 
+
 # 提供简单的发送接口，符合用户需求
-def send_email(subject: str, to_email: str = None, to_name: str = None, message: str = None) -> bool:
+async def send_email(subject: str, message: str = None) -> bool:
     """
     发送邮件的简单接口
     
@@ -234,10 +254,8 @@ def send_email(subject: str, to_email: str = None, to_name: str = None, message:
     user_config = _get_user_config()
     
     # 如果未提供收件人信息，则使用配置中的用户信息
-    if to_email is None:
-        to_email = user_config.get('email', '')
-    if to_name is None:
-        to_name = user_config.get('nickname', '')
+    to_email = user_config.get('email', '')
+    to_name = user_config.get('nickname', '')
     if message is None:
         message = f"这是一封来自AIGC Demo项目的邮件\n主题: {subject}"
     

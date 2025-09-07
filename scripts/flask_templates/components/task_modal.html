@@ -417,6 +417,7 @@
                                         <span class="task-status status-${task.status}">${getStatusText(task.status)}</span>
                                     </div>
                                     <div class="task-details">
+                                        <div class="task-prompt">任务ID: ${task.task_id || '无'}</div>
                                         <div class="task-prompt">提示词: ${task.prompt || '无'}</div>
                                         <div class="task-info">创建时间: ${createTime}</div>
                                         <div class="task-info">开始时间: ${startTime}</div>

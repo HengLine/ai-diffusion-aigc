@@ -50,6 +50,8 @@ TEMP_FOLDER = os.path.join(project_root, 'temp')  # 使用固定的临时目录
 
 # 全局变量存储任务队列管理器
 from scripts.utils.task_queue_utils import task_queue_manager
+# 导入任务监控器
+from scripts.utils.task_monitor import task_monitor
 
 # 确保目录存在
 for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, TEMP_FOLDER]:
@@ -127,6 +129,9 @@ def handle_shutdown(signum, frame):
     """处理终止信号的回调函数"""
     info("接收到终止信号，正在异步关闭任务队列管理器...")
     
+    # 停止任务监控器
+    task_monitor.stop()
+    
     # 异步调用shutdown方法
     shutdown_thread = threading.Thread(target=task_queue_manager.shutdown)
     shutdown_thread.daemon = True
@@ -191,6 +196,9 @@ if __name__ == '__main__':
         except ImportError:
             # 如果没有安装pywin32，使用简单的信号处理方式
             signal.signal(signal.SIGINT, handle_shutdown)
+    
+    # 启动任务监控器
+    task_monitor.start()
     
     # 启动Flask应用
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -29,7 +29,7 @@ class Task:
         self.status = "queued"      # 任务状态: queued, running, completed, failed
         self.output_filename = None  # 任务输出文件名
         self.task_msg = None        # 任务消息，用于存储错误或状态信息
-        self.execution_count = 0    # 任务执行次数，默认为0
+        self.execution_count = 1    # 任务执行次数，默认为1
 
     def __lt__(self, other):
         # 任务排序基于时间戳，确保先进先出

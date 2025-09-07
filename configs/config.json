@@ -79,9 +79,9 @@
   "email": {
     "smtp_server": "smtp.gmail.com",
     "smtp_port": 587,
-    "username": "haeng2030@gmail.com",
+    "username": "HangLine",
     "from_email": "haeng2030@gmail.com",
-    "from_name": "HangLine"
+    "from_name": "AIGC 创意平台"
   },
   "settings": {
     "text_to_image": {
