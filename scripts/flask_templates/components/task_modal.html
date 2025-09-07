@@ -422,6 +422,7 @@
                                         <div class="task-info">开始时间: ${startTime}</div>
                                         <div class="task-info">结束时间: ${endTime}</div>
                                         <div class="task-info">执行时长: ${duration}</div>
+                                        ${task.task_msg ? '<div class="task-info task-message" style="color: #dc3545;">异常信息: ' + task.task_msg + '</div>' : ''}
                                     </div>
                                     <div class="task-actions">
                                         ${task.status === 'completed' ? 

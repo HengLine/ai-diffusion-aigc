@@ -28,6 +28,7 @@ class Task:
         self.end_time = None        # 任务结束时间
         self.status = "queued"      # 任务状态: queued, running, completed, failed
         self.output_filename = None  # 任务输出文件名
+        self.task_msg = None        # 任务消息，用于存储错误或状态信息
 
     def __lt__(self, other):
         # 任务排序基于时间戳，确保先进先出
@@ -184,22 +185,33 @@ class TaskQueueManager:
             
             # 更新任务状态
             with self.lock:
-                task.status = "completed"
-                task.end_time = time.time()
-                
-                # 保存输出文件名
-                if result and isinstance(result, dict):
-                    if 'output_path' in result:
-                        # 从output_path中提取文件名
-                        task.output_filename = os.path.basename(result['output_path'])
-                    elif 'filename' in result:
-                        task.output_filename = result['filename']
-                
-                # 更新平均执行时间
-                if task.end_time and task.start_time:
-                    duration = task.end_time - task.start_time
-                    # 使用移动平均更新平均执行时间
-                    self._update_average_duration(task.task_type, duration)
+                # 检查任务是否遇到连接异常
+                if result and isinstance(result, dict) and result.get('queued'):
+                    # 如果ComfyUI服务器连接失败，将任务标记为连接异常状态
+                    info(f"任务执行失败，ComfyUI服务器连接异常: {task.task_id}")
+                    task.status = "failed"
+                    task.task_msg = "ComfyUI 工作流连接超时"
+                    task.end_time = time.time()
+                    # 从running_tasks中移除
+                    if task.task_id in self.running_tasks:
+                        del self.running_tasks[task.task_id]
+                else:
+                    task.status = "completed"
+                    task.end_time = time.time()
+                    
+                    # 保存输出文件名
+                    if result and isinstance(result, dict):
+                        if 'output_path' in result:
+                            # 从output_path中提取文件名
+                            task.output_filename = os.path.basename(result['output_path'])
+                        elif 'filename' in result:
+                            task.output_filename = result['filename']
+                    
+                    # 更新平均执行时间
+                    if task.end_time and task.start_time:
+                        duration = task.end_time - task.start_time
+                        # 使用移动平均更新平均执行时间
+                        self._update_average_duration(task.task_type, duration)
                 
                 # 从运行中任务列表移除
                 self.running_tasks.pop(task.task_id, None)
@@ -215,6 +227,7 @@ class TaskQueueManager:
             # 更新任务状态
             with self.lock:
                 task.status = "failed"
+                task.task_msg = f"任务执行失败: {task.task_id}, 错误: {str(e)}"
                 task.end_time = time.time()
                 
                 # 从运行中任务列表移除
@@ -369,6 +382,10 @@ class TaskQueueManager:
                     'output_filename': task.output_filename
                 }
                 
+                # 添加任务消息
+                if task.task_msg:
+                    task_data['task_msg'] = task.task_msg
+                
                 # 添加可选字段
                 if task.start_time:
                     task_data['start_time'] = task.start_time
@@ -447,6 +464,10 @@ class TaskQueueManager:
                         # 恢复任务状态
                         task.status = task_data.get('status', 'queued')
                         
+                        # 恢复任务消息
+                        if 'task_msg' in task_data:
+                            task.task_msg = task_data['task_msg']
+                        
                         # 恢复时间信息
                         if 'start_time' in task_data:
                             task.start_time = task_data['start_time']
@@ -491,6 +512,10 @@ class TaskQueueManager:
                     "timestamp": task.timestamp,
                     "queue_position": len(self.running_tasks) + self.task_queue.qsize()
                 }
+                
+                # 添加任务消息
+                if task.task_msg:
+                    task_info["task_msg"] = task.task_msg
                 
                 # 添加开始和结束时间
                 if task.start_time:
