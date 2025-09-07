@@ -177,6 +177,11 @@ class WorkflowManager:
             
             updated_workflow = self.runner.update_workflow_params(workflow, update_params)
             
+            # 检查ComfyUI服务器是否可用
+            if not self.runner._check_server_running():
+                warning("ComfyUI服务器连接异常，将任务重新加入队列")
+                return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
+            
             # 运行工作流
             success = self.runner.run_workflow(updated_workflow, output_filename)
             
@@ -193,11 +198,6 @@ class WorkflowManager:
         """异步处理文生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-
-        # 检查ComfyUI服务器是否可用
-        if hasattr(self.runner, '_check_server_running'):
-            if not self.runner._check_server_running():
-                return {'success': False, 'message': 'ComfyUI服务器连接失败，请检查服务器是否正在运行'}
 
         # 从工作流预设中获取配置
         preset_config = self.workflow_presets.get('presets', {}).get('text_to_image', {}).get(preset, {})
@@ -309,6 +309,11 @@ class WorkflowManager:
             
             updated_workflow = self.runner.update_workflow_params(workflow, update_params)
             
+            # 检查ComfyUI服务器是否可用
+            if not self.runner._check_server_running():
+                warning("ComfyUI服务器连接异常，将任务重新加入队列")
+                return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
+            
             # 运行工作流
             success = self.runner.run_workflow(updated_workflow, output_filename)
             
@@ -325,11 +330,6 @@ class WorkflowManager:
         """异步处理图生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-
-        # 检查ComfyUI服务器是否可用
-        if hasattr(self.runner, '_check_server_running'):
-            if not self.runner._check_server_running():
-                return {'success': False, 'message': 'ComfyUI服务器连接失败，请检查服务器是否正在运行'}
 
         # 从预设中获取配置
         preset_config = self.workflow_presets.get('image_to_image', {}).get(preset, {})
@@ -420,6 +420,11 @@ class WorkflowManager:
             # 生成唯一的输出文件名
             output_filename = f"image_to_video_{int(time.time())}_{uuid.uuid4().hex[:8]}.mp4"
             
+            # 检查ComfyUI服务器是否可用
+            if not self.runner._check_server_running():
+                warning("ComfyUI服务器连接异常，将任务重新加入队列")
+                return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
+            
             # 返回模拟结果（实际项目中应该调用工作流）
             # 模拟处理延迟
             time.sleep(1)
@@ -437,11 +442,6 @@ class WorkflowManager:
         """异步处理图生视频任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-
-        # 检查ComfyUI服务器是否可用
-        if hasattr(self.runner, '_check_server_running'):
-            if not self.runner._check_server_running():
-                return {'success': False, 'message': 'ComfyUI服务器连接失败，请检查服务器是否正在运行'}
 
         # 从预设中获取配置
         preset_config = self.workflow_presets.get('image_to_video', {}).get(preset, {})
@@ -555,6 +555,11 @@ class WorkflowManager:
             
             updated_workflow = self.runner.update_workflow_params(workflow, update_params)
             
+            # 检查ComfyUI服务器是否可用
+            if not self.runner._check_server_running():
+                warning("ComfyUI服务器连接异常，将任务重新加入队列")
+                return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
+            
             # 运行工作流
             success = self.runner.run_workflow(updated_workflow, output_filename)
             
@@ -571,11 +576,6 @@ class WorkflowManager:
         """异步处理文生视频任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-
-        # 检查ComfyUI服务器是否可用
-        if hasattr(self.runner, '_check_server_running'):
-            if not self.runner._check_server_running():
-                return {'success': False, 'message': 'ComfyUI服务器连接失败，请检查服务器是否正在运行'}
 
         # 从预设中获取配置
         preset_config = self.workflow_presets.get('text_to_video', {}).get(preset, {})

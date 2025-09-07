@@ -2,7 +2,12 @@
   "flask": {
     "secret_key": "your-secret-key-here",
     "debug": true,
-    "allowed_extensions": ["png", "jpg", "jpeg", "gif"]
+    "allowed_extensions": [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif"
+    ]
   },
   "workflows": {
     "text_to_image": "workflows/text_to_image.json",
@@ -64,42 +69,71 @@
       "video": 25
     }
   },
+  "user": {
+    "email": "haeng2030@gmail.com",
+    "nickname": "HangLine",
+    "avatar": "default_avatar.png",
+    "preferred_language": "en",
+    "organization": ""
+  },
   "settings": {
     "text_to_image": {
       "width": 512,
       "height": 512,
-      "steps": 30,
-      "cfg": 8.0,
+      "steps": 10,
+      "cfg": 6.0,
+      "batch_size": 1,
+      "seed": -1,
       "prompt": "a beautiful sunset over a mountain range",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
-      "sampler": "DPM++ 2M Karras"
+      "sampler": "DPM++ 2M Karras",
+      "restore_faces": false,
+      "tiling": false,
+      "enable_highres_fix": false,
+      "highres_steps": 15,
+      "denoising_strength": 0.5
     },
     "image_to_image": {
       "width": 512,
       "height": 512,
-      "steps": 30,
-      "cfg": 8.0,
+      "steps": 10,
+      "cfg": 7.5,
+      "batch_size": 1,
+      "seed": -1,
       "prompt": "The sunrise over the sea of clouds reflects on the mountain peaks",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
       "denoising_strength": 0.75,
-      "sampler": "DPM++ 2M Karras"
+      "sampler": "DPM++ 2M Karras",
+      "resize_mode": "just_resize",
+      "mask_blur": 4
     },
     "image_to_video": {
       "width": 512,
-      "height": 512,
-      "frames": 16,
+      "height": 384,
+      "frames": 15,
       "fps": 8,
       "motion_bucket_id": 127,
-      "noise_aug_strength": 0.02
+      "noise_aug_strength": 0.02,
+      "decode_chunk_size": 8,
+      "seed": -1,
+      "cfg": 1.0
     },
     "text_to_video": {
-      "width": 512,
-      "height": 512,
+      "width": 576,
+      "height": 320,
       "frames": 16,
       "fps": 8,
       "motion_bucket_id": 127,
       "noise_aug_strength": 0.02,
+      "decode_chunk_size": 8,
+      "seed": -1,
+      "cfg": 1.0,
       "default_prompt": "beautiful forest scene with a river and mountains in the background, sunlight filtering through the trees"
+    },
+    "common": {
+      "max_concurrent_tasks": 2,
+      "cache_enabled": true,
+      "cache_size": 1024
     }
   }
 }
