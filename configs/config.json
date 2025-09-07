@@ -70,11 +70,18 @@
     }
   },
   "user": {
-    "email": "haeng2030@gmail.com",
-    "nickname": "HangLine",
+    "email": "haeng2015@foxmail.com",
+    "nickname": "haengo",
     "avatar": "default_avatar.png",
-    "preferred_language": "en",
+    "preferred_language": "zh-CN",
     "organization": ""
+  },
+  "email": {
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "username": "haeng2030@gmail.com",
+    "from_email": "haeng2030@gmail.com",
+    "from_name": "HangLine"
   },
   "settings": {
     "text_to_image": {
