@@ -16,7 +16,7 @@
     "workflows_dir": "workflows"
   },
   "comfyui": {
-    "path": "E:\\\\Projects\\\\AI\\\\ComfyUI",
+    "path": "E:\\Projects\\AI\\ComfyUI",
     "api_url": "http://127.0.0.1:8188",
     "auto_start_server": true
   },

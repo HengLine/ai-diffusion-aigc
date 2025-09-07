@@ -80,30 +80,39 @@ def index():
 @app.route('/config', methods=['GET', 'POST'])
 def configure():
     """配置页面路由"""
-    global comfyui_path, config
+    global config
     
     if request.method == 'POST':
-        new_comfyui_path = request.form.get('comfyui_path', '')
+        comfyui_api_url = request.form.get('comfyui_api_url', '').strip()
         
-        if new_comfyui_path:
-            # 更新全局变量
-            comfyui_path = new_comfyui_path
+        if comfyui_api_url:
+            # 保存配置
+            if 'comfyui' not in config:
+                config['comfyui'] = {}
+            config['comfyui']['api_url'] = comfyui_api_url
             
-            # 更新配置文件
-            config['comfyui']['path'] = new_comfyui_path
+            # 确保配置目录存在
+            config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'configs')
+            if not os.path.exists(config_dir):
+                os.makedirs(config_dir)
+            
+            # 保存配置到文件
+            config_path = os.path.join(config_dir, 'config.json')
             with open(config_path, 'w', encoding='utf-8') as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
             
             # 重新初始化运行器
             workflow_manager.stop_runner()
             
-            flash('配置已保存成功！')
+            flash('配置已成功保存！', 'success')
         else:
-            flash('请输入有效的ComfyUI路径！', 'error')
+            flash('请输入有效的ComfyUI API URL！', 'error')
         
         return redirect(url_for('configure'))
     
-    return render_template('config.html', comfyui_path=comfyui_path)
+    # 从配置文件获取当前的ComfyUI API URL
+    comfyui_api_url = config.get('comfyui', {}).get('api_url', 'http://127.0.0.1:8188')
+    return render_template('config.html', comfyui_api_url=comfyui_api_url)
 
 # 注意：文生图、图生图和图生视频的路由处理已拆分到flask_web目录下的单独文件中
 # 请参考text_to_image_route.py, image_to_image_route.py和image_to_video_route.py文件

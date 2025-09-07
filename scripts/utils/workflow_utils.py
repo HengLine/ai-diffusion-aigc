@@ -32,6 +32,69 @@ def load_config():
             }
         }
 
+# 加载工作流预设
+def load_workflow_presets():
+    """加载工作流预设配置"""
+    presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs', 'workflow_presets.json')
+    try:
+        with open(presets_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        error(f"加载工作流预设失败: {e}")
+        # 返回默认预设
+        return {
+            'presets': {
+                'text_to_image': {
+                    'default': {
+                        'model': 'v1-5-pruned-emaonly.safetensors',
+                        'vae': 'vae-ft-mse-840000-ema-pruned.safetensors',
+                        'sampler': 'dpmpp_2m_sde_karras',
+                        'steps': 20,
+                        'cfg': 7.0,
+                        'width': 512,
+                        'height': 512,
+                        'batch_size': 1
+                    }
+                },
+                'image_to_image': {
+                    'default': {
+                        'model': 'v1-5-pruned-emaonly.safetensors',
+                        'vae': 'vae-ft-mse-840000-ema-pruned.safetensors',
+                        'sampler': 'dpmpp_2m_sde_karras',
+                        'steps': 20,
+                        'cfg': 7.0,
+                        'denoising_strength': 0.75,
+                        'width': 512,
+                        'height': 512
+                    }
+                },
+                'image_to_video': {
+                    'default': {
+                        'model': 'svd.safetensors',
+                        'motion_bucket_id': 127,
+                        'noise_aug_strength': 0.02,
+                        'num_frames': 16,
+                        'fps': 8,
+                        'decode_chunk_size': 8,
+                        'width': 512,
+                        'height': 320
+                    }
+                },
+                'text_to_video': {
+                    'default': {
+                        'model': 'svd.safetensors',
+                        'motion_bucket_id': 127,
+                        'noise_aug_strength': 0.02,
+                        'num_frames': 16,
+                        'fps': 8,
+                        'decode_chunk_size': 8,
+                        'width': 512,
+                        'height': 320
+                    }
+                }
+            }
+        }
+
 class WorkflowManager:
     """工作流管理器类，用于处理各种AI生成任务"""
     
@@ -39,13 +102,18 @@ class WorkflowManager:
         """初始化工作流管理器"""
         self.config = config
         self.runner = runner
+        # 导入全局的workflow_presets变量
+        from scripts.utils.workflow_utils import workflow_presets
+        self.workflow_presets = workflow_presets
         self.comfyui_path = config['comfyui']['path'] if config and 'comfyui' in config else './ComfyUI'
         self.output_dir = None
     
     def init_runner(self):
         """初始化工作流运行器"""
         if not self.runner and self.comfyui_path and self.output_dir:
-            self.runner = ComfyUIRunner(self.comfyui_path, self.output_dir)
+            # 获取配置中的API URL，如果没有则使用默认值
+            api_url = self.config.get('comfyui', {}).get('api_url', 'http://127.0.0.1:8188')
+            self.runner = ComfyUIRunner(self.comfyui_path, self.output_dir, api_url)
         return self.runner is not None
     
     def stop_runner(self):
@@ -61,10 +129,15 @@ class WorkflowManager:
         
         prompt = params['prompt']
         negative_prompt = params['negative_prompt']
-        width = params.get('width', 1024)
-        height = params.get('height', 1024)
-        steps = params.get('steps', 30)
-        cfg_scale = params.get('cfg_scale', 8.0)
+        # 从参数中获取配置，同时提供默认值
+        width = params.get('width', 512)
+        height = params.get('height', 512)
+        steps = params.get('steps', 20)
+        cfg_scale = params.get('cfg_scale', 7.0)
+        model = params.get('model')
+        vae = params.get('vae')
+        sampler = params.get('sampler')
+        batch_size = params.get('batch_size')
         
         try:
             info(f"处理文生图任务: {prompt}")
@@ -91,6 +164,17 @@ class WorkflowManager:
                 "steps": steps,
                 "cfg_scale": cfg_scale
             }
+            
+            # 添加可选参数（如果存在）
+            if model:
+                update_params["model"] = model
+            if vae:
+                update_params["vae"] = vae
+            if sampler:
+                update_params["sampler"] = sampler
+            if batch_size:
+                update_params["batch_size"] = batch_size
+            
             updated_workflow = self.runner.update_workflow_params(workflow, update_params)
             
             # 运行工作流
@@ -105,19 +189,29 @@ class WorkflowManager:
             error(f"文生图任务执行失败: {str(e)}")
             return {'success': False, 'message': f'文生图任务执行失败: {str(e)}'}
     
-    def process_text_to_image(self, prompt, negative_prompt, width=1024, height=1024, steps=30, cfg_scale=8.0):
+    def process_text_to_image(self, prompt, negative_prompt, preset='default', **kwargs):
         """异步处理文生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
         
-        # 准备任务参数
+        # 从工作流预设中获取配置
+        preset_config = self.workflow_presets.get('presets', {}).get('text_to_image', {}).get(preset, {})
+        if not preset_config:
+            # 如果预设不存在，使用默认配置
+            preset_config = self.workflow_presets.get('presets', {}).get('text_to_image', {}).get('default', {})
+        
+        # 准备任务参数，优先级：kwargs > preset_config > 默认值
         task_params = {
             'prompt': prompt,
             'negative_prompt': negative_prompt,
-            'width': width,
-            'height': height,
-            'steps': steps,
-            'cfg_scale': cfg_scale
+            'width': kwargs.get('width', preset_config.get('width', 512)),
+            'height': kwargs.get('height', preset_config.get('height', 512)),
+            'steps': kwargs.get('steps', preset_config.get('steps', 20)),
+            'cfg_scale': kwargs.get('cfg_scale', preset_config.get('cfg', 7.0)),
+            'model': preset_config.get('model'),
+            'vae': preset_config.get('vae'),
+            'sampler': preset_config.get('sampler'),
+            'batch_size': preset_config.get('batch_size')
         }
         
         # 任务回调函数
@@ -159,11 +253,16 @@ class WorkflowManager:
         image_path = params['image_path']
         prompt = params['prompt']
         negative_prompt = params['negative_prompt']
-        width = params.get('width', 1024)
-        height = params.get('height', 1024)
-        steps = params.get('steps', 30)
-        cfg_scale = params.get('cfg_scale', 8.0)
+        # 从参数中获取配置，同时提供默认值
+        width = params.get('width', 512)
+        height = params.get('height', 512)
+        steps = params.get('steps', 20)
+        cfg_scale = params.get('cfg_scale', 7.0)
         denoising_strength = params.get('denoising_strength', 0.75)
+        model = params.get('model')
+        vae = params.get('vae')
+        sampler = params.get('sampler')
+        batch_size = params.get('batch_size')
         
         try:
             info(f"处理图生图任务: {prompt}")
@@ -192,6 +291,17 @@ class WorkflowManager:
                 "cfg_scale": cfg_scale,
                 "denoising_strength": denoising_strength
             }
+            
+            # 添加可选参数（如果存在）
+            if model:
+                update_params["model"] = model
+            if vae:
+                update_params["vae"] = vae
+            if sampler:
+                update_params["sampler"] = sampler
+            if batch_size:
+                update_params["batch_size"] = batch_size
+            
             updated_workflow = self.runner.update_workflow_params(workflow, update_params)
             
             # 运行工作流
@@ -206,10 +316,24 @@ class WorkflowManager:
             error(f"图生图任务执行失败: {str(e)}")
             return {'success': False, 'message': f'图生图任务执行失败: {str(e)}'}
     
-    def process_image_to_image(self, image_path, prompt, negative_prompt, width=1024, height=1024, steps=30, cfg_scale=8.0, denoising_strength=0.75):
+    def process_image_to_image(self, image_path, prompt, negative_prompt, preset='default', **kwargs):
         """异步处理图生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
+        
+        # 从预设中获取配置
+        preset_config = self.workflow_presets.get('image_to_image', {}).get(preset, {})
+        
+        # 参数优先级：kwargs > preset_config > 默认值
+        width = kwargs.get('width', preset_config.get('width', 512))
+        height = kwargs.get('height', preset_config.get('height', 512))
+        steps = kwargs.get('steps', preset_config.get('steps', 20))
+        cfg_scale = kwargs.get('cfg_scale', preset_config.get('cfg_scale', 7.0))
+        denoising_strength = kwargs.get('denoising_strength', preset_config.get('denoising_strength', 0.75))
+        model = kwargs.get('model', preset_config.get('model'))
+        vae = kwargs.get('vae', preset_config.get('vae'))
+        sampler = kwargs.get('sampler', preset_config.get('sampler'))
+        batch_size = kwargs.get('batch_size', preset_config.get('batch_size'))
         
         # 准备任务参数
         task_params = {
@@ -222,6 +346,16 @@ class WorkflowManager:
             'cfg_scale': cfg_scale,
             'denoising_strength': denoising_strength
         }
+        
+        # 添加可选参数
+        if model:
+            task_params['model'] = model
+        if vae:
+            task_params['vae'] = vae
+        if sampler:
+            task_params['sampler'] = sampler
+        if batch_size:
+            task_params['batch_size'] = batch_size
         
         # 任务回调函数
         def task_callback(params):
@@ -262,8 +396,13 @@ class WorkflowManager:
         image_path = params['image_path']
         prompt = params['prompt']
         negative_prompt = params['negative_prompt']
+        # 从参数中获取配置，同时提供默认值
         duration = params.get('duration', 5)
         fps = params.get('fps', 30)
+        model = params.get('model')
+        motion_model = params.get('motion_model')
+        steps = params.get('steps', 20)
+        cfg_scale = params.get('cfg_scale', 7.0)
         
         try:
             info(f"处理图生视频任务")
@@ -284,10 +423,21 @@ class WorkflowManager:
             error(f"图生视频任务执行失败: {str(e)}")
             return {'success': False, 'message': f'图生视频任务执行失败: {str(e)}'}
     
-    def process_image_to_video(self, image_path, prompt, negative_prompt, duration=5, fps=30):
+    def process_image_to_video(self, image_path, prompt, negative_prompt, preset='default', **kwargs):
         """异步处理图生视频任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
+        
+        # 从预设中获取配置
+        preset_config = self.workflow_presets.get('image_to_video', {}).get(preset, {})
+        
+        # 参数优先级：kwargs > preset_config > 默认值
+        duration = kwargs.get('duration', preset_config.get('duration', 5))
+        fps = kwargs.get('fps', preset_config.get('fps', 30))
+        model = kwargs.get('model', preset_config.get('model'))
+        motion_model = kwargs.get('motion_model', preset_config.get('motion_model'))
+        steps = kwargs.get('steps', preset_config.get('steps', 20))
+        cfg_scale = kwargs.get('cfg_scale', preset_config.get('cfg_scale', 7.0))
         
         # 准备任务参数
         task_params = {
@@ -297,6 +447,16 @@ class WorkflowManager:
             'duration': duration,
             'fps': fps
         }
+        
+        # 添加可选参数
+        if model:
+            task_params['model'] = model
+        if motion_model:
+            task_params['motion_model'] = motion_model
+        if steps:
+            task_params['steps'] = steps
+        if cfg_scale:
+            task_params['cfg_scale'] = cfg_scale
         
         # 任务回调函数
         def task_callback(params):
@@ -336,8 +496,13 @@ class WorkflowManager:
         
         prompt = params['prompt']
         negative_prompt = params['negative_prompt']
+        # 从参数中获取配置，同时提供默认值
         duration = params.get('duration', 5)
         fps = params.get('fps', 30)
+        model = params.get('model')
+        motion_model = params.get('motion_model')
+        steps = params.get('steps', 20)
+        cfg_scale = params.get('cfg_scale', 7.0)
         
         try:
             info(f"处理文生视频任务: {prompt}")
@@ -362,6 +527,17 @@ class WorkflowManager:
                 "duration": duration,
                 "fps": fps
             }
+            
+            # 添加可选参数（如果存在）
+            if model:
+                update_params["model"] = model
+            if motion_model:
+                update_params["motion_model"] = motion_model
+            if steps:
+                update_params["steps"] = steps
+            if cfg_scale:
+                update_params["cfg_scale"] = cfg_scale
+            
             updated_workflow = self.runner.update_workflow_params(workflow, update_params)
             
             # 运行工作流
@@ -376,10 +552,21 @@ class WorkflowManager:
             error(f"文生视频任务执行失败: {str(e)}")
             return {'success': False, 'message': f'文生视频任务执行失败: {str(e)}'}
     
-    def process_text_to_video(self, prompt, negative_prompt, duration=5, fps=30):
+    def process_text_to_video(self, prompt, negative_prompt, preset='default', **kwargs):
         """异步处理文生视频任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
+        
+        # 从预设中获取配置
+        preset_config = self.workflow_presets.get('text_to_video', {}).get(preset, {})
+        
+        # 参数优先级：kwargs > preset_config > 默认值
+        duration = kwargs.get('duration', preset_config.get('duration', 5))
+        fps = kwargs.get('fps', preset_config.get('fps', 30))
+        model = kwargs.get('model', preset_config.get('model'))
+        motion_model = kwargs.get('motion_model', preset_config.get('motion_model'))
+        steps = kwargs.get('steps', preset_config.get('steps', 20))
+        cfg_scale = kwargs.get('cfg_scale', preset_config.get('cfg_scale', 7.0))
         
         # 准备任务参数
         task_params = {
@@ -388,6 +575,16 @@ class WorkflowManager:
             'duration': duration,
             'fps': fps
         }
+        
+        # 添加可选参数
+        if model:
+            task_params['model'] = model
+        if motion_model:
+            task_params['motion_model'] = motion_model
+        if steps:
+            task_params['steps'] = steps
+        if cfg_scale:
+            task_params['cfg_scale'] = cfg_scale
         
         # 任务回调函数
         def task_callback(params):
@@ -433,4 +630,5 @@ class WorkflowManager:
         return task_queue_manager.get_all_tasks()
 # 全局配置和管理器实例
 config = load_config()
+workflow_presets = load_workflow_presets()
 workflow_manager = WorkflowManager(config)

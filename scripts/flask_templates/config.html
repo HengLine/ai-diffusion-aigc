@@ -133,14 +133,14 @@
 
         <div class="info-box">
             <h3>关于ComfyUI配置</h3>
-            <p>请输入您本地安装的ComfyUI路径，这是使用AI生成功能的必要条件。配置完成后，系统将能够启动ComfyUI服务器并执行工作流。</p>
+            <p>请输入您的ComfyUI API URL地址，这是使用AI生成功能的必要条件。配置完成后，系统将能够连接到ComfyUI服务器并执行工作流。</p>
         </div>
 
         <form method="post">
             <div class="form-group">
-                <label for="comfyui_path">ComfyUI安装路径</label>
-                <input type="text" id="comfyui_path" name="comfyui_path" 
-                       value="{{ comfyui_path }}" placeholder="例如：C:\\ComfyUI\\">
+                <label for="comfyui_api_url">ComfyUI API URL <span style="color: red;">*</span></label>
+                <input type="text" id="comfyui_api_url" name="comfyui_api_url" 
+                       value="{{ comfyui_api_url }}" placeholder="例如：http://127.0.0.1:8188" required>
             </div>
             
             <button type="submit" class="form-button">保存配置</button>

@@ -92,7 +92,13 @@ async function submitForm(url, data, method = 'POST') {
             throw new Error(`提交失败! Status: ${response.status}`);
         }
         
-        return await response.json();
+        // 尝试解析JSON响应
+        try {
+            return await response.json();
+        } catch (e) {
+            // 如果不是JSON，返回成功状态（因为表单提交通常会重定向或刷新页面）
+            return { success: true };
+        }
     } catch (error) {
         showNotification(`提交失败: ${error.message}`, 'error');
         throw error;

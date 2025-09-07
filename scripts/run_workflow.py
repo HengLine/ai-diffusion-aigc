@@ -23,17 +23,18 @@ from utils.logger import info, error, debug
 class ComfyUIRunner:
     """ComfyUI工作流运行器类"""
     
-    def __init__(self, comfyui_path: str, output_dir: str):
+    def __init__(self, comfyui_path: str, output_dir: str, api_url: str = "http://127.0.0.1:8188"):
         """
         初始化ComfyUIRunner
         
         Args:
             comfyui_path: ComfyUI安装路径
             output_dir: 输出文件保存目录
+            api_url: ComfyUI API URL地址，默认为http://127.0.0.1:8188
         """
         self.comfyui_path = comfyui_path
         self.output_dir = output_dir
-        self.api_url = "http://127.0.0.1:8188"
+        self.api_url = api_url
         
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)

@@ -493,18 +493,17 @@
                 progressInfo.classList.add('show');
                 
                 // 使用公共组件中的submitForm函数提交表单
-                submitForm('/api/text_to_video', formData, {
-                    success: function(data) {
+                submitForm('/text_to_video', formData, 'POST')
+                    .then(function(data) {
                         // 提交成功处理
                         showLoading(false);
                         showNotification('任务已提交到队列，请在"我的任务"中查看进度', 'success');
-                        // startTaskPolling(data.task_id);
                         
                         // 恢复按钮状态
                         generateButton.disabled = false;
                         generateButton.textContent = '生成视频';
-                    },
-                    error: function(error) {
+                    })
+                    .catch(function(error) {
                         // 提交失败处理
                         showLoading(false);
                         showNotification('提交失败: ' + error.message, 'error');
@@ -513,46 +512,8 @@
                         generateButton.disabled = false;
                         generateButton.textContent = '生成视频';
                         progressInfo.classList.remove('show');
-                    }
-                });
+                    });
             });
-            
-            // 任务轮询功能
-            function startTaskPolling(taskId) {
-                // 调用公共组件中的轮询函数
-                pollTaskStatus(taskId, {
-                    completed: function(data) {
-                        // 处理完成的任务
-                        showNotification('视频生成完成！', 'success');
-                        progressInfo.classList.remove('show');
-                        
-                        if (data.videos && data.videos.length > 0) {
-                            // 创建结果容器
-                            const resultContainer = document.createElement('div');
-                            resultContainer.className = 'status-box status-success';
-                            resultContainer.innerHTML = '<p><strong>视频生成完成！</strong></p>';
-                            
-                            // 添加视频预览
-                            data.videos.forEach((video, index) => {
-                                const videoElement = document.createElement('video');
-                                videoElement.src = video;
-                                videoElement.controls = true;
-                                videoElement.classList.add('generated-video');
-                                resultContainer.appendChild(videoElement);
-                            });
-                            
-                            // 插入到表单前面
-                            form.parentNode.insertBefore(resultContainer, form);
-                        }
-                    },
-                    failed: function(error) {
-                        showNotification('任务失败: ' + error.message, 'error');
-                        generateButton.disabled = false;
-                        generateButton.textContent = '生成视频';
-                        progressInfo.classList.remove('show');
-                    }
-                });
-            }
             
             // 启动任务队列状态轮询
         if (typeof startQueueStatusPolling === 'function') {
