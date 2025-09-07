@@ -45,6 +45,12 @@
         opacity: 0.8;
     }
     
+    /* 当前选中菜单高亮样式 */
+    .nav-item a.active {
+        font-weight: 700;
+        border-bottom: 2px solid white;
+    }
+    
     .nav-right {
         display: flex;
         align-items: center;
@@ -112,6 +118,13 @@
         padding: 0.5rem 0;
     }
     
+    /* 移动端选中菜单高亮样式 */
+    .mobile-menu a.active {
+        font-weight: 700;
+        background-color: rgba(255, 255, 255, 0.1);
+        padding-left: 10px;
+    }
+    
     @media (max-width: 768px) {
         .nav-menu {
             display: none;
@@ -136,7 +149,7 @@
         </ul>
         <div class="nav-right">
             <button id="tasksButton" class="tasks-button">
-                我的任务 <span id="queueTaskBadge" class="task-badge" style="display: none;">0</span>
+                我的任务 <span id="queueTaskBadge" class="task-badge" style="display: inline; visibility: visible; opacity: 1;">0</span>
             </button>
             <button id="mobileMenuButton" class="mobile-menu-button">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -159,11 +172,22 @@
 </nav>
 
 <script>
+// 获取当前页面路径
+function getCurrentPagePath() {
+    const path = window.location.pathname;
+    // 确保路径以/开头
+    return path.startsWith('/') ? path : '/' + path;
+}
+
 // 移动端菜单切换函数
 function toggleMobileMenu() {
     const mobileMenu = document.getElementById('mobileMenu');
     mobileMenu.style.display = mobileMenu.style.display === 'none' || mobileMenu.style.display === '' ? 'block' : 'none';
 }
+
+// 全局变量跟踪徽章显示状态
+let badgeVisible = false;
+let badgeCount = 0;
 
 // 为移动端菜单按钮添加点击事件
 document.addEventListener('DOMContentLoaded', function() {
@@ -171,6 +195,72 @@ document.addEventListener('DOMContentLoaded', function() {
     if (mobileMenuButton) {
         mobileMenuButton.addEventListener('click', toggleMobileMenu);
     }
+    
+    // 设置当前菜单高亮
+    const currentPath = getCurrentPagePath();
+    
+    // 高亮桌面端菜单
+    const desktopLinks = document.querySelectorAll('.nav-menu .nav-item a');
+    desktopLinks.forEach(link => {
+        const linkPath = new URL(link.href).pathname;
+        if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
+            link.classList.add('active');
+        }
+    });
+    
+    // 高亮移动端菜单
+    const mobileLinks = document.querySelectorAll('.mobile-menu a');
+    mobileLinks.forEach(link => {
+        const linkPath = new URL(link.href).pathname;
+        if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
+            link.classList.add('active');
+        }
+    });
+    
+    // 确保DOM加载完成后徽章仍然可见
+    const taskBadge = document.getElementById('queueTaskBadge');
+    if (taskBadge) {
+        console.log('找到徽章元素，开始设置初始样式');
+        
+        // 先设置一个静态的徽章显示，确保HTML/CSS工作正常
+        taskBadge.textContent = '1'; // 设置一个默认数字
+        console.log('已设置默认徽章数字为1');
+        
+        // 先设置基础的显示样式，不依赖badgeVisible状态
+        taskBadge.style.display = 'inline !important';
+        taskBadge.style.visibility = 'visible !important';
+        taskBadge.style.opacity = '1 !important';
+        console.log('已设置基础显示样式');
+        
+        // 然后再应用其他样式
+        taskBadge.style.position = 'relative';
+        taskBadge.style.zIndex = '9999';
+        taskBadge.style.background = '#dc3545';
+        taskBadge.style.color = 'white';
+        taskBadge.style.fontSize = '0.75rem';
+        taskBadge.style.padding = '2px 6px';
+        taskBadge.style.borderRadius = '10px';
+        taskBadge.style.marginLeft = '4px';
+        taskBadge.style.fontWeight = '600';
+        taskBadge.style.minWidth = '20px';
+        taskBadge.style.textAlign = 'center';
+        console.log('DOM完全加载后强制设置徽章显示样式完成');
+    } else {
+        console.error('未找到徽章元素queueTaskBadge');
+    }
+    
+    // 加载并显示未完成任务数
+    console.log('DOM加载完成，开始加载任务数量');
+    if (typeof loadUnfinishedTaskCount === 'function') {
+        console.log('loadUnfinishedTaskCount函数存在，准备调用');
+        loadUnfinishedTaskCount();
+    } else {
+        console.error('loadUnfinishedTaskCount函数不存在');
+    }
+    
+    // 定时刷新任务数量（每30秒）
+    console.log('设置定时刷新任务数量（每30秒）');
+    setInterval(loadUnfinishedTaskCount, 30000);
 });
 
 // 获取状态文本函数 - 从task_modal.html中复制的完整实现
@@ -184,26 +274,36 @@ function getStatusText(status) {
     return statusTexts[status] || status;
 }
 
-// 加载任务列表函数 - 从task_modal.html中复制的完整实现
+// 加载任务列表函数 - 从task_modal.html中复制的完整实现，包含状态筛选功能
 function loadTaskList() {
     const taskList = document.getElementById('taskList');
     const dateFilter = document.getElementById('taskDateFilter');
+    const statusFilter = document.getElementById('taskStatusFilter');
     
     if (!taskList || !dateFilter) {
-        console.error('任务列表或日期筛选器元素未找到');
+        console.error('任务列表或筛选器元素未找到');
         return;
     }
     
     taskList.innerHTML = '<div class="loading">加载任务列表中...</div>';
     
-    // 获取选择的日期
+    // 获取选择的日期和状态
     const selectedDate = dateFilter.value;
+    const selectedStatus = statusFilter ? statusFilter.value : '';
     
-    // 构建请求URL，添加日期参数
-    let url = '/api/task_queue/all_tasks';
+    // 构建请求URL，添加日期和状态参数
+    let url = '/api/task_queue/all_tasks?';
+    const params = [];
+    
     if (selectedDate) {
-        url += '?date=' + selectedDate;
+        params.push('date=' + selectedDate);
     }
+    
+    if (selectedStatus && selectedStatus !== 'all') {
+        params.push('status=' + selectedStatus);
+    }
+    
+    url += params.join('&');
     
     fetch(url)
         .then(response => response.json())
@@ -289,7 +389,7 @@ function openTaskModalWrapper() {
             return;
         }
         
-        // 如果全局函数不存在，我们自己实现打开模态框和加载任务列表的逻辑
+        // 如果全局函数不存在， ourselves实现打开模态框和加载任务列表的逻辑
         const taskModal = document.getElementById('taskModal');
         if (!taskModal) {
             console.error('任务模态框元素未找到');
@@ -312,6 +412,14 @@ function openTaskModalWrapper() {
             dateFilter.addEventListener('change', loadTaskList);
         }
         
+        // 添加状态筛选下拉框处理
+        const statusFilter = document.getElementById('taskStatusFilter');
+        if (statusFilter) {
+            // 添加状态变化事件监听
+            statusFilter.removeEventListener('change', loadTaskList); // 防止重复添加
+            statusFilter.addEventListener('change', loadTaskList);
+        }
+        
         // 加载任务列表
         loadTaskList();
         
@@ -328,11 +436,118 @@ function openTaskModalWrapper() {
     }
 }
 
-// 确保DOM加载完成后添加点击事件
+// 获取当前页面的任务类型
+function getCurrentTaskType() {
+    const path = getCurrentPagePath();
+    
+    // 根据不同页面路径返回对应的任务类型
+    if (path.includes('/text_to_image')) {
+        return 'text_to_image';
+    } else if (path.includes('/image_to_image')) {
+        return 'image_to_image';
+    } else if (path.includes('/text_to_video')) {
+        return 'text_to_video';
+    } else if (path.includes('/image_to_video')) {
+        return 'image_to_video';
+    } else if (path.includes('/config')) {
+        return 'all'; // 配置页面显示所有类型任务
+    } else {
+        return 'all'; // 首页显示所有类型任务
+    }
+}
+
+// 为任务按钮添加点击事件
 document.addEventListener('DOMContentLoaded', function() {
     const tasksButton = document.getElementById('tasksButton');
     if (tasksButton) {
         tasksButton.addEventListener('click', openTaskModalWrapper);
     }
 });
+
+// 加载并显示未完成任务数
+function loadUnfinishedTaskCount() {
+    const taskBadge = document.getElementById('queueTaskBadge');
+    if (!taskBadge) {
+        console.error('任务徽章元素未找到');
+        return;
+    }
+    
+    console.log('开始加载未完成任务数');
+    
+    // 获取当前页面的任务类型
+    const taskType = getCurrentTaskType();
+    console.log('当前页面任务类型:', taskType);
+    
+    // 构建请求URL，根据任务类型添加过滤参数
+    let url = '/api/task_queue/status';
+    if (taskType && taskType !== 'all') {
+        url += '?task_type=' + taskType;
+    }
+    
+    console.log('请求URL:', url);
+    
+    // 添加缓存控制，确保每次获取最新数据
+    const headers = new Headers({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    });
+    
+    fetch(url, { headers: headers })
+        .then(response => {
+            console.log('响应状态:', response.status);
+            if (!response.ok) {
+                throw new Error('服务器响应错误: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.data && typeof data.data.unfinished_tasks_count === 'number') {
+                const count = data.data.unfinished_tasks_count;
+                
+                // 更新全局状态
+                badgeCount = count;
+                badgeVisible = true;
+                
+                // 使用setTimeout确保DOM操作在正确的时机执行
+                setTimeout(() => {
+                    taskBadge.textContent = count;
+                    taskBadge.style.display = 'inline !important';
+                    // 强制设置更强的CSS样式确保徽章可见
+                    taskBadge.style.position = 'relative';
+                    taskBadge.style.zIndex = '9999';
+                    taskBadge.style.background = '#dc3545';
+                    taskBadge.style.color = 'white';
+                    taskBadge.style.fontSize = '0.75rem';
+                    taskBadge.style.padding = '2px 6px';
+                    taskBadge.style.borderRadius = '10px';
+                    taskBadge.style.marginLeft = '4px';
+                    taskBadge.style.fontWeight = '600';
+                    taskBadge.style.minWidth = '20px';
+                    taskBadge.style.textAlign = 'center';
+                    taskBadge.style.boxSizing = 'border-box';
+                    taskBadge.style.verticalAlign = 'middle';
+                    taskBadge.style.whiteSpace = 'nowrap';
+                    taskBadge.style.overflow = 'visible';
+                    taskBadge.style.float = 'none';
+                    taskBadge.style.clear = 'none';
+                    // 使用!important增强样式优先级
+                    taskBadge.style.display = 'inline !important';
+                    taskBadge.style.visibility = 'visible !important';
+                    taskBadge.style.opacity = '1 !important';
+                }, 10);
+            } else {
+                console.error('获取未完成任务数失败:', data.message || '数据格式不正确');
+                // 发生错误时不要隐藏徽章，保留上次显示的状态
+            }
+        })
+        .catch(error => {
+            console.error('获取未完成任务数网络错误:', error);
+            // 网络错误时不要隐藏徽章，保留上次显示的状态
+        })
+        .finally(() => {
+            console.log('任务数量加载完成');
+        });
+}
+
 </script>

@@ -505,6 +505,9 @@
     <!-- 引入公共组件 -->
         {% include 'components/notification.html' %}
         
+        <!-- 引入任务队列状态组件 -->
+        {% include 'components/task_queue_status.html' %}
+        
         <!-- 引入任务模态框 -->
         {% include 'components/task_modal.html' %}
     
@@ -665,9 +668,8 @@
         // 启动任务队列状态轮询
         if (typeof startQueueStatusPolling === 'function') {
             startQueueStatusPolling();
-        } else {
-            console.warn('startQueueStatusPolling function not available');
         }
+        
     });
     </script>
     

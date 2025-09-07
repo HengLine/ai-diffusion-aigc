@@ -232,17 +232,76 @@ class TaskQueueManager:
         
         debug(f"更新任务类型 {task_type} 的平均执行时间: 旧值={old_avg:.1f}秒, 新值={new_avg:.1f}秒")
     
-    def get_queue_status(self) -> Dict[str, Any]:
+    def get_queue_status(self, task_type: Optional[str] = None) -> Dict[str, Any]:
         """
         获取队列状态
         
+        Args:
+            task_type: 可选的任务类型过滤参数，如果提供则只统计该类型的任务
+        
         Returns:
-            Dict[str, Any]: 队列状态信息
+            Dict[str, Any]: 队列状态信息，包含前端期望的字段
         """
         with self.lock:
+            # 计算总运行任务数和排队任务数
+            running_count = len(self.running_tasks)
+            queued_count = self.task_queue.qsize()
+            
+            # 如果提供了任务类型参数，则过滤任务
+            if task_type and task_type != 'all':
+                # 计算该类型的运行任务数
+                running_count = sum(1 for task in self.running_tasks.values() if task.task_type == task_type)
+                
+                # 计算该类型的排队任务数
+                # 需要临时复制队列来避免修改原始队列
+                temp_queue = []
+                queued_count = 0
+                
+                # 将队列中的所有任务移动到临时列表
+                while not self.task_queue.empty():
+                    task = self.task_queue.get()
+                    temp_queue.append(task)
+                    if task.task_type == task_type:
+                        queued_count += 1
+                
+                # 将任务放回原始队列
+                for task in temp_queue:
+                    self.task_queue.put(task)
+                
+            # 计算总任务数
+            total_tasks = running_count + queued_count
+            
+            # 计算队列位置（这里简单地返回1，实际应用中可能需要更复杂的逻辑）
+            position = 1
+            
+            # 计算预计等待时间（基于平均执行时间）
+            avg_duration = 0
+            if task_type and task_type in self.average_task_durations:
+                avg_duration = self.average_task_durations[task_type] / 60  # 转换为分钟
+            else:
+                # 如果没有指定任务类型或任务类型不存在，使用所有类型的平均值
+                avg_durations = list(self.average_task_durations.values())
+                if avg_durations:
+                    avg_duration = sum(avg_durations) / len(avg_durations) / 60  # 转换为分钟
+            
+            # 计算预计等待时间
+            estimated_time = queued_count * avg_duration if avg_duration > 0 else 0
+            
+            # 计算进度（这里简单地基于队列位置和总任务数）
+            progress = 0
+            if total_tasks > 0:
+                progress = min(100, int((position / total_tasks) * 100))
+                
+            # 返回前端期望的数据结构
             return {
-                "running_tasks_count": len(self.running_tasks),
-                "queued_tasks_count": self.task_queue.qsize(),
+                "total_tasks": total_tasks,
+                "in_queue": queued_count,
+                "running_tasks": running_count,
+                "position": position,
+                "estimated_time": round(estimated_time, 1),
+                "progress": progress,
+                "running_tasks_count": running_count,  # 保留原始字段以保持兼容性
+                "queued_tasks_count": queued_count,    # 保留原始字段以保持兼容性
                 "max_concurrent_tasks": self.max_concurrent_tasks,
                 "average_task_durations": self.average_task_durations
             }

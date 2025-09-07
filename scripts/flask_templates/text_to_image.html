@@ -5,126 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文生图 - AIGC创意平台</title>
     <style>
-        /* 导航栏样式 */
-        nav {
-            background-color: #4a6fa5;
-            color: white;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .nav-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .nav-brand {
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-decoration: none;
-            color: white;
-        }
-        
-        .nav-menu {
-            display: flex;
-            gap: 1.5rem;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .nav-item a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: opacity 0.3s ease;
-        }
-        
-        .nav-item a:hover {
-            opacity: 0.8;
-        }
-        
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .task-indicator {
-            position: relative;
-        }
-        
-        .task-count {
-            background-color: #dc3545;
-            color: white;
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 10px;
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            font-weight: 600;
-        }
-        
-        .my-tasks-button {
-            background-color: #ffffff;
-            color: #4a6fa5;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-        }
-        
-        .my-tasks-button:hover {
-            background-color: #f8f9fa;
-        }
-        
-        /* 移动端导航菜单 */
-        .mobile-menu-button {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        
-        @media (max-width: 768px) {
-            .nav-menu {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background-color: #4a6fa5;
-                flex-direction: column;
-                padding: 1rem 0;
-                margin-top: 0.5rem;
-                border-radius: 0 0 8px 8px;
-            }
-            
-            .nav-menu.show {
-                display: flex;
-            }
-            
-            .mobile-menu-button {
-                display: block;
-            }
-            
-            .nav-container {
-                position: relative;
-                flex-wrap: wrap;
-            }
-        }
-    
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
@@ -692,11 +572,18 @@
                 });
             });
             
+            // 启动任务队列状态轮询
+                if (typeof startQueueStatusPolling === 'function') {
+                    startQueueStatusPolling();
+                }
 
         </script>
         
         <!-- 引入公共组件 -->
         {% include 'components/notification.html' %}
+        
+        <!-- 引入任务队列状态组件 -->
+        {% include 'components/task_queue_status.html' %}
         
         <!-- 引入任务模态框 -->
         {% include 'components/task_modal.html' %}

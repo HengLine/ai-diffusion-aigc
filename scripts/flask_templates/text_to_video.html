@@ -133,8 +133,14 @@
             color: #495057;
         }
         
+        .slider-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         .slider {
-            width: 100%;
+            flex: 1;
             height: 6px;
             background: #e9ecef;
             border-radius: 3px;
@@ -371,22 +377,28 @@
                 
                 <div class="slider-container">
                     <label for="strengthSlider">转换强度 (0-1)</label>
-                    <input type="range" id="strengthSlider" class="slider" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}">
-                    <input type="number" id="strength" name="strength" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}" class="slider-value">
+                    <div class="slider-input-group">
+                        <input type="range" id="strengthSlider" class="slider" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}">
+                        <input type="number" id="strength" name="strength" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}" class="slider-value">
+                    </div>
                     <p class="parameter-description">值越低保留原图特征越多，值越高变化越大</p>
                 </div>
                 
                 <div class="slider-container">
                     <label for="stepsSlider">生成步数</label>
-                    <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}">
-                    <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}" class="slider-value">
+                    <div class="slider-input-group">
+                        <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}">
+                        <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}" class="slider-value">
+                    </div>
                     <p class="parameter-description">步数越多，细节越丰富，但生成时间越长</p>
                 </div>
                 
                 <div class="slider-container">
                     <label for="cfgScaleSlider">CFG Scale</label>
-                    <input type="range" id="cfgScaleSlider" class="slider" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}">
-                    <input type="number" id="cfg_scale" name="cfg_scale" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                    <div class="slider-input-group">
+                        <input type="range" id="cfgScaleSlider" class="slider" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" id="cfg_scale" name="cfg_scale" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                    </div>
                     <p class="parameter-description">值越高，越严格遵循提示词</p>
                 </div>
             </div>
@@ -542,12 +554,12 @@
                 });
             }
             
-            // 页面加载完成后自动启动任务队列状态轮询
-            if (typeof startQueueStatusPolling === 'function') {
-                startQueueStatusPolling();
-            } else {
-                console.warn('startQueueStatusPolling function not available');
-            }
+            // 启动任务队列状态轮询
+        if (typeof startQueueStatusPolling === 'function') {
+            startQueueStatusPolling();
+        } else {
+            console.warn('startQueueStatusPolling function not available');
+        }
         });
     </script>
 </body>

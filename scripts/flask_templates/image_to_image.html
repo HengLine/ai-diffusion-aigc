@@ -166,8 +166,14 @@
             color: #495057;
         }
         
+        .slider-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         .slider {
-            width: 100%;
+            flex: 1;
             height: 6px;
             background: #e9ecef;
             border-radius: 3px;
@@ -355,20 +361,6 @@
     <!-- 引入公共组件 -->
     {% include 'components/header.html' %}
     {% include 'components/common_scripts.html' %}
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-                // 使用公共组件中的文件预览功能
-                const fileInput = document.getElementById('image');
-                const previewImage = document.querySelector('.preview-image');
-                const fileName = document.querySelector('.file-name');
-                const previewContainer = document.querySelector('.preview-container');
-                
-                if (fileInput && previewImage) {
-                    setupFilePreview(fileInput, previewImage);
-                }
-            });
-        </script>
 
 
     <div class="container">
@@ -421,22 +413,28 @@
                 
                 <div class="slider-container">
                     <label for="strengthSlider">转换强度 (0-1)</label>
-                    <input type="range" id="strengthSlider" class="slider" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}">
-                    <input type="number" id="strength" name="strength" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}" class="slider-value">
+                    <div class="slider-input-group">
+                        <input type="range" id="strengthSlider" class="slider" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}">
+                        <input type="number" id="strength" name="strength" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}" class="slider-value">
+                    </div>
                     <p class="parameter-description">值越低保留原图特征越多，值越高变化越大</p>
                 </div>
                 
                 <div class="slider-container">
                     <label for="stepsSlider">生成步数</label>
-                    <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}">
-                    <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}" class="slider-value">
+                    <div class="slider-input-group">
+                        <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}">
+                        <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}" class="slider-value">
+                    </div>
                     <p class="parameter-description">步数越多，细节越丰富，但生成时间越长</p>
                 </div>
                 
                 <div class="slider-container">
                     <label for="cfgScaleSlider">CFG Scale</label>
-                    <input type="range" id="cfgScaleSlider" class="slider" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}">
-                    <input type="number" id="cfg_scale" name="cfg_scale" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                    <div class="slider-input-group">
+                        <input type="range" id="cfgScaleSlider" class="slider" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" id="cfg_scale" name="cfg_scale" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                    </div>
                     <p class="parameter-description">值越高，越严格遵循提示词</p>
                 </div>
             </div>
@@ -446,15 +444,19 @@
                 
                 <div class="slider-container">
                     <label for="widthSlider">输出宽度 (像素)</label>
-                    <input type="range" id="widthSlider" class="slider" min="128" max="2048" step="16" value="{{ default_params.width or 512 }}">
-                    <input type="number" id="width" name="width" min="128" max="2048" step="16" value="{{ default_params.width or 512 }}" class="slider-value">
+                    <div class="slider-input-group">
+                        <input type="range" id="widthSlider" class="slider" min="128" max="2048" step="16" value="{{ default_params.width or 512 }}">
+                        <input type="number" id="width" name="width" min="128" max="2048" step="16" value="{{ default_params.width or 512 }}" class="slider-value">
+                    </div>
                     <p class="parameter-description">建议值：512, 768, 1024</p>
                 </div>
                 
                 <div class="slider-container">
                     <label for="heightSlider">输出高度 (像素)</label>
-                    <input type="range" id="heightSlider" class="slider" min="128" max="2048" step="16" value="{{ default_params.height or 512 }}">
-                    <input type="number" id="height" name="height" min="128" max="2048" step="16" value="{{ default_params.height or 512 }}" class="slider-value">
+                    <div class="slider-input-group">
+                        <input type="range" id="heightSlider" class="slider" min="128" max="2048" step="16" value="{{ default_params.height or 512 }}">
+                        <input type="number" id="height" name="height" min="128" max="2048" step="16" value="{{ default_params.height or 512 }}" class="slider-value">
+                    </div>
                     <p class="parameter-description">建议值：512, 768, 1024</p>
                 </div>
             </div>
@@ -512,6 +514,46 @@
                 setupSliderSync('cfgScaleSlider', 'cfg_scale');
                 setupSliderSync('widthSlider', 'width');
                 setupSliderSync('heightSlider', 'height');
+                
+                // 使用公共组件中的文件预览功能
+                const fileInput = document.getElementById('image');
+                const previewImage = document.querySelector('.preview-image');
+                const fileName = document.querySelector('.file-name');
+                const previewContainer = document.querySelector('.preview-container');
+                
+                if (fileInput && previewImage) {
+                    // 自定义文件预览实现，确保预览容器正确显示
+                    fileInput.addEventListener('change', function(e) {
+                        if (e.target.files && e.target.files[0]) {
+                            // 显示文件名
+                            if (fileName) {
+                                fileName.textContent = e.target.files[0].name;
+                            }
+                            
+                            // 显示预览图片
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                previewImage.src = event.target.result;
+                                previewImage.style.display = 'block';
+                                // 显示预览容器
+                                if (previewContainer) {
+                                    previewContainer.classList.add('show');
+                                }
+                            }
+                            reader.readAsDataURL(e.target.files[0]);
+                        } else {
+                            // 清除预览
+                            if (fileName) {
+                                fileName.textContent = '';
+                            }
+                            previewImage.src = '';
+                            previewImage.style.display = 'none';
+                            if (previewContainer) {
+                                previewContainer.classList.remove('show');
+                            }
+                        }
+                    });
+                }
                 
                 form.addEventListener('submit', function(e) {
                     e.preventDefault(); // 阻止默认表单提交
@@ -745,31 +787,17 @@
                 // 启动任务队列状态轮询
                 if (typeof startQueueStatusPolling === 'function') {
                     startQueueStatusPolling();
-                } else {
-                    console.warn('startQueueStatusPolling function not available');
-                }
-                
-                // 检查是否有排队消息
-                const flashMessages = document.querySelectorAll('.status-box');
-                let hasQueueMessage = false;
-                
-                flashMessages.forEach(message => {
-                    if (message.textContent.includes('排队')) {
-                        hasQueueMessage = true;
-                    }
-                });
-                
-                if (hasQueueMessage) {
-                    // 显示队列状态容器
-                    document.getElementById('queueStatusContainer').style.display = 'block';
                 }
             });
             
 
         </script>
         
-        <!-- 引入公共组件 -->
+        <!-- 引入通知组件 -->
         {% include 'components/notification.html' %}
+        
+        <!-- 引入任务队列状态组件 -->
+        {% include 'components/task_queue_status.html' %}
         
         <!-- 引入任务模态框 -->
         {% include 'components/task_modal.html' %}

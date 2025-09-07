@@ -9,10 +9,35 @@ def get_task_queue_status():
     """
     获取任务队列状态的API端点
     返回当前正在执行的任务数、排队任务数以及平均任务执行时间
+    同时包含当天未完成任务的统计结果
+    支持按任务类型过滤
     """
     try:
-        # 获取队列状态
-        queue_status = task_queue_manager.get_queue_status()
+        # 获取任务类型参数
+        task_type = request.args.get('task_type')
+        
+        # 获取队列状态，传入任务类型参数
+        queue_status = task_queue_manager.get_queue_status(task_type=task_type)
+        
+        # 获取日期参数，如果没有提供则使用今天
+        date = request.args.get('date')
+        if not date:
+            # 如果没有提供日期，使用今天的日期
+            from datetime import datetime
+            date = datetime.now().strftime('%Y-%m-%d')
+        
+        # 获取所有任务
+        all_tasks = task_queue_manager.get_all_tasks(date=date)
+        
+        # 过滤未完成任务（状态为queued或running）
+        unfinished_tasks = [task for task in all_tasks if task['status'] in ['queued', 'running']]
+        
+        # 如果提供了任务类型参数，则进一步过滤
+        if task_type and task_type != 'all':
+            unfinished_tasks = [task for task in unfinished_tasks if task['task_type'] == task_type]
+        
+        # 将未完成任务数添加到队列状态数据中
+        queue_status['unfinished_tasks_count'] = len(unfinished_tasks)
         
         # 返回队列状态信息
         return jsonify({
@@ -31,14 +56,20 @@ def get_all_tasks():
     """
     获取所有任务历史记录的API端点
     返回所有已提交任务的列表，包括状态和基本信息
-    支持按日期筛选任务
+    支持按日期和状态筛选任务
     """
     try:
         # 获取日期参数
         date = request.args.get('date')
+        # 获取状态参数
+        status = request.args.get('status')
         
         # 获取任务列表（可能按日期筛选）
         all_tasks = task_queue_manager.get_all_tasks(date=date)
+        
+        # 如果提供了状态参数且不是'all'，则根据状态过滤任务
+        if status and status != 'all':
+            all_tasks = [task for task in all_tasks if task['status'] == status]
         
         # 返回任务列表
         return jsonify({

@@ -19,7 +19,7 @@ function startQueueStatusPolling() {
         clearInterval(pollingInterval);
     }
     
-    pollingInterval = setInterval(updateQueueStatus, 3000); // 每3秒更新一次
+    pollingInterval = setInterval(updateQueueStatus, 5000); // 每5秒更新一次
     
     // 立即执行一次
     updateQueueStatus();
@@ -33,48 +33,69 @@ function stopQueueStatusPolling() {
 }
 
 function updateQueueStatus() {
-    fetch('/api/task_queue/status')
-        .then(response => response.json())
+    // 获取当前页面的任务类型
+    let taskType = 'all';
+    if (typeof getCurrentTaskType === 'function') {
+        taskType = getCurrentTaskType();
+    }
+    
+    // 构建请求URL，根据任务类型添加参数
+    let url = '/api/task_queue/status';
+    if (taskType !== 'all') {
+        url += `?task_type=${taskType}`;
+    }
+    
+    // 发送实际API请求
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP错误!状态码: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('任务队列API响应:', data);
+            
             const queueStatusContainer = document.getElementById('queueStatusContainer');
             const queueStatus = document.getElementById('queueStatus');
             const taskProgressFill = document.querySelector('.task-progress-fill');
             const taskProgressText = document.querySelector('.task-progress-text');
-            const queueTaskCount = document.getElementById('queueTaskCount');
             const queueTaskBadge = document.getElementById('queueTaskBadge');
             
-            if (queueTaskCount) {
-                queueTaskCount.textContent = data.total_tasks || 0;
-            }
+            // 检查数据结构是否正确
+            const queueData = data.success && data.data ? data.data : {};
             
+            // 更新任务计数徽章
             if (queueTaskBadge) {
-                if (data.total_tasks && data.total_tasks > 0) {
-                    queueTaskBadge.style.display = 'inline-block';
-                    queueTaskBadge.textContent = data.total_tasks;
-                } else {
-                    queueTaskBadge.style.display = 'none';
-                }
+                // 使用unfinished_tasks_count作为徽章显示值，这是包含所有历史和当前任务的更准确计数
+                const displayCount = queueData.unfinished_tasks_count || queueData.total_tasks || 0;
+                // 始终显示徽章，确保用户知道有任务系统
+                queueTaskBadge.style.display = 'inline-block';
+                queueTaskBadge.textContent = displayCount;
             }
             
-            if (data.in_queue && data.in_queue > 0) {
-                // 有排队任务，显示队列状态
+            if (queueData.in_queue && queueData.in_queue > 0 || queueData.total_tasks && queueData.total_tasks > 0) {
+                // 有排队任务或执行中任务，显示队列状态
                 if (queueStatusContainer) {
                     queueStatusContainer.style.display = 'block';
                 }
                 
                 if (queueStatus) {
-                    const position = data.position || 0;
-                    const total = data.in_queue || 0;
-                    const estimatedTime = data.estimated_time || 0;
+                    const position = queueData.position || 0;
+                    const total = queueData.in_queue || 0;
+                    const estimatedTime = queueData.estimated_time || 0;
                     
+                    // 确保显示状态信息
                     queueStatus.innerHTML = `
                         <p>当前队列位置: ${position}/${total}</p>
                         <p>预计等待时间: ${estimatedTime} 分钟</p>
+                        <p>执行中任务: ${queueData.running_tasks || 0}</p>
+                        <p>总任务数: ${queueData.total_tasks || 0}</p>
                     `;
                 }
                 
                 if (taskProgressFill && taskProgressText) {
-                    const progress = data.progress || 0;
+                    const progress = queueData.progress || 0;
                     taskProgressFill.style.width = `${progress}%`;
                     taskProgressText.textContent = progress > 0 ? `${progress}%` : '等待中';
                 }
@@ -85,78 +106,92 @@ function updateQueueStatus() {
         })
         .catch(error => {
             console.error('更新任务队列状态失败:', error);
+            
+            // API请求失败时，保持队列状态显示
+            const queueStatusContainer = document.getElementById('queueStatusContainer');
+            const queueStatus = document.getElementById('queueStatus');
+            const queueTaskBadge = document.getElementById('queueTaskBadge');
+            
+            if (queueTaskBadge) {
+                // 即使API失败，也显示一个可能的任务数
+                queueTaskBadge.style.display = 'inline-block';
+                queueTaskBadge.textContent = '?';
+            }
+            
+            if (queueStatusContainer && queueStatus) {
+                queueStatusContainer.style.display = 'block';
+                queueStatus.innerHTML = '<p style="color: #dc3545;">无法连接到服务器，请稍后刷新页面重试</p>';
+            }
         });
 }
 
 
- function openTaskStatusModal() {
+function openTaskStatusModal(data) {
     try {
-        if (waitingTasks > 0) {
-            // 更新任务计数
-            taskCountElement.textContent = '有任务';
-            taskBadgeElement.textContent = waitingTasks;
-            taskBadgeElement.style.display = 'inline-block';
+        // 获取DOM元素
+        const queueStatusContainer = document.getElementById('queueStatusContainer');
+        const queueStatus = document.getElementById('queueStatus');
+        const taskProgressFill = document.querySelector('.task-progress-fill');
+        const taskProgressText = document.querySelector('.task-progress-text');
+        const queueTaskBadge = document.getElementById('queueTaskBadge');
+        
+        // 如果没有传入数据，使用默认数据
+        const taskData = data || {
+            total_tasks: 0,
+            in_queue: 0,
+            position: 0,
+            estimated_time: 0,
+            progress: 0
+        };
+        
+        // 更新任务计数徽章
+        if (queueTaskBadge) {
+            // 始终显示徽章，确保用户知道有任务系统
+            queueTaskBadge.style.display = 'inline-block';
+            queueTaskBadge.textContent = taskData.total_tasks || 0;
+        }
+        
+        // 有排队任务，显示队列状态
+        if (queueStatusContainer) {
+            queueStatusContainer.style.display = 'block';
+        }
+        
+        if (queueStatus) {
+            const position = taskData.position || 0;
+            const total = taskData.in_queue || 0;
+            const estimatedTime = taskData.estimated_time || 0;
             
-            // 计算预计等待时间
-            const avgDurations = queueData.average_task_durations || {};
-            const avgImageToImageDuration = avgDurations.image_to_image || 70; // 秒
-            const estimatedWaitTimeMinutes = Math.ceil((waitingTasks * avgImageToImageDuration) / 60);
-            
-            // 更新队列状态信息
-            queueStatus.innerHTML = `
-                <p>当前有 ${runningTasks} 个任务正在处理</p>
-                <p>您的任务排在第 ${waitingTasks} 位</p>
-                <p>预计需要等待约 ${estimatedWaitTimeMinutes} 分钟</p>
-            `;
-            
-            // 更新进度条
-            const progressPercentage = Math.max(0, Math.min(100, 100 - (waitingTasks * 10)));
-            progressFill.style.width = `${progressPercentage}%`;
-            progressText.textContent = `排队中 (${progressPercentage}%)`;
-            progressText.style.color = '#2c3e50';
-        } else {
-            // 没有任务在排队
-            if (runningTasks > 0) {
-                taskCountElement.textContent = '有任务';
-                taskBadgeElement.style.display = 'none';
-                
-                // 更新队列状态信息
+            // 如果是模拟数据，显示模拟的任务队列信息
+            if (!data) {
                 queueStatus.innerHTML = `
-                    <p>当前有 ${runningTasks} 个任务正在处理</p>
-                    <p>您的任务将在队列空闲后立即开始</p>
+                    <p>任务队列演示</p>
+                    <p>当前队列位置: 模拟数据</p>
+                    <p>预计等待时间: 模拟数据</p>
                 `;
-                
-                // 更新进度条
-                progressFill.style.width = '100%';
-                progressFill.style.backgroundColor = '#007bff'; // 蓝色表示准备中
-                progressText.textContent = '准备中';
-                progressText.style.color = 'white';
             } else {
-                taskCountElement.textContent = '0';
-                taskBadgeElement.style.display = 'none';
-                
-                // 更新队列状态信息
                 queueStatus.innerHTML = `
-                    <p>当前队列为空</p>
-                    <p>您的任务将立即开始处理</p>
+                    <p>当前队列位置: ${position}/${total}</p>
+                    <p>预计等待时间: ${estimatedTime} 分钟</p>
                 `;
-                
-                // 更新进度条
-                progressFill.style.width = '100%';
-                progressFill.style.backgroundColor = '#28a745'; // 绿色表示完成
-                progressText.textContent = '就绪';
-                progressText.style.color = 'white';
             }
         }
+        
+        if (taskProgressFill && taskProgressText) {
+            const progress = taskData.progress || 0;
+            taskProgressFill.style.width = `${progress}%`;
+            taskProgressText.textContent = progress > 0 ? `${progress}%` : '等待中';
+        }
     } catch (error) {
-        console.error('获取任务队列状态失败:', error);
+        console.error('打开任务状态模态框失败:', error);
         
         // 显示错误信息
         const queueStatusContainer = document.getElementById('queueStatusContainer');
         const queueStatus = document.getElementById('queueStatus');
         
-        queueStatusContainer.style.display = 'block';
-        queueStatus.innerHTML = `<p style="color: #dc3545;">无法获取队列状态，请刷新页面重试</p>`;
+        if (queueStatusContainer && queueStatus) {
+            queueStatusContainer.style.display = 'block';
+            queueStatus.innerHTML = `<p style="color: #dc3545;">无法获取队列状态，请刷新页面重试</p>`;
+        }
     }
 }
 
@@ -164,5 +199,11 @@ function updateQueueStatus() {
 // 页面卸载时停止轮询
 window.addEventListener('beforeunload', function() {
     stopQueueStatusPolling();
+});
+
+// 页面加载完成后自动启动轮询
+document.addEventListener('DOMContentLoaded', function() {
+    // 延迟一小段时间启动轮询，确保页面其他元素已经加载完成
+    setTimeout(startQueueStatusPolling, 1000);
 });
 </script>

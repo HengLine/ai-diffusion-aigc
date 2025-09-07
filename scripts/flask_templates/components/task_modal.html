@@ -3,9 +3,21 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2>我的任务</h2>
-            <div class="date-filter">
-                <label for="taskDateFilter">选择日期：</label>
-                <input type="date" id="taskDateFilter" name="taskDateFilter" value="" max="">
+            <div class="filter-group">
+                <div class="date-filter">
+                    <label for="taskDateFilter">选择日期：</label>
+                    <input type="date" id="taskDateFilter" name="taskDateFilter" value="" max="">
+                </div>
+                <div class="status-filter">
+                    <label for="taskStatusFilter">任务状态：</label>
+                    <select id="taskStatusFilter" name="taskStatusFilter">
+                        <option value="all">全部状态</option>
+                        <option value="queued">排队中</option>
+                        <option value="running">运行中</option>
+                        <option value="completed">已完成</option>
+                        <option value="failed">失败</option>
+                    </select>
+                </div>
             </div>
             <span class="close">&times;</span>
         </div>
@@ -59,24 +71,59 @@
         gap: 20px;
     }
     
-    /* 日期选择框样式 */
-    .date-filter {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .date-filter label {
-        font-size: 0.9rem;
-        color: #495057;
-    }
-    
-    .date-filter input[type="date"] {
-        padding: 6px 10px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        font-size: 0.9rem;
-    }
+    /* 筛选器样式 */
+        .filter-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        @media (max-width: 768px) {
+            .filter-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+        
+        /* 日期选择框样式 */
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .date-filter label {
+            font-size: 0.9rem;
+            color: #495057;
+        }
+        
+        .date-filter input[type="date"] {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        /* 状态筛选样式 */
+        .status-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-filter label {
+            font-size: 0.9rem;
+            color: #495057;
+        }
+        
+        .status-filter select {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            background-color: white;
+        }
     
     .modal-header h2 {
         margin: 0;
@@ -246,6 +293,11 @@
                 loadTaskList();
             });
             
+            // 添加状态变化事件监听
+            document.getElementById('taskStatusFilter').addEventListener('change', function() {
+                loadTaskList();
+            });
+            
             loadTaskList();
         };
         
@@ -270,14 +322,23 @@
         function loadTaskList() {
             taskList.innerHTML = '<div class="loading">加载任务列表中...</div>';
             
-            // 获取选择的日期
+            // 获取选择的日期和状态
             const selectedDate = document.getElementById('taskDateFilter').value;
+            const selectedStatus = document.getElementById('taskStatusFilter').value;
             
-            // 构建请求URL，添加日期参数
-            let url = '/api/task_queue/all_tasks';
+            // 构建请求URL，添加日期和状态参数
+            let url = '/api/task_queue/all_tasks?';
+            const params = [];
+            
             if (selectedDate) {
-                url += '?date=' + selectedDate;
+                params.push('date=' + selectedDate);
             }
+            
+            if (selectedStatus && selectedStatus !== 'all') {
+                params.push('status=' + selectedStatus);
+            }
+            
+            url += params.join('&');
             
             fetch(url)
                 .then(response => response.json())
