@@ -30,7 +30,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
             background-color: #f5f5f5;
@@ -145,6 +145,34 @@
             border-radius: 8px;
             border: 1px solid #e9ecef;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .parameter-group h3 {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .parameter-group h3::after {
+            content: '▼';
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .parameter-group.collapsed h3::after {
+            transform: rotate(-90deg);
+        }
+        
+        .parameter-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .parameter-group.collapsed .parameter-content {
+            max-height: 0;
         }
         
         .parameter-group h3 {
@@ -408,9 +436,9 @@
             </div>
             
             <!-- 模型参数设置 -->
-            <div class="parameter-group">
+            <div class="parameter-group collapsed">
                 <h3>图像转换参数</h3>
-                
+                <div class="parameter-content">
                 <div class="slider-container">
                     <label for="strengthSlider">转换强度 (0-1)</label>
                     <div class="slider-input-group">
@@ -437,11 +465,12 @@
                     </div>
                     <p class="parameter-description">值越高，越严格遵循提示词</p>
                 </div>
+                </div>
             </div>
             
-            <div class="parameter-group">
+            <div class="parameter-group collapsed">
                 <h3>输出尺寸设置</h3>
-                
+                <div class="parameter-content">
                 <div class="slider-container">
                     <label for="widthSlider">输出宽度 (像素)</label>
                     <div class="slider-input-group">
@@ -460,7 +489,7 @@
                     <p class="parameter-description">建议值：512, 768, 1024</p>
                 </div>
             </div>
-            
+            </div>
             <button type="submit" class="form-button" id="generateButton">生成图像</button>
             <div id="loadingIndicator" style="display: none; margin-top: 10px; color: #4a6fa5;">
                 <div style="display: flex; align-items: center;">
@@ -482,6 +511,17 @@
                 const generateButton = document.getElementById('generateButton');
                 const loadingIndicator = document.getElementById('loadingIndicator');
                 const form = document.querySelector('form');
+                
+                // 参数折叠/展开功能
+                function setupParameterFolding() {
+                    const parameterGroups = document.querySelectorAll('.parameter-group');
+                    parameterGroups.forEach(group => {
+                        const header = group.querySelector('h3');
+                        header.addEventListener('click', () => {
+                            group.classList.toggle('collapsed');
+                        });
+                    });
+                }
                 
                 // 同步滑块和输入框的值
                 function setupSliderSync(sliderId, inputId) {
@@ -521,6 +561,9 @@
                 setupSliderSync('cfgScaleSlider', 'cfg_scale');
                 setupSliderSync('widthSlider', 'width');
                 setupSliderSync('heightSlider', 'height');
+                
+                // 设置参数折叠功能
+                setupParameterFolding();
                 
                 // 使用公共组件中的文件预览功能
                 const fileInput = document.getElementById('image');

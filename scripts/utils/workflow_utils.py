@@ -193,7 +193,12 @@ class WorkflowManager:
         """异步处理文生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-        
+
+        # 检查ComfyUI服务器是否可用
+        if hasattr(self.runner, '_check_server_running'):
+            if not self.runner._check_server_running():
+                return {'success': False, 'message': 'ComfyUI服务器连接失败，请检查服务器是否正在运行'}
+
         # 从工作流预设中获取配置
         preset_config = self.workflow_presets.get('presets', {}).get('text_to_image', {}).get(preset, {})
         if not preset_config:
@@ -320,7 +325,12 @@ class WorkflowManager:
         """异步处理图生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-        
+
+        # 检查ComfyUI服务器是否可用
+        if hasattr(self.runner, '_check_server_running'):
+            if not self.runner._check_server_running():
+                return {'success': False, 'message': 'ComfyUI服务器连接失败，请检查服务器是否正在运行'}
+
         # 从预设中获取配置
         preset_config = self.workflow_presets.get('image_to_image', {}).get(preset, {})
         
@@ -427,7 +437,12 @@ class WorkflowManager:
         """异步处理图生视频任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-        
+
+        # 检查ComfyUI服务器是否可用
+        if hasattr(self.runner, '_check_server_running'):
+            if not self.runner._check_server_running():
+                return {'success': False, 'message': 'ComfyUI服务器连接失败，请检查服务器是否正在运行'}
+
         # 从预设中获取配置
         preset_config = self.workflow_presets.get('image_to_video', {}).get(preset, {})
         
@@ -556,10 +571,15 @@ class WorkflowManager:
         """异步处理文生视频任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-        
+
+        # 检查ComfyUI服务器是否可用
+        if hasattr(self.runner, '_check_server_running'):
+            if not self.runner._check_server_running():
+                return {'success': False, 'message': 'ComfyUI服务器连接失败，请检查服务器是否正在运行'}
+
         # 从预设中获取配置
         preset_config = self.workflow_presets.get('text_to_video', {}).get(preset, {})
-        
+
         # 参数优先级：kwargs > preset_config > 默认值
         duration = kwargs.get('duration', preset_config.get('duration', 5))
         fps = kwargs.get('fps', preset_config.get('fps', 30))
@@ -567,7 +587,7 @@ class WorkflowManager:
         motion_model = kwargs.get('motion_model', preset_config.get('motion_model'))
         steps = kwargs.get('steps', preset_config.get('steps', 20))
         cfg_scale = kwargs.get('cfg_scale', preset_config.get('cfg_scale', 7.0))
-        
+
         # 准备任务参数
         task_params = {
             'prompt': prompt,
@@ -575,7 +595,7 @@ class WorkflowManager:
             'duration': duration,
             'fps': fps
         }
-        
+
         # 添加可选参数
         if model:
             task_params['model'] = model
@@ -585,26 +605,26 @@ class WorkflowManager:
             task_params['steps'] = steps
         if cfg_scale:
             task_params['cfg_scale'] = cfg_scale
-        
+
         # 任务回调函数
         def task_callback(params):
             # 任务执行后的回调函数
             result = self._execute_text_to_video(params)
-            
+
             # 如果任务成功完成，更新任务文件数据
             if result and result.get('success'):
                 # 这里可以添加任何额外的任务完成后的处理逻辑
                 pass
-            
+
             return result
-        
+
         # 将任务加入队列
         task_id, queue_position, waiting_time = task_queue_manager.enqueue_task(
             'text_to_video', 
             task_params, 
             task_callback
         )
-        
+
         # 立即返回任务信息，不等待任务完成
         minutes, seconds = divmod(int(waiting_time), 60)
         waiting_str = f"{minutes}分{seconds}秒" if minutes > 0 else f"{seconds}秒"

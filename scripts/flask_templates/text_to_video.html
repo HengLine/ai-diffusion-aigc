@@ -29,7 +29,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
             background-color: #f5f5f5;
@@ -112,6 +112,34 @@
             border-radius: 8px;
             border: 1px solid #e9ecef;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .parameter-group h3 {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .parameter-group h3::after {
+            content: '▼';
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .parameter-group.collapsed h3::after {
+            transform: rotate(-90deg);
+        }
+        
+        .parameter-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .parameter-group.collapsed .parameter-content {
+            max-height: 0;
         }
         
         .parameter-group h3 {
@@ -372,9 +400,9 @@
             </div>
             
             <!-- 模型参数设置 -->
-            <div class="parameter-group">
+            <div class="parameter-group collapsed">
                 <h3>视频生成参数</h3>
-                
+                <div class="parameter-content">
                 <div class="slider-container">
                     <label for="strengthSlider">转换强度 (0-1)</label>
                     <div class="slider-input-group">
@@ -401,6 +429,7 @@
                     </div>
                     <p class="parameter-description">值越高，越严格遵循提示词</p>
                 </div>
+                </div>
             </div>
             
             <button type="submit" class="form-button" id="generateButton">生成视频</button>
@@ -424,13 +453,23 @@
     
     <!-- 引入公共组件 -->
     {% include 'components/notification.html' %}
-    {% include 'components/footer.html' %}
     
     <!-- 引入任务模态框 -->
     {% include 'components/task_modal.html' %}
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 参数折叠/展开功能
+            function setupParameterFolding() {
+                const parameterGroups = document.querySelectorAll('.parameter-group');
+                parameterGroups.forEach(group => {
+                    const header = group.querySelector('h3');
+                    header.addEventListener('click', () => {
+                        group.classList.toggle('collapsed');
+                    });
+                });
+            }
+            
             // 同步滑块和输入框的值
             function setupSliderSync(sliderId, inputId) {
                 const slider = document.getElementById(sliderId);
@@ -467,6 +506,9 @@
             setupSliderSync('strengthSlider', 'strength');
             setupSliderSync('stepsSlider', 'steps');
             setupSliderSync('cfgScaleSlider', 'cfg_scale');
+            
+            // 设置参数折叠功能
+            setupParameterFolding();
             
             // 表单提交处理
             const form = document.querySelector('form');
@@ -523,5 +565,8 @@
         }
         });
     </script>
+    
+    <!-- 引入页脚组件 -->
+    {% include 'components/footer.html' %}
 </body>
 </html>

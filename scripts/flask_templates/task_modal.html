@@ -1,4 +1,4 @@
-<!-- 我的任务模态框 -->
+我的任务模态框
 <div id="taskModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -16,6 +16,16 @@
                         <option value="running">运行中</option>
                         <option value="completed">已完成</option>
                         <option value="failed">失败</option>
+                    </select>
+                </div>
+                <div class="type-filter">
+                    <label for="taskTypeFilter">类型筛选：</label>
+                    <select id="taskTypeFilter" name="taskTypeFilter">
+                        <option value="all">全部类型</option>
+                        <option value="text_to_image">文生图</option>
+                        <option value="image_to_image">图生图</option>
+                        <option value="text_to_video">文生视频</option>
+                        <option value="image_to_video">图生视频</option>
                     </select>
                 </div>
             </div>
@@ -91,13 +101,15 @@
         }
         
         .date-filter label,
-        .status-filter label {
+        .status-filter label,
+        .type-filter label {
             font-size: 0.9rem;
             color: #495057;
         }
         
         .date-filter input[type="date"],
-        .status-filter select {
+        .status-filter select,
+        .type-filter select {
             padding: 6px 10px;
             border: 1px solid #ced4da;
             border-radius: 4px;
@@ -269,9 +281,14 @@
         });
         
         // 添加状态变化事件监听
-        document.getElementById('taskStatusFilter').addEventListener('change', function() {
-            loadTaskList();
-        });
+            document.getElementById('taskStatusFilter').addEventListener('change', function() {
+                loadTaskList();
+            });
+            
+            // 添加类型变化事件监听
+            document.getElementById('taskTypeFilter').addEventListener('change', function() {
+                loadTaskList();
+            });
             
             loadTaskList();
         };
@@ -297,11 +314,12 @@
         function loadTaskList() {
             taskList.innerHTML = '<div class="loading">加载任务列表中...</div>';
             
-            // 获取选择的日期和状态
+            // 获取选择的日期、状态和类型
             const selectedDate = document.getElementById('taskDateFilter').value;
             const selectedStatus = document.getElementById('taskStatusFilter').value;
+            const selectedType = document.getElementById('taskTypeFilter').value;
             
-            // 构建请求URL，添加日期和状态参数
+            // 构建请求URL，添加日期、状态和类型参数
             let url = '/api/task_queue/all_tasks';
             let params = [];
             if (selectedDate) {
@@ -309,6 +327,9 @@
             }
             if (selectedStatus && selectedStatus !== 'all') {
                 params.push('status=' + selectedStatus);
+            }
+            if (selectedType && selectedType !== 'all') {
+                params.push('task_type=' + selectedType);
             }
             
             if (params.length > 0) {
