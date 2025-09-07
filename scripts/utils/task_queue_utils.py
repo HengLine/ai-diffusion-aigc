@@ -29,6 +29,7 @@ class Task:
         self.status = "queued"      # 任务状态: queued, running, completed, failed
         self.output_filename = None  # 任务输出文件名
         self.task_msg = None        # 任务消息，用于存储错误或状态信息
+        self.execution_count = 0    # 任务执行次数，默认为0
 
     def __lt__(self, other):
         # 任务排序基于时间戳，确保先进先出
@@ -70,8 +71,30 @@ class TaskQueueManager:
         self.worker_thread.daemon = True
         self.worker_thread.start()
         
+        # 加载今天排队中的任务到队列
+        queued_tasks_added = 0
+        with self.lock:
+            # 获取今天的日期
+            today_date = datetime.now().strftime('%Y-%m-%d')
+            
+            # 筛选今天且状态为queued的任务
+            today_queued_tasks = []
+            for task in self.task_history.values():
+                task_date = datetime.fromtimestamp(task.timestamp).strftime('%Y-%m-%d')
+                if task_date == today_date and task.status == "queued":
+                    today_queued_tasks.append(task)
+            
+            # 按时间戳排序
+            today_queued_tasks.sort(key=lambda x: x.timestamp)
+            
+            # 将任务加入队列
+            for task in today_queued_tasks:
+                self.task_queue.put(task)
+                queued_tasks_added += 1
+        
         info(f"任务队列管理器已启动，最大并发任务数: {max_concurrent_tasks}")
         info(f"已加载任务历史记录: {len(self.task_history)} 个任务")
+        info(f"已将今天 {queued_tasks_added} 个排队中的任务添加到队列")
     
     def enqueue_task(self, task_type: str, params: Dict[str, Any], callback: Callable) -> Tuple[str, int, float]:
         """
@@ -86,21 +109,43 @@ class TaskQueueManager:
             Tuple[str, int, float]: (任务ID, 队列中的位置, 预估等待时间(秒))
         """
         with self.lock:
-            # 生成唯一任务ID
-            task_id = str(uuid.uuid4())
+            # 检查任务参数中是否已提供task_id
+            task_id = params.get('task_id')
             timestamp = time.time()
             
-            # 创建任务对象
-            task = Task(
-                task_type=task_type,
-                task_id=task_id,
-                timestamp=timestamp,
-                params=params,
-                callback=callback
-            )
-            
-            # 将任务加入队列
-            self.task_queue.put(task)
+            # 如果没有提供task_id或该task_id不存在，则生成新的唯一ID
+            if not task_id or task_id not in self.task_history:
+                task_id = str(uuid.uuid4())
+                
+                # 创建新任务对象
+                task = Task(
+                    task_type=task_type,
+                    task_id=task_id,
+                    timestamp=timestamp,
+                    params=params,
+                    callback=callback
+                )
+                
+                # 将任务加入队列
+                self.task_queue.put(task)
+                
+                info(f"新任务已加入队列: {task_id}, 类型: {task_type}")
+            else:
+                # 如果task_id已存在，则更新现有任务
+                task = self.task_history[task_id]
+                # 更新任务参数
+                task.params.update(params)
+                # 更新时间戳
+                task.timestamp = timestamp
+                # 重置任务状态为排队中
+                task.status = "queued"
+                # 重置执行时间
+                task.start_time = None
+                task.end_time = None
+                # 将任务重新加入队列
+                self.task_queue.put(task)
+                
+                info(f"任务已更新并重新加入队列: {task_id}, 类型: {task_type}")
             
             # 计算队列中的位置（包括正在运行的任务）
             queue_position = len(self.running_tasks) + self.task_queue.qsize()
@@ -113,8 +158,6 @@ class TaskQueueManager:
             
             # 保存任务历史
             self._save_task_history()
-            
-            info(f"任务已加入队列: {task_id}, 类型: {task_type}, 队列位置: {queue_position}, 预估等待时间: {waiting_time:.1f}秒")
             
             return task_id, queue_position, waiting_time
     
@@ -153,9 +196,10 @@ class TaskQueueManager:
                     # 获取下一个任务
                     task = self.task_queue.get()
                     
-                    # 更新任务状态
+                    # 更新任务状态和执行次数
                     task.status = "running"
                     task.start_time = time.time()
+                    task.execution_count += 1  # 执行次数加1
                     self.running_tasks[task.task_id] = task
                     
                     # 记录到历史
@@ -355,11 +399,23 @@ class TaskQueueManager:
     def shutdown(self):
         """关闭任务队列管理器"""
         self.running = False
-        # 保存任务历史
-        self._save_task_history()
+        
+        # 将队列中排队的任务添加到任务历史记录中
+        with self.lock:
+            temp_tasks = []
+            while not self.task_queue.empty():
+                task = self.task_queue.get()
+                temp_tasks.append(task)
+                # 将任务添加到历史记录，保持"queued"状态
+                self.task_history[task.task_id] = task
+                info(f"将排队任务添加到历史记录: {task.task_id}, 类型: {task.task_type}")
+            
+            # 保存任务历史
+            self._save_task_history()
+            
         if self.worker_thread.is_alive():
             self.worker_thread.join(timeout=5)
-        info("任务队列管理器已关闭")
+        info("任务队列管理器已关闭，已保存所有排队任务到历史记录")
         
     def _save_task_history(self):
         """保存任务历史到按日期分类的文件"""
@@ -379,7 +435,8 @@ class TaskQueueManager:
                     'timestamp': task.timestamp,
                     'params': task.params,
                     'status': task.status,
-                    'output_filename': task.output_filename
+                    'output_filename': task.output_filename,
+                    'execution_count': task.execution_count
                 }
                 
                 # 添加任务消息
@@ -474,6 +531,9 @@ class TaskQueueManager:
                         if 'end_time' in task_data:
                             task.end_time = task_data['end_time']
                         
+                        # 恢复执行次数
+                        task.execution_count = task_data.get('execution_count', 1)
+                        
                         # 将任务添加到历史记录
                         self.task_history[task.task_id] = task
                         total_tasks += 1
@@ -510,7 +570,8 @@ class TaskQueueManager:
                     "task_type": task.task_type,
                     "status": task.status,
                     "timestamp": task.timestamp,
-                    "queue_position": len(self.running_tasks) + self.task_queue.qsize()
+                    "queue_position": len(self.running_tasks) + self.task_queue.qsize(),
+                    "execution_count": task.execution_count
                 }
                 
                 # 添加任务消息

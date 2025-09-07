@@ -30,7 +30,7 @@ def get_task_queue_status():
         all_tasks = task_queue_manager.get_all_tasks(date=date)
         
         # 过滤未完成任务（状态为queued或running）
-        unfinished_tasks = [task for task in all_tasks if task['status'] in ['queued', 'running']]
+        unfinished_tasks = [task for task in all_tasks if task['status'] in ['queued', 'running', 'failed']]
         
         # 如果提供了任务类型参数，则进一步过滤
         if task_type and task_type != 'all':

@@ -38,11 +38,23 @@
         letter-spacing: 0.5px;
         border-bottom: 2px solid #3498db;
         padding-bottom: 8px;
-        display: inline-block;
+        width: 100%;
+        text-align: center !important;
     }
     
-    /* 标题居中 */
+    /* 标题居中 - 使用继承方式让标题居中 */
     .footer-info, .footer-links, .footer-contact {
+        text-align: left;
+    }
+    
+    /* 确保标题居中显示 */
+    .footer-info h3,
+    .footer-info h4,
+    .footer-links h3,
+    .footer-links h4,
+    .footer-contact h3,
+    .footer-contact h4,
+    .footer-title {
         text-align: center;
     }
     
@@ -173,8 +185,8 @@
         <div class="footer-contact">
             <h4 class="footer-title">联系我</h4>
             <p class="footer-text">如有任何问题或建议，请随时联系我。</p>
-            <p class="footer-text">我的邮箱：<a href="mailto:haeng2030@gmail.com" target="_blank" style="color:rgba(27, 6, 164, 0.945);">haeng2030@gmail.com</a></p>
-            <p class="footer-text">个人博客：<a href="https://hangline.github.io" target="_blank" style="color:rgba(187, 7, 7, 0.8531);">https://hangline.github.io</a></p>
+            <p class="footer-text">我的邮箱：<a href="mailto:haeng2030@gmail.com" target="_blank" style="color:rgba(174, 183, 19, 0.945);">haeng2030@gmail.com</a></p>
+            <p class="footer-text">个人博客：<a href="https://hangline.github.io" target="_blank" style="color:rgba(18, 198, 221, 0.948);">https://hangline.github.io</a></p>
         </div>
     </div>
     <div class="footer-bottom">

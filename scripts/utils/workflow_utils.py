@@ -179,7 +179,7 @@ class WorkflowManager:
             
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
-                warning("ComfyUI服务器连接异常，将任务重新加入队列")
+                warning("ComfyUI服务器连接异常，将任务放入任务记录")
                 return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
             
             # 运行工作流
@@ -311,7 +311,7 @@ class WorkflowManager:
             
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
-                warning("ComfyUI服务器连接异常，将任务重新加入队列")
+                warning("ComfyUI服务器连接异常，将任务放入任务记录")
                 return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
             
             # 运行工作流
@@ -422,7 +422,7 @@ class WorkflowManager:
             
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
-                warning("ComfyUI服务器连接异常，将任务重新加入队列")
+                warning("ComfyUI服务器连接异常，将任务放入任务记录")
                 return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
             
             # 返回模拟结果（实际项目中应该调用工作流）
@@ -557,7 +557,7 @@ class WorkflowManager:
             
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
-                warning("ComfyUI服务器连接异常，将任务重新加入队列")
+                warning("ComfyUI服务器连接异常，将任务放入任务记录")
                 return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
             
             # 运行工作流

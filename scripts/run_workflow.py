@@ -287,7 +287,7 @@ class ComfyUIRunner:
     def _check_server_running(self) -> bool:
         """检查ComfyUI服务器是否正在运行"""
         try:
-            response = requests.get(f"{self.api_url}/system_stats", timeout=2)
+            response = requests.get(f"{self.api_url}/system_stats", timeout=3)
             return response.status_code == 200
         except:
             return False

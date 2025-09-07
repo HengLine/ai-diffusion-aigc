@@ -11,6 +11,8 @@ import uuid
 import time
 import shutil
 import datetime
+import signal
+import threading
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from werkzeug.utils import secure_filename
 
@@ -45,6 +47,9 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_FOLDER = os.path.join(project_root, config.get('paths', {}).get('temp_folder', 'uploads'))
 OUTPUT_FOLDER = os.path.join(project_root, config.get('paths', {}).get('output_folder', 'outputs'))
 TEMP_FOLDER = os.path.join(project_root, 'temp')  # 使用固定的临时目录
+
+# 全局变量存储任务队列管理器
+from scripts.utils.task_queue_utils import task_queue_manager
 
 # 确保目录存在
 for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, TEMP_FOLDER]:
@@ -118,6 +123,35 @@ def serve_output(filename):
     """提供输出文件的路由"""
     return send_from_directory(OUTPUT_FOLDER, filename)
 
+def handle_shutdown(signum, frame):
+    """处理终止信号的回调函数"""
+    info("接收到终止信号，正在异步关闭任务队列管理器...")
+    
+    # 异步调用shutdown方法
+    shutdown_thread = threading.Thread(target=task_queue_manager.shutdown)
+    shutdown_thread.daemon = True
+    shutdown_thread.start()
+    
+    # 等待一段时间让异步关闭有时间完成
+    time.sleep(2)
+    
+    # 停止ComfyUI服务器
+    global runner, server_process
+    if server_process and runner:
+        runner.stop_comfyui_server(server_process)
+        server_process = None
+        runner = None
+    
+    info("服务正在关闭...")
+    
+    # 如果是Werkzeug服务器，尝试优雅关闭
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is not None:
+        func()
+    else:
+        # 如果不是Werkzeug服务器，强制退出
+        sys.exit(0)
+
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
     """关闭服务器的路由"""
@@ -128,6 +162,11 @@ def shutdown():
         server_process = None
         runner = None
     
+    # 异步调用shutdown方法
+    shutdown_thread = threading.Thread(target=task_queue_manager.shutdown)
+    shutdown_thread.daemon = True
+    shutdown_thread.start()
+    
     # 关闭Flask服务器
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
@@ -136,5 +175,22 @@ def shutdown():
     return 'Server shutting down...'
 
 if __name__ == '__main__':
+    # 注册信号处理函数
+    if sys.platform != 'win32':  # Windows系统不支持SIGTERM和SIGINT
+        signal.signal(signal.SIGTERM, handle_shutdown)
+        signal.signal(signal.SIGINT, handle_shutdown)
+    else:
+        # Windows系统的信号处理
+        try:
+            # 尝试使用win32api注册信号处理（如果安装了pywin32）
+            import win32api
+            def win_handler(event):
+                handle_shutdown(None, None)
+                return True
+            win32api.SetConsoleCtrlHandler(win_handler, True)
+        except ImportError:
+            # 如果没有安装pywin32，使用简单的信号处理方式
+            signal.signal(signal.SIGINT, handle_shutdown)
+    
     # 启动Flask应用
     app.run(debug=True, host='0.0.0.0', port=5000)
