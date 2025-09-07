@@ -443,13 +443,7 @@
                     setupSliderSync('stepsSlider', 'steps');
                     setupSliderSync('cfgScaleSlider', 'cfg_scale');
                     
-                    form.addEventListener('submit', function() {
-                        // 禁用按钮防止重复点击
-                        generateButton.disabled = true;
-                        generateButton.textContent = '生成中...';
-                        // 显示加载指示器
-                        loadingIndicator.style.display = 'block';
-                    });
+                    
                 });
                 
                 // 添加加载动画样式
@@ -499,7 +493,7 @@
                     
                     // 验证提示词不能为空
                     if (!prompt.trim()) {
-                        alert('请输入提示词！');
+                        showNotification('请输入提示词！', 'warning', 3000);
                         return;
                     }
                     
@@ -563,7 +557,7 @@
                             loadingIndicator.style.display = 'none';
                         }
                     } catch (error) {
-                        alert(`请求失败: ${error.message}`);
+                        showNotification(`请求失败: ${error.message}`, 'error', 3000);
                         // 恢复按钮状态
                         generateButton.disabled = false;
                         generateButton.textContent = '生成图像';

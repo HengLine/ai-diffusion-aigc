@@ -44,7 +44,7 @@ class ComfyUIRunner:
         
         # 根据操作系统选择启动命令
         if sys.platform == 'win32':
-            cmd = ["python", "comfyui.exe"]
+            cmd = ["comfyui.exe"]
         else:
             cmd = ["python", "main.py"]
         
@@ -213,7 +213,7 @@ class ComfyUIRunner:
             server_running = self._check_server_running()
             if not server_running:
                 info("ComfyUI服务器未运行，正在启动...")
-                server_process = self.start_comfyui_server()
+                # server_process = self.start_comfyui_server()
                 if not self._check_server_running():
                     error("无法启动ComfyUI服务器，请手动启动后再试")
                     return False

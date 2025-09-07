@@ -468,6 +468,13 @@
                     <span style="margin-left: 10px;">正在生成图像，请稍候...</span>
                 </div>
             </div>
+            
+            <!-- 结果显示区域 -->
+            <div class="result-container" style="margin-top: 20px; padding: 15px; border: 1px solid #e9ecef; border-radius: 4px; background-color: #f8f9fa; display: none;">
+                <h3>生成结果</h3>
+                <div class="generated-images" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+                <div class="result-actions" style="margin-top: 15px; display: flex; gap: 10px;"></div>
+            </div>
 
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -563,12 +570,12 @@
                     const prompt = document.getElementById('prompt').value;
                     
                     if (!imageFile) {
-                        alert('请上传一张图片！');
+                        showNotification('请上传一张图片！', 'warning', 3000);
                         return;
                     }
                     
                     if (!prompt.trim()) {
-                        alert('请输入提示词！');
+                        showNotification('请输入提示词！', 'warning', 3000);
                         return;
                     }
                     
@@ -592,10 +599,8 @@
                             showAutoCloseNotification('任务提交成功，请在"我的任务"中查看进度', 2000);
                             // 刷新任务队列状态
                             updateQueueStatus();
-                            // 开始轮询任务状态
-                            startTaskPolling(data.task_id);
                         } else {
-                            alert(data.message || '生成失败，请重试');
+                            showNotification(data.message || '生成失败，请重试', 'error', 3000);
                         }
                         
                         // 恢复按钮状态
@@ -605,7 +610,7 @@
                     })
                     .catch(error => {
                         console.error('请求失败:', error);
-                        alert('生成请求失败，请重试');
+                        showNotification('生成请求失败，请重试', 'error', 3000);
                         
                         // 恢复按钮状态
                         showLoading(false);
@@ -614,34 +619,7 @@
                     });
                 });
             });
-            
-            // 任务轮询功能
-            function startTaskPolling(taskId) {
-                // 调用公共组件中的轮询函数
-                pollTaskStatus(taskId, {
-                    completed: function(data) {
-                        // 处理完成的任务
-                        if (data.images && data.images.length > 0) {
-                            const resultContainer = document.querySelector('.result-container');
-                            if (resultContainer) {
-                                resultContainer.innerHTML = '';
-                                
-                                data.images.forEach((image, index) => {
-                                    const imgElement = document.createElement('img');
-                                    imgElement.src = image;
-                                    imgElement.alt = `生成结果 ${index + 1}`;
-                                    imgElement.classList.add('generated-image');
-                                    resultContainer.appendChild(imgElement);
-                                });
-                            }
-                        }
-                    },
-                    failed: function(error) {
-                        showNotification('任务失败: ' + error.message, 'error');
-                    }
-                });
-            }
-                
+             
                 // 添加加载动画样式
                 const style = document.createElement('style');
                 style.textContent = `

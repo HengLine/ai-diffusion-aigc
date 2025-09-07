@@ -1,7 +1,7 @@
 <!-- 自动关闭通知组件 -->
 <script>
 // 自动关闭通知函数
-function showAutoCloseNotification(message, duration = 2000) {
+function showAutoCloseNotification(message, type = 'success', duration = 2000) {
     // 检查通知元素是否存在，不存在则创建
     let notificationContainer = document.getElementById('notificationContainer');
     if (!notificationContainer) {
@@ -9,7 +9,7 @@ function showAutoCloseNotification(message, duration = 2000) {
         notificationContainer.id = 'notificationContainer';
         notificationContainer.style.cssText = `
             position: fixed;
-            top: 20px;
+            bottom: 20px;
             right: 20px;
             z-index: 1000;
             display: flex;
@@ -19,18 +19,24 @@ function showAutoCloseNotification(message, duration = 2000) {
         document.body.appendChild(notificationContainer);
     }
     
+    // 根据通知类型设置不同的背景颜色
+    let backgroundColor = '#28a745'; // 成功 - 绿色
+    if (type === 'error') backgroundColor = '#dc3545'; // 错误 - 红色
+    if (type === 'warning') backgroundColor = '#ffc107'; // 警告 - 黄色
+    if (type === 'info') backgroundColor = '#17a2b8'; // 信息 - 蓝色
+    
     // 创建通知元素
     const notification = document.createElement('div');
-    notification.className = 'notification';
+    notification.className = 'notification notification-' + type;
     notification.style.cssText = `
-        background-color: #28a745;
+        background-color: ${backgroundColor};
         color: white;
         padding: 15px 20px;
         border-radius: 6px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         max-width: 300px;
         opacity: 0;
-        transform: translateX(100%);
+        transform: translateY(100%);
         transition: opacity 0.3s ease, transform 0.3s ease;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-size: 14px;
@@ -42,13 +48,13 @@ function showAutoCloseNotification(message, duration = 2000) {
     // 触发重排后应用过渡效果
     setTimeout(() => {
         notification.style.opacity = '1';
-        notification.style.transform = 'translateX(0)';
+        notification.style.transform = 'translateY(0)';
     }, 10);
     
     // 设置自动关闭
     setTimeout(() => {
         notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
+        notification.style.transform = 'translateY(100%)';
         // 过渡结束后移除元素
         setTimeout(() => {
             if (notification.parentNode === notificationContainer) {

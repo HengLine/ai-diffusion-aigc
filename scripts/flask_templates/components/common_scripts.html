@@ -10,6 +10,7 @@ function showNotification(message, type = 'info', duration = 3000) {
     // 确保notification组件已加载
     if (!window.showAutoCloseNotification) {
         console.warn('Notification system not initialized');
+        // 作为后备方案，仍然使用alert以确保消息能被用户看到
         alert(message);
         return;
     }

@@ -484,12 +484,12 @@
                             }
                         });
                     } else {
-                        alert('获取任务结果失败: ' + (data.message || '未知错误'));
+                        showNotification('获取任务结果失败: ' + (data.message || '未知错误'), 'error', 3000);
                     }
                 })
                 .catch(error => {
                     console.error('获取任务结果失败:', error);
-                    alert('获取任务结果失败，请稍后重试');
+                    showNotification('获取任务结果失败，请稍后重试', 'error', 3000);
                 });
         };
         
