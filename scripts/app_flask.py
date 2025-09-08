@@ -40,7 +40,8 @@ app = Flask(__name__, template_folder='flask_templates')
 
 # 从配置文件读取Flask配置
 app.secret_key = config.get('flask', {}).get('secret_key', 'default-fallback-key')
-app.debug = config.get('flask', {}).get('debug', False)
+# 不再从配置文件读取debug设置，直接在app.run()中设置
+# app.debug = config.get('flask', {}).get('debug', False)
 
 # 从配置文件读取路径配置
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -201,4 +202,4 @@ if __name__ == '__main__':
     task_monitor.start()
     
     # 启动Flask应用
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)

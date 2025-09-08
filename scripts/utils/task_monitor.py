@@ -7,17 +7,19 @@
 import threading
 import time
 import datetime
+import os
+import uuid
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
 
 # 导入自定义日志模块
-from .logger import info, error, debug, warning
+from scripts.utils.logger import info, error, debug, warning
 # 导入任务队列管理器
-from .task_queue_utils import task_queue_manager
+from scripts.utils.task_queue_utils import task_queue_manager
 # 导入工作流运行器
 from scripts.run_workflow import ComfyUIRunner
 # 导入配置
-from .workflow_utils import config
+from scripts.utils.workflow_utils import config
 # 导入邮件发送工具
 from scripts.utils.email_utils import EmailSender, init_email_sender, send_email
 
@@ -38,6 +40,9 @@ class TaskMonitor:
         self.comfyui_runner = None
         self.max_execution_count = 3  # 最大执行次数
         self.max_runtime_hours = 2  # 最大运行时间（小时）
+        self.instance_id = str(uuid.uuid4())[:8]  # 生成一个简短的实例ID
+        self.process_id = os.getpid()  # 获取当前进程ID
+        self._task_check_lock = threading.Lock()  # 添加线程锁以防止并发执行
     
     def start(self):
         """启动任务监控器"""
@@ -46,16 +51,19 @@ class TaskMonitor:
             return
         
         # 初始化ComfyUI运行器
-        comfyui_path = config.get('comfyui', {}).get('path', '')
-        output_dir = config.get('paths', {}).get('output_folder', 'outputs')
-        self.comfyui_runner = ComfyUIRunner(comfyui_path, output_dir, self.comfyui_api_url)
+        # comfyui_path = config.get('comfyui', {}).get('path', '')
+        # output_dir = config.get('paths', {}).get('output_folder', 'outputs')
+        # self.comfyui_runner = ComfyUIRunner(comfyui_path, output_dir, self.comfyui_api_url)
         
         self.running = True
-        self.monitor_thread = threading.Thread(target=self._monitor_loop)
+        self.monitor_thread = threading.Thread(target=self._monitor_loop, name=f"TaskMonitorThread-{self.instance_id}")
         self.monitor_thread.daemon = True
         self.monitor_thread.start()
         
-        info(f"任务监控器已启动，检查间隔：{self.check_interval}秒")
+        current_thread = threading.current_thread()
+        info(f"任务监控器已启动，检查间隔：{self.check_interval}秒 - 实例ID: {self.instance_id}, 进程ID: {self.process_id}")
+        info(f"启动线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
+        info(f"监控线程ID: {self.monitor_thread.ident}, 线程名称: {self.monitor_thread.name}")
     
     def stop(self):
         """停止任务监控器"""
@@ -71,6 +79,9 @@ class TaskMonitor:
     
     def _monitor_loop(self):
         """监控循环"""
+        current_thread = threading.current_thread()
+        info(f"监控循环开始执行 - 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
+        
         while self.running:
             try:
                 self._check_tasks()
@@ -82,39 +93,53 @@ class TaskMonitor:
                 if not self.running:
                     break
                 time.sleep(1)
+            
+        info(f"任务监控器线程已退出 - 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
     
     def _check_tasks(self):
         """检查任务状态"""
-        info("开始检查任务状态")
+        # 获取当前线程信息
+        current_thread = threading.current_thread()
         
-        # 获取今天的日期
-        today_date = datetime.now().strftime('%Y-%m-%d')
+        # 尝试获取锁，如果获取失败，说明已有线程在执行，直接返回
+        if not self._task_check_lock.acquire(blocking=False):
+            debug(f"跳过任务检查 - 已有线程在执行检查，实例ID: {self.instance_id}, 进程ID: {self.process_id}, 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
+            return
         
-        # 获取今天的所有任务
-        today_tasks = task_queue_manager.get_all_tasks(date=today_date)
-        
-        # 筛选执行次数不超过3次的任务
-        eligible_tasks = [task for task in today_tasks if task.get('execution_count', 0) <= self.max_execution_count]
-        
-        info(f"找到{len(eligible_tasks)}个符合条件的任务（执行次数<={self.max_execution_count}）")
-        
-        for task_info in eligible_tasks:
-            task_id = task_info.get('task_id')
-            status = task_info.get('status')
-            execution_count = task_info.get('execution_count', 0)
+        try:
+            info(f"开始检查任务状态 - 实例ID: {self.instance_id}, 进程ID: {self.process_id}, 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
             
-            if not task_id or not status:
-                continue
+            # 获取今天的日期
+            today_date = datetime.now().strftime('%Y-%m-%d')
             
-            try:
-                if status == "failed":
-                    # 处理失败的任务
-                    self._handle_failed_task(task_id, task_info, execution_count)
-                elif status == "running":
-                    # 处理运行中的任务
-                    self._handle_running_task(task_id, task_info)
-            except Exception as e:
-                error(f"处理任务 {task_id} 时出错: {str(e)}")
+            # 获取今天的所有任务
+            today_tasks = task_queue_manager.get_all_tasks(date=today_date)
+            
+            # 筛选执行次数不超过3次的任务
+            eligible_tasks = [task for task in today_tasks if task.get('execution_count', 0) <= self.max_execution_count]
+            
+            info(f"找到{len(eligible_tasks)}个符合条件的任务（执行次数<={self.max_execution_count}）")
+            
+            for task_info in eligible_tasks:
+                task_id = task_info.get('task_id')
+                status = task_info.get('status')
+                execution_count = task_info.get('execution_count', 0)
+                
+                if not task_id or not status:
+                    continue
+                
+                try:
+                    if status == "failed":
+                        # 处理失败的任务
+                        self._handle_failed_task(task_id, task_info, execution_count)
+                    elif status == "running":
+                        # 处理运行中的任务
+                        self._handle_running_task(task_id, task_info)
+                except Exception as e:
+                    error(f"处理任务 {task_id} 时出错: {str(e)}")
+        finally:
+            # 确保锁被释放
+            self._task_check_lock.release()
     
     def _handle_failed_task(self, task_id: str, task_info: Dict[str, Any], execution_count: int):
         """处理失败的任务"""

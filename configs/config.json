@@ -1,7 +1,7 @@
 {
   "flask": {
     "secret_key": "your-secret-key-here",
-    "debug": true,
+    "debug": false,
     "allowed_extensions": [
       "png",
       "jpg",

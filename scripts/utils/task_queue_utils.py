@@ -234,7 +234,7 @@ class TaskQueueManager:
                     # 如果ComfyUI服务器连接失败，将任务标记为连接异常状态
                     info(f"任务执行失败，ComfyUI服务器连接异常: {task.task_id}")
                     task.status = "failed"
-                    task.task_msg = "ComfyUI 工作流连接超时"
+                    task.task_msg = "ComfyUI 工作流连接超时，请检查ComfyUI服务器是否运行，或配置中URL是否修改。"
                     task.end_time = time.time()
                     # 从running_tasks中移除
                     if task.task_id in self.running_tasks:
