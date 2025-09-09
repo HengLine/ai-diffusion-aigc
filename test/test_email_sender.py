@@ -11,8 +11,8 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入邮件发送工具
-from scripts.utils.email_utils import EmailSender, init_email_sender, send_email
-from scripts.utils.logger import info, error
+from hengline.utils.email_utils import EmailSender, init_email_sender, send_email
+from hengline.utils.logger import info, error
 
 # 读取配置文件
 def load_config():

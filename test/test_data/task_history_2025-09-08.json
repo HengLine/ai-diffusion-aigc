@@ -1,0 +1,13 @@
+[
+  {
+    "task_id": "test_queued_task_1757345590",
+    "task_type": "text_to_image",
+    "timestamp": 1757345590.333109,
+    "params": {
+      "prompt": "test"
+    },
+    "status": "queued",
+    "output_filename": null,
+    "execution_count": 1
+  }
+]

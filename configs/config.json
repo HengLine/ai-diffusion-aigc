@@ -23,40 +23,7 @@
   "comfyui": {
     "path": "E:\\Projects\\AI\\ComfyUI",
     "api_url": "http://127.0.0.1:8188",
-    "auto_start_server": true
-  },
-  "models": {
-    "stable_diffusion": {
-      "path": "",
-      "default_model": "v1-5-pruned-emaonly.safetensors",
-      "vae": "vae-ft-mse-840000-ema-pruned.safetensors"
-    },
-    "stable_video_diffusion": {
-      "path": "",
-      "default_model": "svd.safetensors"
-    },
-    "flux": {
-      "path": "",
-      "default_model": "flux1-schnell.safetensors"
-    },
-    "controlnet": {
-      "path": "",
-      "models": [
-        "control_v11p_sd15_canny.pth",
-        "control_v11p_sd15_openpose.pth"
-      ]
-    },
-    "loras": {
-      "path": "",
-      "presets": {
-        "ancient_clothing": [
-          "ancient_clothing_lora.safetensors"
-        ],
-        "sci_fi": [
-          "sci_fi_lora.safetensors"
-        ]
-      }
-    }
+    "auto_start_server": false
   },
   "output": {
     "dir": "outputs",
@@ -71,7 +38,7 @@
   },
   "user": {
     "email": "haeng2015@foxmail.com",
-    "nickname": "haengo",
+    "nickname": "haeng2015",
     "avatar": "default_avatar.png",
     "preferred_language": "zh-CN",
     "organization": ""

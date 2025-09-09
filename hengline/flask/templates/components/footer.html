@@ -1,0 +1,195 @@
+<!-- 页脚组件 -->
+<style>
+    /* 页脚样式 - 统一字体和间距 */
+    footer {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        padding: 2rem 0;
+        margin-top: 3rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.5;
+    }
+    
+    .footer-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .footer-info,
+    .footer-links,
+    .footer-contact {
+        flex: 1;
+        min-width: 250px;
+        margin-bottom: 2rem;
+        padding: 0 15px;
+    }
+    
+    /* 统一标题样式 */
+    .footer-title {
+        color: white;
+        margin-top: 0;
+        margin-bottom: 1.2rem;
+        font-size: 1.3rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 8px;
+        width: 100%;
+        text-align: center !important;
+    }
+    
+    /* 标题居中 - 使用继承方式让标题居中 */
+    .footer-info, .footer-links, .footer-contact {
+        text-align: left;
+    }
+    
+    /* 确保标题居中显示 */
+    .footer-info h3,
+    .footer-info h4,
+    .footer-links h3,
+    .footer-links h4,
+    .footer-contact h3,
+    .footer-contact h4,
+    .footer-title {
+        text-align: center;
+    }
+    
+    /* 统一段落样式 */
+    .footer-text {
+        color: #bdc3c7;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    
+    /* 链接样式优化 - 每行显示三个链接 */
+    .footer-links ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem 1rem;
+    }
+    
+    .footer-links li {
+        margin-bottom: 0;
+    }
+    
+    .footer-links a {
+        color: #bdc3c7;
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        display: inline-block;
+        position: relative;
+        padding-left: 12px;
+        white-space: nowrap;
+    }
+    
+    .footer-links a:before {
+        content: "▶";
+        position: absolute;
+        left: 0;
+        color: #3498db;
+        font-size: 0.7rem;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.3s ease;
+    }
+    
+    .footer-links a:hover {
+        color: white;
+        transform: translateX(5px);
+    }
+    
+    .footer-links a:hover:before {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    
+    /* 底部版权信息 */
+    .footer-bottom {
+        background-color: #34495e;
+        padding: 1.2rem 0;
+        text-align: center;
+        border-top: 1px solid #4a5f7a;
+    }
+    
+    .footer-bottom p {
+        margin: 0;
+        color: #bdc3c7;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+    
+    /* 响应式设计优化 */
+    @media (max-width: 768px) {
+        .footer-container {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .footer-info,
+        .footer-links,
+        .footer-contact {
+            margin-bottom: 2rem;
+            padding: 0 10px;
+        }
+        
+        .footer-title {
+            font-size: 1.2rem;
+        }
+        
+        .footer-links a {
+            padding-left: 0;
+        }
+        
+        .footer-links ul {
+            grid-template-columns: 1fr;
+            gap: 0.8rem 0;
+        }
+        
+        .footer-links a:before {
+            display: none;
+        }
+        
+        .footer-links a:hover {
+            transform: none;
+        }
+    }
+</style>
+
+<footer>
+    <div class="footer-container">
+        <div class="footer-info">
+            <h3 class="footer-title">AIGC创意平台</h3>
+            <p class="footer-text">一个集成了文生图、图生图、文生视频和图生视频功能的创意平台，为您提供全方位的AI创作体验。</p>
+            <p class="footer-text">如果需要定制化功能或有任何问题，请联系我。</p>
+        </div>
+        <div class="footer-links">
+            <h4 class="footer-title">快速链接</h4>
+            <ul>
+                <li><a href="/">首页</a></li>
+                <li><a href="/config">配置</a></li>
+                <li><a href="/text_to_image">文生图</a></li>
+                <li><a href="/image_to_image">图生图</a></li>
+                <li><a href="/text_to_video">文生视频</a></li>
+                <li><a href="/image_to_video">图生视频</a></li>
+            </ul>
+        </div>
+        <div class="footer-contact">
+            <h4 class="footer-title">联系我</h4>
+            <p class="footer-text">如有任何问题或建议，请随时联系我。</p>
+            <p class="footer-text">我的邮箱：<a href="mailto:haeng2030@gmail.com" target="_blank" style="color:rgba(174, 183, 19, 0.945);">haeng2030@gmail.com</a></p>
+            <p class="footer-text">个人博客：<a href="https://pengline.github.io" target="_blank" style="color:rgba(18, 198, 221, 0.948);">https://pengline.github.io</a></p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2025 AIGC 创意平台. PengLine 保留所有权利.</p>
+    </div>
+</footer>
