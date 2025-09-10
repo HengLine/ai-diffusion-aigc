@@ -683,8 +683,8 @@
             generateButton.textContent = '生成中...';
             
             // 使用公共组件中的submitForm函数提交表单
-            submitForm('/api/image_to_video', formData, {
-                success: function(data) {
+            submitForm('/api/image_to_video', formData, 'POST')
+                .then(function(data) {
                     // 提交成功处理
                     showLoading(false);
                     showNotification('任务已提交到队列，请在"我的任务"中查看进度', 'success');
@@ -693,8 +693,8 @@
                     generateButton.disabled = false;
                     generateButton.textContent = '生成视频';
                     progressInfo.classList.remove('show');
-                },
-                error: function(error) {
+                })
+                .catch(function(error) {
                     // 提交失败处理
                     showLoading(false);
                     showNotification('提交失败: ' + error.message, 'error');
@@ -703,8 +703,7 @@
                     generateButton.disabled = false;
                     generateButton.textContent = '生成视频';
                     progressInfo.classList.remove('show');
-                }
-            });
+                });
         });
         
         // 启动任务队列状态轮询

@@ -335,6 +335,11 @@ class TaskQueueManager:
                     task.status = "failed"
                     task.task_msg = f"任务执行未返回结果: {task.task_id}"
                     task.end_time = time.time()
+                elif isinstance(result, dict) and not result.get('success', True):
+                    # 任务返回结果但标记为失败
+                    task.status = "failed"
+                    task.task_msg = result.get('message', '任务执行失败')
+                    task.end_time = time.time()
                 else:
                     task.status = "completed"
                     task.end_time = time.time()

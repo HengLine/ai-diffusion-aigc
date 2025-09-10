@@ -298,7 +298,8 @@
         const taskList = document.getElementById('taskList');
         
         // 打开模态框
-        window.openTaskModal = function() {
+        // 修改openTaskModal函数以接受taskType参数
+        window.openTaskModal = function(taskType) {
             taskModal.style.display = 'block';
             
             // 设置日期选择框默认值为今天
@@ -317,10 +318,23 @@
                 loadTaskList();
             });
             
-            // 添加类型变化事件监听
-            document.getElementById('taskTypeFilter').addEventListener('change', function() {
-                loadTaskList();
-            });
+            // 设置任务类型筛选框
+            const taskTypeFilter = document.getElementById('taskTypeFilter');
+            if (taskTypeFilter) {
+                // 如果提供了taskType参数且存在对应的选项，则设置它
+                if (taskType && taskType !== 'all') {
+                    // 检查选择框是否包含该选项
+                    const optionExists = Array.from(taskTypeFilter.options).some(option => option.value === taskType);
+                    if (optionExists) {
+                        taskTypeFilter.value = taskType;
+                    }
+                }
+                
+                // 添加类型变化事件监听
+                taskTypeFilter.addEventListener('change', function() {
+                    loadTaskList();
+                });
+            }
             
             loadTaskList();
         };

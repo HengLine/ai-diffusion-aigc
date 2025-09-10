@@ -383,9 +383,29 @@ function loadTaskList() {
 // 为任务按钮添加点击事件 - 使用完整的功能实现
 function openTaskModalWrapper() {
     try {
+        // 获取当前页面的任务类型
+        const currentTaskType = getCurrentTaskType();
+        console.log('当前页面任务类型:', currentTaskType);
+        
         // 首先检查全局的openTaskModal函数是否存在
         if (typeof window.openTaskModal === 'function') {
-            window.openTaskModal();
+            // 扩展window.openTaskModal函数以接受taskType参数
+            if (window.openTaskModal.length > 0) {
+                window.openTaskModal(currentTaskType);
+            } else {
+                // 如果原始函数不接受参数，先调用它，然后再设置任务类型
+                window.openTaskModal();
+                // 延迟设置任务类型，确保模态框已完全加载
+                setTimeout(() => {
+                    const taskTypeFilter = document.getElementById('taskTypeFilter');
+                    if (taskTypeFilter && currentTaskType && currentTaskType !== 'all') {
+                        taskTypeFilter.value = currentTaskType;
+                        // 触发加载任务列表
+                        const loadTaskListEvent = new Event('change');
+                        taskTypeFilter.dispatchEvent(loadTaskListEvent);
+                    }
+                }, 100);
+            }
             return;
         }
         
@@ -418,6 +438,15 @@ function openTaskModalWrapper() {
             // 添加状态变化事件监听
             statusFilter.removeEventListener('change', loadTaskList); // 防止重复添加
             statusFilter.addEventListener('change', loadTaskList);
+        }
+        
+        // 设置任务类型筛选框
+        const taskTypeFilter = document.getElementById('taskTypeFilter');
+        if (taskTypeFilter && currentTaskType && currentTaskType !== 'all') {
+            taskTypeFilter.value = currentTaskType;
+            // 添加类型变化事件监听
+            taskTypeFilter.removeEventListener('change', loadTaskList); // 防止重复添加
+            taskTypeFilter.addEventListener('change', loadTaskList);
         }
         
         // 加载任务列表

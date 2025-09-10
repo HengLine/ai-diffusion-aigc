@@ -418,20 +418,50 @@ class WorkflowManager:
             # 生成唯一的输出文件名
             output_filename = f"image_to_video_{int(time.time())}_{uuid.uuid4().hex[:8]}.mp4"
             
+            # 加载图生视频工作流
+            workflow_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+                                        "workflows", "image_to_video.json")
+            
+            # 检查工作流文件是否存在
+            if not os.path.exists(workflow_path):
+                warning(f"工作流文件不存在: {workflow_path}")
+                return {'success': False, 'message': f'工作流文件不存在: {workflow_path}'}
+            
+            # 加载和更新工作流
+            workflow = self.runner.load_workflow(workflow_path)
+            update_params = {
+                "prompt": prompt,
+                "negative_prompt": negative_prompt,
+                "image_path": image_path,
+                "duration": duration,
+                "fps": fps
+            }
+            
+            # 添加可选参数（如果存在）
+            if model:
+                update_params["model"] = model
+            if motion_model:
+                update_params["motion_model"] = motion_model
+            if steps:
+                update_params["steps"] = steps
+            if cfg_scale:
+                update_params["cfg_scale"] = cfg_scale
+            
+            updated_workflow = self.runner.update_workflow_params(workflow, update_params)
+            
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
                 warning("ComfyUI服务器连接异常，将任务放入任务记录")
                 return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
             
-            # 返回模拟结果（实际项目中应该调用工作流）
-            # 模拟处理延迟
-            time.sleep(1)
+            # 运行工作流
+            success = self.runner.run_workflow(updated_workflow, output_filename)
             
-            output_path = os.path.join(self.output_dir, output_filename)
-            # 创建一个空文件作为模拟输出
-            open(output_path, 'a').close()
-            
-            return {'success': True, 'message': '图生视频任务处理成功', 'output_path': output_path}
+            if success:
+                output_path = os.path.join(self.output_dir, output_filename)
+                return {'success': True, 'message': '图生视频任务处理成功', 'output_path': output_path}
+            else:
+                return {'success': False, 'message': '工作流运行失败'}
         except Exception as e:
             error(f"图生视频任务执行失败: {str(e)}")
             return {'success': False, 'message': f'图生视频任务执行失败: {str(e)}'}
