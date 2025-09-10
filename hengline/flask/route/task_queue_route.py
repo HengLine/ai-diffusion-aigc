@@ -131,10 +131,9 @@ def get_task_result(task_id):
             }), 404
         
         # 从task_history中获取原始任务对象，以获取完整的参数信息
-        with task_queue_manager.lock:
-            task = task_queue_manager.task_history.get(task_id)
-            prompt = task.params.get("prompt", "") if task and task.params else ""
-            negative_prompt = task.params.get("negative_prompt", "") if task and task.params else ""
+        task = task_queue_manager.task_history.get(task_id)
+        prompt = task.params.get("prompt", "") if task and task.params else ""
+        negative_prompt = task.params.get("negative_prompt", "") if task and task.params else ""
         
         # 使用实际的输出文件名
         result_filename = None

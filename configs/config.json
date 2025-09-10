@@ -21,7 +21,6 @@
     "workflows_dir": "workflows"
   },
   "comfyui": {
-    "path": "E:\\Projects\\AI\\ComfyUI",
     "api_url": "http://127.0.0.1:8188",
     "auto_start_server": false
   },
@@ -90,7 +89,9 @@
       "noise_aug_strength": 0.02,
       "decode_chunk_size": 8,
       "seed": -1,
-      "cfg": 1.0
+      "cfg": 1.0,
+      "prompt": "A beautiful landscape with mountains and river, cinematic lighting, smooth camera movement",
+      "negative_prompt": "low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres"
     },
     "text_to_video": {
       "width": 576,

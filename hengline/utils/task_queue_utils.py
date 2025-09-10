@@ -12,7 +12,7 @@ import json
 import os
 from typing import Dict, Any, Callable, Tuple, Optional, List
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .logger import info, error, debug
 
@@ -47,7 +47,7 @@ class TaskQueueManager:
         self.max_concurrent_tasks = max_concurrent_tasks
         self.task_queue = queue.PriorityQueue()  # 优先队列，按时间戳排序
         self.running_tasks = {}  # 当前运行中的任务 {task_id: Task}
-        self.lock = threading.Lock()  # 用于线程同步的锁
+        # self.lock = threading.Lock()  # 用于线程同步的主锁
         self.task_history = {}  # 任务历史记录 {task_id: Task}
         self.average_task_durations = {
             "text_to_image": 60.0,  # 默认平均文生图任务时长（秒）
@@ -55,6 +55,8 @@ class TaskQueueManager:
             "text_to_video": 300.0,  # 默认平均文生视频任务时长（秒）
             "image_to_video": 320.0  # 默认平均图生视频任务时长（秒）
         }
+        self.task_locks = {}  # 任务级别的锁 {task_id: threading.Lock}
+        self.task_locks_lock = threading.Lock()  # 用于保护task_locks字典的锁
         
         # 添加任务类型计数器，用于精确跟踪不同类型任务的排队数量
         # 避免每次查询时遍历整个队列
@@ -82,32 +84,38 @@ class TaskQueueManager:
         
         # 加载今天排队中的任务到队列
         queued_tasks_added = 0
-        with self.lock:
-            # 获取今天的日期
-            today_date = datetime.now().strftime('%Y-%m-%d')
-            
-            # 筛选今天且状态为queued的任务
-            today_queued_tasks = []
-            for task in self.task_history.values():
-                task_date = datetime.fromtimestamp(task.timestamp).strftime('%Y-%m-%d')
-                if task_date == today_date and task.status == "queued":
-                    today_queued_tasks.append(task)
-            
-            # 按时间戳排序
-            today_queued_tasks.sort(key=lambda x: x.timestamp)
-            
-            # 将任务加入队列
-            for task in today_queued_tasks:
-                self.task_queue.put(task)
-                queued_tasks_added += 1
+        # 获取今天的日期
+        today_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # 筛选今天且状态为queued的任务
+        today_queued_tasks = []
+        for task in self.task_history.values():
+            task_date = datetime.fromtimestamp(task.timestamp).strftime('%Y-%m-%d')
+            if task_date == today_date and task.status == "queued":
+                today_queued_tasks.append(task)
+        
+        # 按时间戳排序
+        today_queued_tasks.sort(key=lambda x: x.timestamp)
+        
+        # 将任务加入队列
+        for task in today_queued_tasks:
+            self.task_queue.put(task)
+            queued_tasks_added += 1
         
         info(f"任务队列管理器已启动，最大并发任务数: {max_concurrent_tasks}")
         info(f"已加载任务历史记录: {len(self.task_history)} 个任务")
         info(f"已将今天 {queued_tasks_added} 个排队中的任务添加到队列")
     
+    def _get_task_lock(self, task_id: str) -> threading.Lock:
+        """获取指定任务的锁，如果不存在则创建"""
+        with self.task_locks_lock:
+            if task_id not in self.task_locks:
+                self.task_locks[task_id] = threading.Lock()
+            return self.task_locks[task_id]
+    
     def enqueue_task(self, task_type: str, params: Dict[str, Any], callback: Callable) -> Tuple[str, int, float]:
         """
-        将任务加入队列
+        将任务加入队列（仅对队列操作部分加锁）
         
         Args:
             task_type: 任务类型
@@ -117,14 +125,22 @@ class TaskQueueManager:
         Returns:
             Tuple[str, int, float]: (任务ID, 队列中的位置, 预估等待时间(秒))
         """
-        with self.lock:
-            # 检查任务参数中是否已提供task_id
-            task_id = params.get('task_id')
-            timestamp = time.time()
-            
-            # 如果没有提供task_id或该task_id不存在，则生成新的唯一ID
+        # 检查任务参数中是否已提供task_id
+        task_id = params.get('task_id')
+        timestamp = time.time()
+        
+        # 创建或获取任务锁
+        if task_id:
+            task_lock = self._get_task_lock(task_id)
+        else:
+            # 临时锁，用于新任务创建过程
+            task_lock = threading.Lock()
+        
+        with task_lock:
+            # 再次检查任务ID是否存在
             if not task_id or task_id not in self.task_history:
                 task_id = str(uuid.uuid4())
+                task_lock = self._get_task_lock(task_id)  # 为新任务创建并获取锁
                 
                 # 创建新任务对象
                 task = Task(
@@ -161,20 +177,20 @@ class TaskQueueManager:
                 self.task_type_counters[task_type] = self.task_type_counters.get(task_type, 0) + 1
                 
                 info(f"任务已更新并重新加入队列: {task_id}, 类型: {task_type}")
-            
-            # 计算队列中的位置（包括正在运行的任务）
-            queue_position = len(self.running_tasks) + self.task_queue.qsize()
-            
-            # 计算预估等待时间
-            waiting_time = self._estimate_waiting_time(task_type, queue_position)
-            
-            # 将任务添加到历史记录
-            self.task_history[task_id] = task
-            
-            # 保存任务历史
-            self._save_task_history()
-            
-            return task_id, queue_position, waiting_time
+                
+                # 计算队列中的位置（包括正在运行的任务）
+                queue_position = len(self.running_tasks) + self.task_queue.qsize()
+                
+                # 计算预估等待时间
+                waiting_time = self._estimate_waiting_time(task_type, queue_position)
+                
+                # 将任务添加到历史记录
+                self.task_history[task_id] = task
+                
+                # 异步保存任务历史
+                self._async_save_history()
+                
+                return task_id, queue_position, waiting_time
     
     def _estimate_waiting_time(self, task_type: str, queue_position: int) -> float:
         """
@@ -203,51 +219,58 @@ class TaskQueueManager:
         return estimated_waiting_time
     
     def _process_tasks(self):
-        """处理队列中的任务 - 优化版本"""
+        """处理队列中的任务 - 任务级锁优化版本"""
         while self.running:
             try:
                 # 检查是否可以启动新任务
-                with self.lock:
-                    current_running = len(self.running_tasks)
-                    can_start_new = current_running < self.max_concurrent_tasks and not self.task_queue.empty()
+                current_running = len(self.running_tasks)
+                can_start_new = current_running < self.max_concurrent_tasks and not self.task_queue.empty()
                 
                 if can_start_new:
                     try:
-                        # 获取下一个任务，使用较短时间锁，减少阻塞
-                        with self.lock:
+                        task = None
+                        task_lock = None
+                        
+                        # 获取下一个任务
+                        if not self.task_queue.empty() and len(self.running_tasks) < self.max_concurrent_tasks:
                             task = self.task_queue.get()
-                            
-                            # 再次检查是否可以启动新任务（避免竞争条件）
-                            if len(self.running_tasks) >= self.max_concurrent_tasks:
-                                # 无法启动新任务，将任务放回队列
-                                self.task_queue.put(task)
-                                continue
+                            task_lock = self._get_task_lock(task.task_id)
                             
                             # 减少任务类型计数器
                             self.task_type_counters[task.task_type] = max(0, self.task_type_counters.get(task.task_type, 0) - 1)
-                            
-                            # 更新任务状态和执行次数
-                            task.status = "running"
-                            task.start_time = time.time()
-                            task.execution_count += 1  # 执行次数加1
-                            self.running_tasks[task.task_id] = task
-                            
-                            # 记录到历史
-                            self.task_history[task.task_id] = task
-                            
-                        info(f"开始执行任务: {task.task_id}, 类型: {task.task_type}")
                         
-                        # 直接异步保存任务历史，避免阻塞
-                        self._async_save_history()
-                        
-                        # 启动任务线程
-                        task_thread = threading.Thread(
-                            target=self._execute_task, 
-                            args=(task,)
-                        )
-                        task_thread.daemon = True
-                        task_thread.start()
-                        
+                        if task and task_lock:
+                            # 使用任务级锁更新任务状态
+                            with task_lock:
+                                # 再次检查是否可以启动新任务
+                                if len(self.running_tasks) >= self.max_concurrent_tasks:
+                                    # 无法启动新任务，将任务放回队列
+                                    self.task_queue.put(task)
+                                    self.task_type_counters[task.task_type] = self.task_type_counters.get(task.task_type, 0) + 1
+                                    continue
+                                
+                                # 更新任务状态和执行次数
+                                task.status = "running"
+                                task.start_time = time.time()
+                                task.execution_count += 1  # 执行次数加1
+                                self.running_tasks[task.task_id] = task
+                                
+                                # 记录到历史
+                                self.task_history[task.task_id] = task
+                                    
+                            info(f"开始执行任务: {task.task_id}, 类型: {task.task_type}")
+                            
+                            # 直接异步保存任务历史，避免阻塞
+                            self._async_save_history()
+                            
+                            # 启动任务线程
+                            task_thread = threading.Thread(
+                                target=self._execute_task, 
+                                args=(task,)
+                            )
+                            task_thread.daemon = True
+                            task_thread.start()
+                            
                     except Exception as e:
                         error(f"处理队列任务时发生错误: {str(e)}")
                 else:
@@ -258,13 +281,15 @@ class TaskQueueManager:
                 time.sleep(0.1)
     
     def _execute_task(self, task: Task):
-        """执行单个任务 - 优化版本"""
+        """执行单个任务 - 任务级锁优化版本"""
+        task_lock = self._get_task_lock(task.task_id)
+        
         try:
             # 使用单独的方法执行任务回调，避免长时间阻塞主处理流程
             result = self._execute_callback_with_timeout(task)
             
-            # 更新任务状态
-            with self.lock:
+            # 使用任务级锁更新任务状态
+            with task_lock:
                 # 检查任务是否遇到连接异常
                 if result and isinstance(result, dict) and result.get('queued'):
                     # 如果ComfyUI服务器连接失败，将任务标记为连接异常状态
@@ -311,8 +336,8 @@ class TaskQueueManager:
         except Exception as e:
             error(f"任务执行异常: {task.task_id}, 错误: {str(e)}")
             
-            # 更新任务状态
-            with self.lock:
+            # 使用任务级锁更新任务状态
+            with task_lock:
                 task.status = "failed"
                 task.task_msg = f"任务执行异常: {str(e)}"
                 task.end_time = time.time()
@@ -359,13 +384,12 @@ class TaskQueueManager:
     def _async_update_average_duration(self, task_type: str, duration: float):
         """异步更新任务类型的平均执行时间，避免阻塞主流程"""
         try:
-            with self.lock:
-                # 使用简单移动平均，权重为0.8（旧值）和0.2（新值）
-                old_avg = self.average_task_durations.get(task_type, 60.0)
-                new_avg = old_avg * 0.8 + duration * 0.2
-                self.average_task_durations[task_type] = new_avg
-                
-                debug(f"更新任务类型 {task_type} 的平均执行时间: 旧值={old_avg:.1f}秒, 新值={new_avg:.1f}秒")
+            # 使用简单移动平均，权重为0.8（旧值）和0.2（新值）
+            old_avg = self.average_task_durations.get(task_type, 60.0)
+            new_avg = old_avg * 0.8 + duration * 0.2
+            self.average_task_durations[task_type] = new_avg
+            
+            debug(f"更新任务类型 {task_type} 的平均执行时间: 旧值={old_avg:.1f}秒, 新值={new_avg:.1f}秒")
         except Exception as e:
             error(f"异步更新平均执行时间失败: {str(e)}")
     
@@ -459,63 +483,61 @@ class TaskQueueManager:
         Returns:
             Optional[Dict[str, Any]]: 任务状态信息，如果任务不存在则返回None
         """
-        with self.lock:
-            task = self.task_history.get(task_id)
-            if not task:
-                return None
-            
-            # 确保状态值的正确性
-            current_status = task.status
-            
-            # 优化：不再遍历整个队列来计算位置，避免长时间持锁
-            queue_position = 1
-            
-            # 检查任务状态的一致性
-            if current_status == "queued":
-                # 检查是否在running_tasks中
-                if task_id in self.running_tasks:
-                    current_status = "running"
-                else:
-                    # 使用任务类型计数器估算队列位置
-                    # 注意：这是一个估算值，但避免了遍历整个队列
-                    task_type = task.task_type
-                    if task_type in self.task_type_counters:
-                        queue_position = self.task_type_counters[task_type] // 2 + 1  # 简单估算
-            
-            status_info = {
-                "task_id": task.task_id,
-                "task_type": task.task_type,
-                "status": current_status,
-                "timestamp": task.timestamp,
-                "queue_position": queue_position
-            }
-            
-            # 添加开始和结束时间
+        task = self.task_history.get(task_id)
+        if not task:
+            return None
+        
+        # 确保状态值的正确性
+        current_status = task.status
+        
+        # 优化：不再遍历整个队列来计算位置，避免长时间持锁
+        queue_position = 1
+        
+        # 检查任务状态的一致性
+        if current_status == "queued":
+            # 检查是否在running_tasks中
+            if task_id in self.running_tasks:
+                current_status = "running"
+            else:
+                # 使用任务类型计数器估算队列位置
+                # 注意：这是一个估算值，但避免了遍历整个队列
+                task_type = task.task_type
+                if task_type in self.task_type_counters:
+                    queue_position = self.task_type_counters[task_type] // 2 + 1  # 简单估算
+        
+        status_info = {
+            "task_id": task.task_id,
+            "task_type": task.task_type,
+            "status": current_status,
+            "timestamp": task.timestamp,
+            "queue_position": queue_position
+        }
+        
+        # 添加开始和结束时间
+        if task.start_time:
+            status_info["start_time"] = task.start_time
+        if task.end_time:
+            status_info["end_time"] = task.end_time
             if task.start_time:
-                status_info["start_time"] = task.start_time
-            if task.end_time:
-                status_info["end_time"] = task.end_time
-                if task.start_time:
-                    status_info["duration"] = task.end_time - task.start_time
-            
-            return status_info
+                status_info["duration"] = task.end_time - task.start_time
+        
+        return status_info
     
     def shutdown(self):
         """关闭任务队列管理器"""
         self.running = False
         
         # 将队列中排队的任务添加到任务历史记录中
-        with self.lock:
-            temp_tasks = []
-            while not self.task_queue.empty():
-                task = self.task_queue.get()
-                temp_tasks.append(task)
-                # 将任务添加到历史记录，保持"queued"状态
-                self.task_history[task.task_id] = task
-                info(f"将排队任务添加到历史记录: {task.task_id}, 类型: {task.task_type}")
-            
-            # 保存任务历史
-            self._save_task_history()
+        temp_tasks = []
+        while not self.task_queue.empty():
+            task = self.task_queue.get()
+            temp_tasks.append(task)
+            # 将任务添加到历史记录，保持"queued"状态
+            self.task_history[task.task_id] = task
+            info(f"将排队任务添加到历史记录: {task.task_id}, 类型: {task.task_type}")
+        
+        # 保存任务历史
+        self._save_task_history()
             
         if self.worker_thread.is_alive():
             self.worker_thread.join(timeout=5)
@@ -532,9 +554,8 @@ class TaskQueueManager:
     def _async_save_history(self):
         """异步保存任务历史"""
         try:
-            # 创建任务数据的深拷贝，避免在文件操作期间持有锁
-            with self.lock:
-                task_history_copy = self.task_history.copy()
+            # 创建任务数据的深拷贝
+            task_history_copy = self.task_history.copy()
             
             # 按日期分组任务
             tasks_by_date = {}
@@ -799,5 +820,23 @@ class TaskQueueManager:
             error(f"获取任务列表失败: {str(e)}")
             return []
 
+# 直接在本文件中加载配置以避免循环导入
+import os
+import json
+
+# 加载配置文件的简单实现
+def _load_config_simple():
+    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs', 'config.json')
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        # 如果加载失败，返回默认配置
+        return {'settings': {'common': {'max_concurrent_tasks': 2}}}
+
+# 加载配置
+config = _load_config_simple()
+# 从配置文件获取最大并发任务数，如果没有则使用默认值
+max_concurrent_tasks = config.get('settings', {}).get('common', {}).get('max_concurrent_tasks', 2)
 # 全局任务队列管理器实例
-task_queue_manager = TaskQueueManager(2)
+task_queue_manager = TaskQueueManager(max_concurrent_tasks)

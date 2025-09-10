@@ -117,8 +117,8 @@ class TaskMonitor:
             today_date = datetime.now().strftime('%Y-%m-%d')
             
             # 获取今天的所有任务 - get_all_tasks内部已有锁保护
-            with task_queue_manager.lock:
-                today_tasks = task_queue_manager.get_all_tasks(date=today_date)
+            # with task_queue_manager.lock:
+            today_tasks = task_queue_manager.get_all_tasks(date=today_date)
             
             # 筛选执行次数不超过max_execution_count次的任务
             eligible_tasks = [task for task in today_tasks if task.get('execution_count', 0) <= self.max_execution_count]

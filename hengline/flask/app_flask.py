@@ -44,7 +44,9 @@ app.secret_key = config.get('flask', {}).get('secret_key', 'default-fallback-key
 # app.debug = config.get('flask', {}).get('debug', False)
 
 # 从配置文件读取路径配置
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 获取项目根目录（而不是henglin目录）
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# 确保在项目根目录下创建文件夹
 UPLOAD_FOLDER = os.path.join(project_root, config.get('paths', {}).get('temp_folder', 'uploads'))
 OUTPUT_FOLDER = os.path.join(project_root, config.get('paths', {}).get('output_folder', 'outputs'))
 TEMP_FOLDER = os.path.join(project_root, 'temp')  # 使用固定的临时目录
@@ -64,13 +66,11 @@ for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, TEMP_FOLDER]:
 allowed_extensions_list = config.get('flask', {}).get('allowed_extensions', ['png', 'jpg', 'jpeg', 'gif'])
 ALLOWED_EXTENSIONS = set(allowed_extensions_list)
 
-# 全局变量存储ComfyUI路径和运行器实例
-comfyui_path = config['comfyui']['path']
+# 全局变量存储运行器实例
 runner = None
 server_process = None
 
 # 初始化全局WorkflowManager实例
-workflow_manager.comfyui_path = comfyui_path
 workflow_manager.output_dir = OUTPUT_FOLDER
 
 # 注意：file_utils相关函数已在其他地方导入，避免重复导入

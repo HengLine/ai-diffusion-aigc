@@ -185,7 +185,23 @@ def install_dependencies(pip_exe):
 def ensure_directories():
     """确保必要的目录存在"""
     print("=== 确保必要的目录存在 ===")
-    required_dirs = ['uploads', 'outputs', 'temp']
+    
+    # 加载配置文件
+    config_path = os.path.join(PROJECT_ROOT, "configs", "config.json")
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        # 从配置文件中获取输出目录配置
+        output_folder = config.get("paths", {}).get("output_folder", "outputs")
+        temp_folder = config.get("paths", {}).get("temp_folder", "uploads")
+    except Exception as e:
+        print(f"[警告] 无法加载配置文件 {config_path}: {e}")
+        print("[警告] 使用默认目录设置")
+        output_folder = "outputs"
+        temp_folder = "uploads"
+    
+    required_dirs = [temp_folder, output_folder, 'temp']
     
     for folder in required_dirs:
         folder_path = os.path.join(PROJECT_ROOT, folder)

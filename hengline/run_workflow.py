@@ -23,56 +23,21 @@ from utils.logger import info, error, debug
 class ComfyUIRunner:
     """ComfyUI工作流运行器类"""
     
-    def __init__(self, comfyui_path: str, output_dir: str, api_url: str = "http://127.0.0.1:8188"):
+    def __init__(self, output_dir: str, api_url: str = "http://127.0.0.1:8188"):
         """
         初始化ComfyUIRunner
         
         Args:
-            comfyui_path: ComfyUI安装路径
             output_dir: 输出文件保存目录
             api_url: ComfyUI API URL地址，默认为http://127.0.0.1:8188
         """
-        self.comfyui_path = comfyui_path
         self.output_dir = output_dir
         self.api_url = api_url
         
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)
     
-    def start_comfyui_server(self) -> subprocess.Popen:
-        """启动ComfyUI服务器"""
-        info(f"启动ComfyUI服务器...")
-        
-        # 根据操作系统选择启动命令
-        if sys.platform == 'win32':
-            cmd = ["comfyui.exe"]
-        else:
-            cmd = ["python", "main.py"]
-        
-        # 在后台启动服务器
-        process = subprocess.Popen(
-            cmd,
-            cwd=self.comfyui_path,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        # 等待服务器启动
-        time.sleep(5)
-        info(f"ComfyUI服务器已启动")
-        
-        return process
-    
-    def stop_comfyui_server(self, process: subprocess.Popen) -> None:
-        """停止ComfyUI服务器"""
-        info(f"停止ComfyUI服务器...")
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-        info(f"ComfyUI服务器已停止")
+
     
     def load_workflow(self, workflow_path: str) -> Dict[str, Any]:
         """加载工作流文件并转换节点属性格式"""
@@ -213,11 +178,14 @@ class ComfyUIRunner:
             # 确保ComfyUI服务器正在运行
             server_running = self._check_server_running()
             if not server_running:
-                info("ComfyUI服务器未运行，正在启动...")
-                # server_process = self.start_comfyui_server()
+                info("ComfyUI服务器未运行，请手动启动后再试...")
+                
                 if not self._check_server_running():
-                    error("无法启动ComfyUI服务器，请手动启动后再试")
+                    error("无法连接到ComfyUI服务器，请确保服务器已启动")
                     return False
+            
+            # 统一使用requests库，不使用httpx，避免混乱
+            info("ComfyUI服务器连接成功")
             
             # 将工作流转换为ComfyUI API期望的格式
             # 检查是否已经是正确的格式，如果不是则转换
@@ -473,24 +441,28 @@ class ComfyUIRunner:
             return False
 
 
-
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="运行ComfyUI工作流")
-    parser.add_argument("--comfyui-path", type=str, required=True, help="ComfyUI安装路径")
     parser.add_argument("--workflow", type=str, help="工作流文件路径")
     parser.add_argument("--prompt", type=str, help="提示词")
     parser.add_argument("--output", type=str, default="output.png", help="输出文件名")
     parser.add_argument("--image-path", type=str, help="输入图像路径(用于图生图或图生视频)")
+    parser.add_argument("--api-url", type=str, default="http://127.0.0.1:8188", help="ComfyUI API URL地址")
     
     args = parser.parse_args()
     
-    # 初始化工作流运行器
-    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "outputs")
-    runner = ComfyUIRunner(args.comfyui_path, output_dir)
+    # 加载配置文件
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "configs", "config.json")
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
     
-    # 启动ComfyUI服务器
-    server_process = runner.start_comfyui_server()
+    # 从配置文件中获取输出目录配置
+    output_folder = config.get("paths", {}).get("output_folder", "outputs")
+    
+    # 初始化工作流运行器
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
+    runner = ComfyUIRunner(output_dir, args.api_url)
     
     try:
         if args.workflow:
@@ -502,10 +474,11 @@ def main():
                 workflow = runner.update_workflow_params(workflow, {"image_path": args.image_path})
             runner.run_workflow(workflow, args.output)
         else:
+            from utils.logger import warning
             warning("请指定工作流文件")
     finally:
-        # 停止ComfyUI服务器
-        runner.stop_comfyui_server(server_process)
+        pass
+
 
 if __name__ == "__main__":
     main()

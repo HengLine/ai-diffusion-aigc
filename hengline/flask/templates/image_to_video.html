@@ -470,7 +470,7 @@
             
             <div class="form-group">
                 <label for="prompt">视频风格提示词 (必填)</label>
-                <textarea id="prompt" name="prompt" placeholder="请输入视频风格描述，例如：sci-fi movie scene, futuristic city, cinematic lighting, smooth camera movement"></textarea>
+                <textarea id="prompt" name="prompt" placeholder="请输入视频风格描述，例如：sci-fi movie scene, futuristic city, cinematic lighting, smooth camera movement">{{ default_params.prompt or '' }}</textarea>
             </div>
             
             <div class="form-group">

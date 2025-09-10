@@ -44,34 +44,21 @@ class AIGCWebApp:
         )
         
         # 初始化会话状态
-        if "comfyui_path" not in st.session_state:
-            st.session_state.comfyui_path = self.config["comfyui"]["path"]
         
         if "runner" not in st.session_state:
-            output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "outputs")
-            st.session_state.runner = ComfyUIRunner(st.session_state.comfyui_path, output_dir)
+            # 从配置文件中获取输出目录配置
+            output_folder = self.config.get("paths", {}).get("output_folder", "outputs")
+            output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
+            api_url = self.config["comfyui"]["api_url"]
+            st.session_state.runner = ComfyUIRunner(output_dir, api_url)
         
 
     
     def _configure_comfyui(self) -> None:
-        """配置ComfyUI路径"""
+        """配置ComfyUI相关参数"""
         with st.expander("⚙️ ComfyUI配置"):
-            comfyui_path = st.text_input("ComfyUI安装路径", value=st.session_state.comfyui_path, key="config_comfyui_path")
-
-            if st.button("保存配置", key="config_save_button"):
-                if os.path.exists(comfyui_path):
-                    st.session_state.comfyui_path = comfyui_path
-                    # 更新配置文件
-                    self.config["comfyui"]["path"] = comfyui_path
-                    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "configs", "config.json")
-                    with open(config_path, 'w', encoding='utf-8') as f:
-                        json.dump(self.config, f, ensure_ascii=False, indent=2)
-                    # 重新初始化运行器
-                    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "outputs")
-                    st.session_state.runner = ComfyUIRunner(st.session_state.comfyui_path, output_dir)
-                    st.success("配置保存成功")
-                else:
-                    st.error(f"ComfyUI路径不存在: {comfyui_path}")
+            # 不再配置ComfyUI路径，仅配置API URL
+            st.info("ComfyUI路径配置已移除，系统将通过API直接连接到运行中的ComfyUI服务。")
     
     def _text_to_image_tab(self) -> None:
         """文生图标签页"""

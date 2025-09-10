@@ -27,7 +27,6 @@ def load_config():
         # 返回默认配置
         return {
             'comfyui': {
-                'path': './ComfyUI',
                 'port': 8188
             }
         }
@@ -105,15 +104,14 @@ class WorkflowManager:
         # 导入全局的workflow_presets变量
         from hengline.utils.workflow_utils import workflow_presets
         self.workflow_presets = workflow_presets
-        self.comfyui_path = config['comfyui']['path'] if config and 'comfyui' in config else './ComfyUI'
         self.output_dir = None
     
     def init_runner(self):
         """初始化工作流运行器"""
-        if not self.runner and self.comfyui_path and self.output_dir:
+        if not self.runner and self.output_dir:
             # 获取配置中的API URL，如果没有则使用默认值
             api_url = self.config.get('comfyui', {}).get('api_url', 'http://127.0.0.1:8188')
-            self.runner = ComfyUIRunner(self.comfyui_path, self.output_dir, api_url)
+            self.runner = ComfyUIRunner(self.output_dir, api_url)
         return self.runner is not None
     
     def stop_runner(self):

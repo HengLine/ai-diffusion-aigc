@@ -173,14 +173,8 @@
     {% include 'components/common_scripts.html' %}
 
     <div class="config-status">
-        <p>
-            ComfyUI 配置状态: 
-            {% if config.comfyui.path %}
-                <strong style="color: #28a745;">已配置</strong>
-            {% else %}
-                <strong style="color: #dc3545;">未配置</strong>
-            {% endif %}
-        </p>
+        <p>✅ 系统通过API连接到ComfyUI服务</p>
+        <p>API地址: {{ config.comfyui.api_url }}</p>
         <a href="{{ url_for('config.configure') }}" class="config-link">管理配置</a>
     </div>
 

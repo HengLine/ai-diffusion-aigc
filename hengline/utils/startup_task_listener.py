@@ -59,31 +59,31 @@ class StartupTaskListener:
         Args:
             today_date: 今天的日期，格式为'YYYY-MM-DD'
         """
-        with self.lock:
-            # 获取所有任务历史记录
-            all_tasks = task_queue_manager.get_all_tasks()
-            info(f"总任务历史记录数: {len(all_tasks)}")
+        # with self.lock:
+        # 获取所有任务历史记录
+        all_tasks = task_queue_manager.get_all_tasks()
+        info(f"总任务历史记录数: {len(all_tasks)}")
+        
+        # 筛选今天未完成且重试未超过3次的任务
+        pending_tasks = []
+        
+        for task_info in all_tasks:
+            # 检查是否为今天的任务
+            task_date = datetime.fromtimestamp(task_info['timestamp']).strftime('%Y-%m-%d')
+            if task_date != today_date:
+                continue
             
-            # 筛选今天未完成且重试未超过3次的任务
-            pending_tasks = []
+            # 检查是否未完成（状态为queued、failed或running）
+            if task_info['status'] not in ['queued', 'failed', 'running']:
+                continue
             
-            for task_info in all_tasks:
-                # 检查是否为今天的任务
-                task_date = datetime.fromtimestamp(task_info['timestamp']).strftime('%Y-%m-%d')
-                if task_date != today_date:
-                    continue
-                
-                # 检查是否未完成（状态为queued、failed或running）
-                if task_info['status'] not in ['queued', 'failed', 'running']:
-                    continue
-                
-                # 检查重试次数是否未超过3次
-                execution_count = task_info.get('execution_count', 1)
-                if execution_count > self.max_retry_count:
-                    warning(f"任务 {task_info['task_id']} 重试次数已超过{self.max_retry_count}次，跳过处理")
-                    continue
-                
-                pending_tasks.append(task_info)
+            # 检查重试次数是否未超过3次
+            execution_count = task_info.get('execution_count', 1)
+            if execution_count > self.max_retry_count:
+                warning(f"任务 {task_info['task_id']} 重试次数已超过{self.max_retry_count}次，跳过处理")
+                continue
+            
+            pending_tasks.append(task_info)
             
             info(f"符合条件的待处理任务数: {len(pending_tasks)}")
             

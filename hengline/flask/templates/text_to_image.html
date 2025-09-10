@@ -358,7 +358,7 @@
         <form method="post">
             <div class="form-group">
                 <label for="prompt">提示词 (必填)</label>
-                <textarea id="prompt" name="prompt" placeholder="请输入图像描述，例如：a beautiful landscape with mountains and lake, high detailed, 4k, realistic lighting"></textarea>
+                <textarea id="prompt" name="prompt" placeholder="请输入图像描述，例如：a beautiful landscape with mountains and lake, high detailed, 4k, realistic lighting">{{ default_params.prompt or '' }}</textarea>
             </div>
             
             <div class="form-group">
