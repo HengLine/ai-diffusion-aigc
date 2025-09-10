@@ -6,7 +6,6 @@ AIGC演示应用的Web界面
 
 import os
 import sys
-import json
 import streamlit as st
 from typing import Optional, Dict, Any
 
@@ -17,6 +16,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from hengline.utils.logger import info, error
 # 导入启动任务监听器
 from hengline.utils.startup_task_listener import startup_task_listener
+# 导入配置工具
+from hengline.utils.config_utils import get_config, get_paths_config, get_comfyui_api_url, get_workflow_path, get_task_settings
 
 # 导入工作流运行器
 from hengline.run_workflow import ComfyUIRunner
@@ -31,11 +32,6 @@ class AIGCWebApp:
     
     def __init__(self):
         """初始化Web应用"""
-        # 加载配置文件
-        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "configs", "config.json")
-        with open(config_path, 'r', encoding='utf-8') as f:
-            self.config = json.load(f)
-        
         # 设置页面配置
         st.set_page_config(
             page_title="AIGC AI生成内容演示",
@@ -46,10 +42,10 @@ class AIGCWebApp:
         # 初始化会话状态
         
         if "runner" not in st.session_state:
-            # 从配置文件中获取输出目录配置
-            output_folder = self.config.get("paths", {}).get("output_folder", "outputs")
+            # 使用配置工具获取输出目录配置
+            output_folder = get_paths_config().get("output_folder", "outputs")
             output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
-            api_url = self.config["comfyui"]["api_url"]
+            api_url = get_comfyui_api_url()
             st.session_state.runner = ComfyUIRunner(output_dir, api_url)
         
 
@@ -66,10 +62,11 @@ class AIGCWebApp:
         st.subheader("📝 文生图")
         
         # 获取默认配置
-        default_width = self.config["settings"]["text_to_image"]["width"]
-        default_height = self.config["settings"]["text_to_image"]["height"]
-        default_steps = self.config["settings"]["text_to_image"]["steps"]
-        default_cfg = self.config["settings"]["text_to_image"]["cfg"]
+        text_to_image_settings = get_task_settings("text_to_image")
+        default_width = text_to_image_settings.get("width", 512)
+        default_height = text_to_image_settings.get("height", 512)
+        default_steps = text_to_image_settings.get("steps", 20)
+        default_cfg = text_to_image_settings.get("cfg", 7.0)
         
         # 用户输入
         col1, col2 = st.columns(2)
@@ -95,7 +92,8 @@ class AIGCWebApp:
             try:
                 with st.spinner("正在生成图像..."):
                     # 调用文生图工作流
-                    workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "workflows", "text_to_image.json")
+                    workflow_file = get_workflow_path("text_to_image")
+                    workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), workflow_file)
                     
                     # 检查工作流文件是否存在
                     if not os.path.exists(workflow_path):
@@ -119,7 +117,9 @@ class AIGCWebApp:
                     # 运行工作流
                     success = st.session_state.runner.run_workflow(updated_workflow, output_filename)
                     
-                    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "outputs")
+                    # 获取输出目录
+                    output_folder = get_paths_config().get("output_folder", "outputs")
+                    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
                     output_path = os.path.join(output_dir, output_filename)
                     
                 if success:
@@ -147,11 +147,12 @@ class AIGCWebApp:
         st.subheader("🖼️ 图生图")
         
         # 获取默认配置
-        default_width = self.config["settings"]["image_to_image"]["width"]
-        default_height = self.config["settings"]["image_to_image"]["height"]
-        default_steps = self.config["settings"]["image_to_image"]["steps"]
-        default_cfg = self.config["settings"]["image_to_image"]["cfg"]
-        default_denoising = self.config["settings"]["image_to_image"]["denoising_strength"]
+        image_to_image_settings = get_task_settings("image_to_image")
+        default_width = image_to_image_settings.get("width", 512)
+        default_height = image_to_image_settings.get("height", 512)
+        default_steps = image_to_image_settings.get("steps", 20)
+        default_cfg = image_to_image_settings.get("cfg", 7.0)
+        default_denoising = image_to_image_settings.get("denoising_strength", 0.7)
         
         # 用户输入
         col1, col2 = st.columns(2)
@@ -186,14 +187,16 @@ class AIGCWebApp:
             try:
                 with st.spinner("正在生成变体..."):
                     # 保存上传的文件
-                    temp_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "temp")
+                    temp_folder = get_paths_config().get("temp_folder", "temp")
+                    temp_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), temp_folder)
                     os.makedirs(temp_dir, exist_ok=True)
                     temp_image_path = os.path.join(temp_dir, uploaded_file.name)
                     with open(temp_image_path, "wb") as f:
                         f.write(uploaded_file.getbuffer())
                     
                     # 调用图生图工作流
-                    workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "workflows", "image_to_image.json")
+                    workflow_file = get_workflow_path("image_to_image")
+                    workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), workflow_file)
                     
                     # 检查工作流文件是否存在
                     if not os.path.exists(workflow_path):
@@ -219,7 +222,9 @@ class AIGCWebApp:
                     # 运行工作流
                     success = st.session_state.runner.run_workflow(updated_workflow, output_filename)
                     
-                    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "outputs")
+                    # 获取输出目录
+                    output_folder = get_paths_config().get("output_folder", "outputs")
+                    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
                     output_path = os.path.join(output_dir, output_filename)
                     
                 if success:
@@ -247,10 +252,11 @@ class AIGCWebApp:
         st.subheader("🎬 图生视频")
         
         # 获取默认配置
-        default_width = self.config["settings"]["image_to_video"]["width"]
-        default_height = self.config["settings"]["image_to_video"]["height"]
-        default_frames = self.config["settings"]["image_to_video"]["frames"]
-        default_fps = self.config["settings"]["image_to_video"]["fps"]
+        image_to_video_settings = get_task_settings("image_to_video")
+        default_width = image_to_video_settings.get("width", 512)
+        default_height = image_to_video_settings.get("height", 512)
+        default_frames = image_to_video_settings.get("frames", 16)
+        default_fps = image_to_video_settings.get("fps", 8)
         
         # 用户输入
         col1, col2 = st.columns(2)
@@ -284,14 +290,16 @@ class AIGCWebApp:
             try:
                 with st.spinner("正在生成视频..."):
                     # 保存上传的文件
-                    temp_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "temp")
+                    temp_folder = get_paths_config().get("temp_folder", "temp")
+                    temp_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), temp_folder)
                     os.makedirs(temp_dir, exist_ok=True)
                     temp_image_path = os.path.join(temp_dir, uploaded_file.name)
                     with open(temp_image_path, "wb") as f:
                         f.write(uploaded_file.getbuffer())
                     
                     # 调用图生视频工作流
-                    workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "workflows", "text_to_video.json")
+                    workflow_file = get_workflow_path("image_to_video")
+                    workflow_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), workflow_file)
                     
                     # 检查工作流文件是否存在
                     if not os.path.exists(workflow_path):
@@ -316,7 +324,9 @@ class AIGCWebApp:
                     # 运行工作流
                     success = st.session_state.runner.run_workflow(updated_workflow, output_filename)
                     
-                    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "outputs")
+                    # 获取输出目录
+                    output_folder = get_paths_config().get("output_folder", "outputs")
+                    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
                     output_path = os.path.join(output_dir, output_filename)
                     
                 if success:
@@ -364,22 +374,22 @@ class AIGCWebApp:
         
         # 文生图标签页
         with tabs[0]:
-            text_to_image_tab = TextToImageTab(st.session_state.runner, self.config)
+            text_to_image_tab = TextToImageTab(st.session_state.runner)
             text_to_image_tab.render()
         
         # 图生图标签页
         with tabs[1]:
-            image_to_image_tab = ImageToImageTab(st.session_state.runner, self.config)
+            image_to_image_tab = ImageToImageTab(st.session_state.runner)
             image_to_image_tab.render()
         
         # 图生视频标签页
         with tabs[2]:
-            image_to_video_tab = ImageToVideoTab(st.session_state.runner, self.config)
+            image_to_video_tab = ImageToVideoTab(st.session_state.runner)
             image_to_video_tab.render()
         
         # 文生视频标签页
         with tabs[3]:
-            text_to_video_tab = TextToVideoTab(st.session_state.runner, self.config)
+            text_to_video_tab = TextToVideoTab(st.session_state.runner)
             text_to_video_tab.render()
 
 if __name__ == "__main__":

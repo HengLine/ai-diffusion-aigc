@@ -13,8 +13,8 @@
 """
 
 import os
-import sys
 import subprocess
+import sys
 import time
 
 # 获取当前脚本所在目录（项目根目录）
@@ -24,7 +24,7 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(PROJECT_ROOT)
 
 # 导入自定义日志模块
-from hengline.utils.logger import info, error, warning
+from hengline.logger import info, error, warning
 
 # 设置编码为UTF-8以确保中文显示正常
 sys.stdout.reconfigure(encoding='utf-8')
@@ -82,7 +82,7 @@ def create_virtual_environment():
             venv_python = os.path.join(VENV_DIR, "Scripts", "python.exe")
         else:  # 非Windows系统
             venv_python = os.path.join(VENV_DIR, "bin", "python")
-        
+
         if os.path.isfile(venv_python):
             info(f"[成功] 虚拟环境有效，使用现有虚拟环境。")
             return True
@@ -92,7 +92,7 @@ def create_virtual_environment():
             shutil.rmtree(VENV_DIR)
     else:
         info(f"虚拟环境不存在于 '{VENV_DIR}'，创建新的虚拟环境。")
-    
+
     info(f"在当前目录下创建Python虚拟环境 '{VENV_DIR}'...")
     result = run_command(f"python -m venv {VENV_DIR}")
     if result and hasattr(result, 'returncode') and result.returncode == 0:
@@ -113,12 +113,12 @@ def get_virtual_environment_paths():
         python_exe = os.path.join(VENV_DIR, "bin", "python")
         pip_exe = os.path.join(VENV_DIR, "bin", "pip")
         activate_cmd = os.path.join(VENV_DIR, "bin", "activate")
-    
+
     # 验证虚拟环境文件是否存在
     if not os.path.exists(python_exe):
         error(f"[错误] 虚拟环境Python解释器不存在！路径: {python_exe}")
         return None, None, None
-    
+
     info(f"使用虚拟环境Python: {python_exe}")
     return python_exe, pip_exe, activate_cmd
 
@@ -127,29 +127,29 @@ def activate_virtual_environment():
     """步骤3: 获取虚拟环境路径并验证可用性"""
     info("=== 步骤3: 获取虚拟环境路径 ===")
     python_exe, pip_exe, activate_cmd = get_virtual_environment_paths()
-    
+
     if not python_exe:
         error("[错误] 无法获取虚拟环境路径。")
         return None, None
-    
+
     # 检查虚拟环境Python解释器是否可执行
     if not os.access(python_exe, os.X_OK):
         error(f"[错误] 虚拟环境Python解释器不可执行: {python_exe}")
         return None, None
-    
+
     # 检查虚拟环境pip是否可执行
     if not os.access(pip_exe, os.X_OK):
         error(f"[错误] 虚拟环境pip不可执行: {pip_exe}")
         return None, None
-    
+
     info(f"[成功] 虚拟环境验证通过，将使用以下路径：")
     info(f"  Python: {python_exe}")
     info(f"  pip: {pip_exe}")
-    
+
     # 注意：在subprocess中执行activate命令不会影响当前进程的环境变量
     # 我们将直接使用虚拟环境的Python和pip完整路径来运行命令
     info("提示：本脚本将直接使用虚拟环境的Python和pip完整路径执行后续操作，无需激活虚拟环境。")
-    
+
     return python_exe, pip_exe
 
 
@@ -159,7 +159,7 @@ def install_dependencies():
     if not os.path.exists(REQUIREMENTS_FILE):
         error(f"[错误] 依赖文件 {REQUIREMENTS_FILE} 不存在！")
         return False
-    
+
     # 使用虚拟环境的pip安装项目依赖
     result = run_command(f'pip install -r "{REQUIREMENTS_FILE}"')
     if result and hasattr(result, 'returncode') and result.returncode == 0:
@@ -175,13 +175,13 @@ def start_application_with_retry():
     info("=== 步骤5: 启动Streamlit应用 ===")
     max_retries = 3
     retry_count = 0
-    
+
     while retry_count < max_retries:
         try:
             if not os.path.exists(APP_FILE):
                 error(f"[错误] 应用文件 {APP_FILE} 不存在！")
                 return False
-            
+
             # 重新获取pip路径并安装依赖
             _, pip_exe_retry, _ = get_virtual_environment_paths()
             if not pip_exe_retry:
@@ -193,14 +193,13 @@ def start_application_with_retry():
                     continue
                 else:
                     return False
-            
-            
+
             info(f"启动AIGC创意平台应用（{APP_FILE}）...")
             info("====================================")
             info("应用启动中，请不要关闭此窗口...")
             info("如果需要停止应用，请按 Ctrl+C")
             info("====================================")
-            
+
             # 使用虚拟环境的Python启动Streamlit应用
             result = run_command(f"streamlit run {APP_FILE}", shell=True)
             if result and hasattr(result, 'returncode') and result.returncode == 1:
@@ -239,26 +238,26 @@ def main():
     info(f"项目根目录: {PROJECT_ROOT}")
     info(f"将使用的虚拟环境: {VENV_DIR}")
     info(f"将启动的应用文件: {APP_FILE}")
-    
+
     # 步骤1: 检查Python安装
     if not check_python_installation():
         input("按Enter键退出...")
         sys.exit(1)
-    
+
     # 步骤2: 检查并创建虚拟环境
     if not create_virtual_environment():
         input("按Enter键退出...")
         sys.exit(1)
-    
+
     # 步骤3: 激活虚拟环境
     python_exe, pip_exe = activate_virtual_environment()
     if not python_exe:
         input("按Enter键退出...")
         sys.exit(1)
-    
+
     # 步骤5: 启动Streamlit应用
     start_application_with_retry()
-    
+
     info("====================================")
     info("应用程序已停止运行。")
     input("按Enter键退出...")

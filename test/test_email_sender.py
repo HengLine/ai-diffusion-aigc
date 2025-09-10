@@ -14,32 +14,23 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from hengline.utils.email_utils import EmailSender, init_email_sender, send_email
 from hengline.utils.logger import info, error
 
-# 读取配置文件
-def load_config():
-    """加载配置文件"""
-    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'configs', 'config.json')
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception as e:
-        error(f"加载配置文件失败: {e}")
-        return {}
+# 导入配置工具
+from hengline.utils.config_utils import get_config, get_email_config, get_user_config
 
 def test_email_sender():
     """测试EmailSender类"""
-    # 加载配置
-    config = load_config()
-    
-    # 从配置文件获取邮件配置
-    email_config = config.get('email', {})
+    # 从配置工具获取邮件配置
+    email_config = get_email_config()
     
     # 如果配置文件中没有完整的邮件配置，使用环境变量或默认值
     email_config.setdefault('smtp_server', os.environ.get('SMTP_SERVER', 'smtp.gmail.com'))
     email_config.setdefault('smtp_port', os.environ.get('SMTP_PORT', 587))
     email_config.setdefault('username', os.environ.get('SMTP_USERNAME', ''))
     email_config.setdefault('password', os.environ.get('SMTP_PASSWORD', ''))
-    email_config.setdefault('from_email', os.environ.get('FROM_EMAIL', config.get('user', {}).get('email', '')))
-    email_config.setdefault('from_name', os.environ.get('FROM_NAME', config.get('user', {}).get('nickname', 'AIGC Demo')))
+    # 从配置工具获取用户配置
+    user_config = get_user_config()
+    email_config.setdefault('from_email', os.environ.get('FROM_EMAIL', user_config.get('email', '')))
+    email_config.setdefault('from_name', os.environ.get('FROM_NAME', user_config.get('nickname', 'AIGC Demo')))
     
     # 测试使用EmailSender类发送邮件
     info("测试使用EmailSender类发送邮件...")
@@ -83,6 +74,9 @@ def test_send_email_function():
     """测试简单的send_email函数接口"""
     # 直接使用自动从配置文件加载的功能，不需要手动传入配置
     # 邮件工具类会自动从配置文件和环境变量中获取配置
+    
+    # 从配置工具获取邮件配置
+    email_config = get_email_config()
     
     # 可以选择不调用init_email_sender，让send_email函数自动初始化
     # 但为了确保测试的一致性，我们还是显式调用一次

@@ -1,20 +1,26 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
 import sys
 import os
 import time
 import logging
 from flask import Blueprint, render_template, request, jsonify, flash
-from werkzeug.utils import secure_filename
+import logging
+import os
+import sys
+import time
+
+from flask import Blueprint, render_template, request, jsonify, flash
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from hengline.utils.workflow_utils import workflow_manager, config
+from hengline.workflow.workflow_image import workflow_image_manager
 from hengline.utils.file_utils import save_uploaded_file
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('image_to_image_api')
 
-# 从配置文件获取上传目录
-UPLOAD_FOLDER = config['paths']['temp_folder']
+# 从配置工具获取上传目录
+from hengline.utils.config_utils import get_paths_config
+UPLOAD_FOLDER = get_paths_config().get('temp_folder', 'temp')
 
 image_to_image_bp = Blueprint('image_to_image', __name__)
 
@@ -22,8 +28,9 @@ image_to_image_bp = Blueprint('image_to_image', __name__)
 def image_to_image():
     """图生图页面路由"""
     if request.method == 'POST':
-        # 从配置文件获取默认参数
-        default_params = config['settings']['image_to_image']
+        # 从配置工具获取默认参数
+        from hengline.utils.config_utils import get_task_settings
+        default_params = get_task_settings('image_to_image')
         
         prompt = request.form.get('prompt', '')
         negative_prompt = request.form.get('negative_prompt', default_params.get('negative_prompt', ''))
@@ -54,7 +61,7 @@ def image_to_image():
             return render_template('image_to_image.html', default_params=default_params)
         
         # 执行图生图任务
-        result = workflow_manager.process_image_to_image(
+        result = workflow_image_manager.process_image_to_image(
             image_path,
             prompt,
             negative_prompt,
@@ -90,8 +97,9 @@ def image_to_image():
             flash('生成失败，请检查ComfyUI配置！', 'error')
             return render_template('image_to_image.html', default_params=default_params)
     
-    # 获取默认参数
-    default_params = config['settings']['image_to_image']
+    # 从配置工具获取默认参数
+    from hengline.utils.config_utils import get_task_settings
+    default_params = get_task_settings('image_to_image')
     return render_template('image_to_image.html', default_params=default_params)
 
 @image_to_image_bp.route('/api/image_to_image', methods=['POST'])
@@ -116,8 +124,9 @@ def api_image_to_image():
                 'message': '请求Content-Type必须是multipart/form-data'
             }), 415
         
-        # 从配置文件获取默认参数
-        default_params = config['settings']['image_to_image']
+        # 从配置工具获取默认参数
+        from hengline.utils.config_utils import get_task_settings
+        default_params = get_task_settings('image_to_image')
         
         # 获取请求参数，如果不存在则使用默认值
         prompt = request.form.get('prompt', '')
@@ -152,8 +161,9 @@ def api_image_to_image():
                 'message': '请选择一个文件'
             }), 400
         
-        # 从配置文件获取上传目录
-        UPLOAD_FOLDER = config['paths']['temp_folder']
+        # 从配置工具获取上传目录
+        from hengline.utils.config_utils import get_paths_config
+        UPLOAD_FOLDER = get_paths_config().get('temp_folder', 'temp')
         
         # 保存上传的文件
         image_path = save_uploaded_file(file, UPLOAD_FOLDER)
@@ -168,7 +178,7 @@ def api_image_to_image():
         logger.info(f"[{request_id}] 开始处理图生图任务 - prompt: {prompt[:50]}..., image: {file.filename}")
         
         # 执行图生图任务
-        result = workflow_manager.process_image_to_image(
+        result = workflow_image_manager.process_image_to_image(
             image_path,
             prompt,
             negative_prompt,

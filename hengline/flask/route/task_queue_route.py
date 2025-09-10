@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, url_for, request
-from hengline.utils.task_queue_utils import task_queue_manager
+from hengline.core.task_queue import task_queue_manager
 
 # 创建任务队列管理的蓝图
 task_queue_bp = Blueprint('task_queue', __name__)

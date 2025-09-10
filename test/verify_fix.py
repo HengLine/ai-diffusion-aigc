@@ -19,15 +19,12 @@ from hengline.run_workflow import ComfyUIRunner
 def verify_comfyui_runner_initialization():
     """验证ComfyUIRunner初始化是否正常"""
     try:
-        # 加载配置文件
-        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs", "config.json")
-        import json
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
+        # 导入配置工具
+        from hengline.utils.config_utils import get_comfyui_api_url
         
         # 获取正确的参数
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
-        api_url = config["comfyui"]["api_url"]
+        api_url = get_comfyui_api_url()
         
         info(f"准备初始化ComfyUIRunner...")
         info(f"output_dir: {output_dir}")

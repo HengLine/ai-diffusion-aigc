@@ -2,20 +2,26 @@ import os
 import sys
 import streamlit as st
 import time
-from hengline.run_workflow import ComfyUIRunner
+from hengline.workflow.run_workflow import ComfyUIRunner
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # 导入自定义日志模块
-from hengline.utils.logger import info, error
+from hengline.logger import info, error
+# 导入配置工具
+from hengline.utils.config_utils import get_task_settings, get_workflow_path, get_paths_config
 
 class ImageToVideoTab:
-    def __init__(self, runner: ComfyUIRunner, config: dict):
+    def __init__(self, runner: ComfyUIRunner):
         """初始化图生视频标签页"""
         self.runner = runner
-        self.config = config
-        self.default_params = config['settings']['image_to_video']
+        
+        # 从配置获取默认参数
+        self.default_params = get_task_settings('image_to_video')
+        
+        # 获取项目根目录
+        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
     def render(self):
         """渲染图生视频标签页"""
@@ -62,9 +68,7 @@ class ImageToVideoTab:
             with st.spinner("正在生成视频，请稍候..."):
                 try:
                     # 保存上传的文件到临时目录
-                    import os
-                    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                    temp_dir = os.path.join(project_root, self.config['paths']['temp_folder'])
+                    temp_dir = os.path.join(self.project_root, get_paths_config()['temp_folder'])
                     os.makedirs(temp_dir, exist_ok=True)
                     temp_path = os.path.join(temp_dir, uploaded_file.name)
                     
@@ -72,7 +76,8 @@ class ImageToVideoTab:
                         f.write(uploaded_file.getbuffer())
                     
                     # 加载工作流
-                    workflow_path = os.path.join(project_root, self.config['workflows']['text_to_video'])
+                    workflow_file = get_workflow_path('image_to_video')
+                    workflow_path = os.path.join(self.project_root, workflow_file)
                     workflow = self.runner.load_workflow(workflow_path)
                     
                     # 更新工作流参数

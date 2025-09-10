@@ -1,21 +1,36 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+文生图标签页模块
+"""
+
 import os
 import sys
 import streamlit as st
 import time
-from hengline.run_workflow import ComfyUIRunner
+from hengline.workflow.run_workflow import ComfyUIRunner
+from typing import Dict, Any
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # 导入自定义日志模块
-from hengline.utils.logger import info, error
+from hengline.logger import info, error
+# 导入配置工具
+from hengline.utils.config_utils import get_task_settings, get_workflow_path, get_paths_config
 
 class TextToImageTab:
-    def __init__(self, runner: ComfyUIRunner, config: dict):
+    """文生图标签页类"""
+    
+    def __init__(self, runner: ComfyUIRunner):
         """初始化文生图标签页"""
         self.runner = runner
-        self.config = config
-        self.default_params = config['settings']['text_to_image']
+        
+        # 从配置获取默认参数
+        self.default_params = get_task_settings('text_to_image')
+        
+        # 获取项目根目录
+        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
     def render(self):
         """渲染文生图标签页"""
@@ -59,10 +74,8 @@ class TextToImageTab:
             with st.spinner("正在生成图像，请稍候..."):
                 try:
                     # 加载工作流
-                    import os
-                    # 构建工作流文件路径
-                    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                    workflow_path = os.path.join(project_root, self.config['workflows']['text_to_image'])
+                    workflow_file = get_workflow_path('text_to_image')
+                    workflow_path = os.path.join(self.project_root, workflow_file)
                     workflow = self.runner.load_workflow(workflow_path)
                     
                     # 更新工作流参数

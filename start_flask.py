@@ -17,6 +17,8 @@ import sys
 import subprocess
 import time
 
+from flask import json
+
 # 获取当前脚本所在目录（项目根目录）
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 

@@ -2,20 +2,26 @@ import os
 import sys
 import streamlit as st
 import time
-from hengline.run_workflow import ComfyUIRunner
+from hengline.workflow.run_workflow import ComfyUIRunner
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # 导入自定义日志模块
-from hengline.utils.logger import info, error
+from hengline.logger import info, error
+# 导入配置工具
+from hengline.utils.config_utils import get_task_settings, get_workflow_path
 
 class TextToVideoTab:
-    def __init__(self, runner: ComfyUIRunner, config: dict):
+    def __init__(self, runner: ComfyUIRunner):
         """初始化文生视频标签页"""
         self.runner = runner
-        self.config = config
-        self.default_params = config['settings'].get('text_to_video', {})
+        
+        # 从配置获取默认参数
+        self.default_params = get_task_settings('text_to_video')
+        
+        # 获取项目根目录
+        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
     def render(self):
         """渲染文生视频标签页"""
@@ -57,14 +63,14 @@ class TextToVideoTab:
             with st.spinner("正在生成视频，请稍候..."):
                 try:
                     # 加载工作流
-                    import os
-                    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                    workflow_path = os.path.join(project_root, self.config['workflows']['text_to_video'])
+                    workflow_file = get_workflow_path('text_to_video')
+                    workflow_path = os.path.join(self.project_root, workflow_file)
                     
                     # 检查工作流文件是否存在
                     if not os.path.exists(workflow_path):
                         # 如果文生视频工作流不存在，使用图生视频工作流代替
-                        workflow_path = os.path.join(project_root, self.config['workflows']['image_to_image'])
+                        workflow_file = get_workflow_path('image_to_video')
+                        workflow_path = os.path.join(self.project_root, workflow_file)
                         
                         if not os.path.exists(workflow_path):
                             st.error(f"工作流文件不存在: {workflow_path}")

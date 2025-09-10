@@ -1,17 +1,17 @@
 # 导入必要的模块
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-import sys
-import os
-import time
 import logging
-import threading
+import os
+import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
+
+from flask import Blueprint, render_template, request, flash, jsonify
 
 # 添加项目路径到系统路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# 导入工作流管理器和配置
-from hengline.utils.workflow_utils import workflow_manager, config
+# 导入工作流管理器
+from hengline.workflow.workflow_image import workflow_image_manager
 
 # 创建蓝图
 text_to_image_bp = Blueprint('text_to_image', __name__)
@@ -23,27 +23,29 @@ logger = logging.getLogger('text_to_image_api')
 # 创建线程池执行器，用于异步处理长时间运行的任务
 executor = ThreadPoolExecutor(max_workers=2)
 
+
 @text_to_image_bp.route('/text_to_image', methods=['GET', 'POST'])
 def text_to_image():
     """文生图页面路由"""
     if request.method == 'POST':
-        # 从配置文件获取默认参数
-        default_params = config['settings']['text_to_image']
-        
+        # 从配置工具获取默认参数
+        from hengline.utils.config_utils import get_task_settings
+        default_params = get_task_settings('text_to_image')
+
         prompt = request.form.get('prompt', '')
         negative_prompt = request.form.get('negative_prompt', default_params.get('negative_prompt', ''))
         width = int(request.form.get('width', default_params.get('width', 512)))
         height = int(request.form.get('height', default_params.get('height', 512)))
         steps = int(request.form.get('steps', default_params.get('steps', 5)))
         cfg_scale = float(request.form.get('cfg_scale', default_params.get('cfg', 2.0)))
-        
+
         # 验证输入
         if not prompt:
             flash('请输入提示词！', 'error')
             return render_template('text_to_image.html', default_params=default_params)
-        
+
         # 执行文生图任务
-        result = workflow_manager.process_text_to_image(
+        result = workflow_image_manager.process_text_to_image(
             prompt,
             negative_prompt,
             width=width,
@@ -51,7 +53,7 @@ def text_to_image():
             steps=steps,
             cfg_scale=cfg_scale
         )
-        
+
         if result:
             if result.get('queued'):
                 # 任务已排队，显示排队信息
@@ -75,10 +77,12 @@ def text_to_image():
         else:
             flash('生成失败，请检查ComfyUI配置！', 'error')
             return render_template('text_to_image.html', default_params=default_params)
-    
-    # 获取默认参数
-    default_params = config['settings']['text_to_image']
+
+    # 从配置工具获取默认参数
+    from hengline.utils.config_utils import get_task_settings
+    default_params = get_task_settings('text_to_image')
     return render_template('text_to_image.html', default_params=default_params)
+
 
 @text_to_image_bp.route('/api/text_to_image', methods=['POST'])
 def api_text_to_image():
@@ -88,11 +92,11 @@ def api_text_to_image():
     """
     request_id = f"{time.strftime('%Y%m%d%H%M%S')}_{os.urandom(4).hex()}"
     logger.info(f"[{request_id}] 接收到文生图API请求")
-    
+
     try:
         # 记录所有请求头，用于调试
         logger.debug(f"[{request_id}] 请求头: {dict(request.headers)}")
-        
+
         # 检查Content-Type - 宽松检查，允许包含额外参数如charset
         content_type = request.headers.get('Content-Type')
         if not content_type or not content_type.startswith('application/json'):
@@ -101,7 +105,7 @@ def api_text_to_image():
                 'success': False,
                 'message': '请求Content-Type必须是application/json'
             }), 415
-        
+
         # 从请求体中获取JSON数据
         logger.info(f"[{request_id}] 尝试获取JSON数据")
         # 添加异常处理，以便更好地诊断JSON解析问题
@@ -120,19 +124,20 @@ def api_text_to_image():
                 'success': False,
                 'message': f'JSON数据解析失败: {str(e)}'
             }), 400
-        
+
         if not data:
             logger.warning(f"[{request_id}] 请求体不包含JSON数据")
             return jsonify({
                 'success': False,
                 'message': '请求体必须包含JSON数据'
             }), 400
-        
+
         logger.info(f"[{request_id}] 接收到的请求数据: {data}")
-        
-        # 从配置文件获取默认参数
-        default_params = config['settings']['text_to_image']
-        
+
+        # 从配置工具获取默认参数
+        from hengline.utils.config_utils import get_task_settings
+        default_params = get_task_settings('text_to_image')
+
         # 获取请求参数，如果不存在则使用默认值
         prompt = data.get('prompt', '')
         negative_prompt = data.get('negative_prompt', default_params.get('negative_prompt', ''))
@@ -140,7 +145,7 @@ def api_text_to_image():
         height = int(data.get('height', default_params.get('height', 512)))
         steps = int(data.get('steps', default_params.get('steps', 5)))
         cfg_scale = float(data.get('cfg_scale', default_params.get('cfg', 2.0)))
-        
+
         # 验证输入
         if not prompt:
             logger.warning(f"[{request_id}] 提示词为空")
@@ -148,12 +153,12 @@ def api_text_to_image():
                 'success': False,
                 'message': '请输入提示词'
             }), 400
-        
+
         # 记录任务信息
         logger.info(f"[{request_id}] 开始处理文生图任务 - prompt: {prompt[:50]}..., size: {width}x{height}")
-        
+
         # 执行文生图任务，设置任务ID
-        result = workflow_manager.process_text_to_image(
+        result = workflow_image_manager.process_text_to_image(
             prompt,
             negative_prompt,
             width=width,
@@ -161,7 +166,7 @@ def api_text_to_image():
             steps=steps,
             cfg_scale=cfg_scale
         )
-        
+
         if result:
             if result.get('queued'):
                 # 任务已排队，返回排队信息
