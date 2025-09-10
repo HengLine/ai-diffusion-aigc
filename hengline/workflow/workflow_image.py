@@ -10,7 +10,6 @@ import uuid
 from hengline.core.task_queue import task_queue_manager
 from hengline.logger import info, error, warning
 # 导入配置工具
-from hengline.utils.config_utils import max_concurrent_tasks
 from hengline.workflow.workflow_core import WorkflowManager
 
 
@@ -295,4 +294,4 @@ class WorkflowImageManager(WorkflowManager):
 
 
 # 全局配置和管理器实例
-workflow_image_manager = WorkflowImageManager(max_concurrent_tasks)
+workflow_image_manager = WorkflowImageManager()
