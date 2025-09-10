@@ -53,21 +53,17 @@ class TaskMonitor:
             info("任务监控器已经在运行中")
             return
         
-        # 初始化ComfyUI运行器
-        # comfyui_path = config.get('comfyui', {}).get('path', '')
-        # output_dir = config.get('paths', {}).get('output_folder', 'outputs')
-        # self.comfyui_runner = ComfyUIRunner(comfyui_path, output_dir, self.comfyui_api_url)
-        
         self.running = True
         self.monitor_thread = threading.Thread(target=self._monitor_loop, name=f"TaskMonitorThread-{self.instance_id}")
         self.monitor_thread.daemon = True
         self.monitor_thread.start()
         
-        current_thread = threading.current_thread()
+        # current_thread = threading.current_thread()
         info(f"任务监控器已启动，检查间隔：{self.check_interval}秒 - 实例ID: {self.instance_id}, 进程ID: {self.process_id}")
-        info(f"启动线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
-        info(f"监控线程ID: {self.monitor_thread.ident}, 线程名称: {self.monitor_thread.name}")
-    
+        # debug(f"启动线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
+        # debug(f"监控线程ID: {self.monitor_thread.ident}, 线程名称: {self.monitor_thread.name}")
+
+
     def stop(self):
         """停止任务监控器"""
         if not self.running:
@@ -83,11 +79,11 @@ class TaskMonitor:
     def _monitor_loop(self):
         """监控循环"""
         current_thread = threading.current_thread()
-        info(f"监控循环开始执行 - 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
+        debug(f"监控循环开始执行 - 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
         
         while self.running:
             try:
-                self._check_tasks()
+                self._check_tasks(current_thread)
             except Exception as e:
                 error(f"任务检查过程中出错: {str(e)}")
             
@@ -97,13 +93,11 @@ class TaskMonitor:
                     break
                 time.sleep(1)
             
-        info(f"任务监控器线程已退出 - 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
+        debug(f"任务监控器线程已退出 - 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
     
-    def _check_tasks(self):
+    def _check_tasks(self, current_thread: threading.current_thread()):
         """检查任务状态 - 优化版本"""
-        # 获取当前线程信息
-        current_thread = threading.current_thread()
-        
+
         # 尝试获取锁，如果获取失败，说明已有线程在执行，直接返回
         if not self._task_check_lock.acquire(blocking=False):
             debug(f"跳过任务检查 - 已有线程在执行检查，实例ID: {self.instance_id}, 进程ID: {self.process_id}, 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
@@ -117,7 +111,6 @@ class TaskMonitor:
             today_date = datetime.now().strftime('%Y-%m-%d')
             
             # 获取今天的所有任务 - get_all_tasks内部已有锁保护
-            # with task_queue_manager.lock:
             today_tasks = task_queue_manager.get_all_tasks(date=today_date)
             
             # 筛选执行次数不超过max_execution_count次的任务

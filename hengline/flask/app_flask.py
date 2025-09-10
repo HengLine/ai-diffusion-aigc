@@ -206,7 +206,7 @@ if __name__ == '__main__':
     startup_task_thread.start()
     
     # 启动任务监控器
-    task_monitor.start()
+    # task_monitor.start()
     
     # 启动Flask应用 - 开启debug模式以便获取详细错误信息
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -35,7 +35,7 @@ class StartupTaskListener:
     def start(self):
         """启动监听器，处理历史任务"""
         info("="*50)
-        info("          启动任务监听器          ")
+        info("          启动历史任务监听器          ")
         info("="*50)
         
         try:
@@ -61,7 +61,7 @@ class StartupTaskListener:
         """
         # with self.lock:
         # 获取所有任务历史记录
-        all_tasks = task_queue_manager.get_all_tasks()
+        all_tasks = task_queue_manager.get_all_tasks(today_date)
         info(f"总任务历史记录数: {len(all_tasks)}")
         
         # 筛选今天未完成且重试未超过3次的任务
@@ -69,12 +69,12 @@ class StartupTaskListener:
         
         for task_info in all_tasks:
             # 检查是否为今天的任务
-            task_date = datetime.fromtimestamp(task_info['timestamp']).strftime('%Y-%m-%d')
-            if task_date != today_date:
-                continue
+            # task_date = datetime.fromtimestamp(task_info['timestamp']).strftime('%Y-%m-%d')
+            # if task_date != today_date:
+            #     continue
             
             # 检查是否未完成（状态为queued、failed或running）
-            if task_info['status'] not in ['queued', 'failed', 'running']:
+            if task_info['status'] not in ['failed', 'running']:
                 continue
             
             # 检查重试次数是否未超过3次
@@ -85,7 +85,7 @@ class StartupTaskListener:
             
             pending_tasks.append(task_info)
             
-            info(f"符合条件的待处理任务数: {len(pending_tasks)}")
+            debug(f"符合条件的待处理任务数: {len(pending_tasks)}")
             
             # 按时间戳排序（最早的任务优先）
             pending_tasks.sort(key=lambda x: x['timestamp'])
@@ -252,7 +252,7 @@ class StartupTaskListener:
             reason: 重新加入队列的原因
         """
         try:
-            with task_queue_manager.lock:
+            with task_queue_manager._get_task_lock(task_id):
                 # 检查任务是否存在于历史记录中
                 if task_id not in task_queue_manager.task_history:
                     warning(f"任务 {task_id} 不存在于历史记录中，无法重新加入队列")
@@ -287,7 +287,7 @@ class StartupTaskListener:
             execution_count: 已执行次数
         """
         try:
-            with task_queue_manager.lock:
+            with task_queue_manager._get_task_lock(task_id):
                 # 检查任务是否存在于历史记录中
                 if task_id not in task_queue_manager.task_history:
                     warning(f"任务 {task_id} 不存在于历史记录中，无法标记为失败")
