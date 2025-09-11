@@ -181,7 +181,10 @@
             
             <!-- 文生图 Tab 内容 -->
             <div id="textToImage" class="tab-content" style="display: block;">
-                <h3 style="margin-top: 0; margin-bottom: 1.5rem;">文生图参数</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; margin-bottom: 0;">文生图参数</h3>
+                    <button type="button" id="resetTextToImage" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                     <div class="form-group">
@@ -245,7 +248,10 @@
             
             <!-- 图生图 Tab 内容 -->
             <div id="imageToImage" class="tab-content" style="display: none;">
-                <h3 style="margin-top: 0; margin-bottom: 1.5rem;">图生图参数</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; margin-bottom: 0;">图生图参数</h3>
+                    <button type="button" id="resetImageToImage" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                     <div class="form-group">
@@ -315,7 +321,10 @@
             
             <!-- 文生视频 Tab 内容 -->
             <div id="textToVideo" class="tab-content" style="display: none;">
-                <h3 style="margin-top: 0; margin-bottom: 1.5rem;">文生视频参数</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; margin-bottom: 0;">文生视频参数</h3>
+                    <button type="button" id="resetTextToVideo" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                     <div class="form-group">
@@ -378,7 +387,10 @@
             
             <!-- 图生视频 Tab 内容 -->
             <div id="imageToVideo" class="tab-content" style="display: none;">
-                <h3 style="margin-top: 0; margin-bottom: 1.5rem;">图生视频参数</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; margin-bottom: 0;">图生视频参数</h3>
+                    <button type="button" id="resetImageToVideo" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                     <div class="form-group">
@@ -437,6 +449,33 @@
 
         <a href="{{ url_for('index') }}" class="back-link">← 返回首页</a>
     </div>
+
+    <script>
+        // 恢复初始值功能
+        document.getElementById('resetTextToImage').addEventListener('click', function() {
+            if (confirm('确定要恢复文生图参数的初始值吗？当前设置将会丢失。')) {
+                window.location.href = '/config/reset/text_to_image';
+            }
+        });
+        
+        document.getElementById('resetImageToImage').addEventListener('click', function() {
+            if (confirm('确定要恢复图生图参数的初始值吗？当前设置将会丢失。')) {
+                window.location.href = '/config/reset/image_to_image';
+            }
+        });
+        
+        document.getElementById('resetTextToVideo').addEventListener('click', function() {
+            if (confirm('确定要恢复文生视频参数的初始值吗？当前设置将会丢失。')) {
+                window.location.href = '/config/reset/text_to_video';
+            }
+        });
+        
+        document.getElementById('resetImageToVideo').addEventListener('click', function() {
+            if (confirm('确定要恢复图生视频参数的初始值吗？当前设置将会丢失。')) {
+                window.location.href = '/config/reset/image_to_video';
+            }
+        });
+    </script>
 
     <!-- 引入公共组件 -->
     {% include 'components/notification.html' %}

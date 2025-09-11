@@ -88,25 +88,29 @@ class WorkflowImageManager(WorkflowManager):
             error(f"文生图任务执行失败: {str(e)}")
             return {'success': False, 'message': f'文生图任务执行失败: {str(e)}'}
 
-    def process_text_to_image(self, prompt, negative_prompt, preset='default', **kwargs):
+    def process_text_to_image(self, prompt, negative_prompt, **kwargs):
         """异步处理文生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        # 从工作流预设中获取配置
-        preset_config = self.workflow_presets.get('presets', {}).get('text_to_image', {}).get(preset, {})
-        if not preset_config:
-            # 如果预设不存在，使用默认配置
-            preset_config = self.workflow_presets.get('presets', {}).get('text_to_image', {}).get('default', {})
+        # 从配置工具导入获取有效配置的函数
+        from hengline.utils.config_utils import get_effective_config
+        
+        # 获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
+        preset_config = get_effective_config('text_to_image', **kwargs)
+        
+        # 确保prompt和negative_prompt被正确设置
+        preset_config['prompt'] = prompt
+        preset_config['negative_prompt'] = negative_prompt
 
-        # 准备任务参数，优先级：kwargs > preset_config > 默认值
+        # 准备任务参数，直接使用有效配置
         task_params = {
-            'prompt': prompt,
-            'negative_prompt': negative_prompt,
-            'width': kwargs.get('width', preset_config.get('width', 512)),
-            'height': kwargs.get('height', preset_config.get('height', 512)),
-            'steps': kwargs.get('steps', preset_config.get('steps', 20)),
-            'cfg_scale': kwargs.get('cfg_scale', preset_config.get('cfg', 7.0)),
+            'prompt': preset_config.get('prompt', ''),
+            'negative_prompt': preset_config.get('negative_prompt', ''),
+            'width': preset_config.get('width', 512),
+            'height': preset_config.get('height', 512),
+            'steps': preset_config.get('steps', 20),
+            'cfg_scale': preset_config.get('cfg', 7.0),
             'model': preset_config.get('model'),
             'vae': preset_config.get('vae'),
             'sampler': preset_config.get('sampler'),
@@ -220,24 +224,32 @@ class WorkflowImageManager(WorkflowManager):
             error(f"图生图任务执行失败: {str(e)}")
             return {'success': False, 'message': f'图生图任务执行失败: {str(e)}'}
 
-    def process_image_to_image(self, image_path, prompt, negative_prompt, preset='default', **kwargs):
+    def process_image_to_image(self, image_path, prompt, negative_prompt, **kwargs):
         """异步处理图生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        # 从预设中获取配置
-        preset_config = self.workflow_presets.get('image_to_image', {}).get(preset, {})
-
-        # 参数优先级：kwargs > preset_config > 默认值
-        width = kwargs.get('width', preset_config.get('width', 512))
-        height = kwargs.get('height', preset_config.get('height', 512))
-        steps = kwargs.get('steps', preset_config.get('steps', 20))
-        cfg_scale = kwargs.get('cfg_scale', preset_config.get('cfg_scale', 7.0))
-        denoising_strength = kwargs.get('denoising_strength', preset_config.get('denoising_strength', 0.75))
-        model = kwargs.get('model', preset_config.get('model'))
-        vae = kwargs.get('vae', preset_config.get('vae'))
-        sampler = kwargs.get('sampler', preset_config.get('sampler'))
-        batch_size = kwargs.get('batch_size', preset_config.get('batch_size'))
+        # 从配置工具导入获取有效配置的函数
+        from hengline.utils.config_utils import get_effective_config
+        
+        # 获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
+        preset_config = get_effective_config('image_to_image', **kwargs)
+        
+        # 确保关键参数被正确设置
+        preset_config['image_path'] = image_path
+        preset_config['prompt'] = prompt
+        preset_config['negative_prompt'] = negative_prompt
+        
+        # 从有效配置中提取参数
+        width = preset_config.get('width', 512)
+        height = preset_config.get('height', 512)
+        steps = preset_config.get('steps', 20)
+        cfg_scale = preset_config.get('cfg', 7.0)
+        denoising_strength = preset_config.get('denoising_strength', 0.75)
+        model = preset_config.get('model')
+        vae = preset_config.get('vae')
+        sampler = preset_config.get('sampler')
+        batch_size = preset_config.get('batch_size')
 
         # 准备任务参数
         task_params = {

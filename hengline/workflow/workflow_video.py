@@ -86,21 +86,29 @@ class WorkflowVideoManager(WorkflowManager):
             error(f"图生视频任务执行失败: {str(e)}")
             return {'success': False, 'message': f'图生视频任务执行失败: {str(e)}'}
 
-    def process_image_to_video(self, image_path, prompt, negative_prompt, preset='default', **kwargs):
+    def process_image_to_video(self, image_path, prompt, negative_prompt, **kwargs):
         """异步处理图生视频任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        # 从预设中获取配置
-        preset_config = self.workflow_presets.get('image_to_video', {}).get(preset, {})
-
-        # 参数优先级：kwargs > preset_config > 默认值
-        duration = kwargs.get('duration', preset_config.get('duration', 5))
-        fps = kwargs.get('fps', preset_config.get('fps', 30))
-        model = kwargs.get('model', preset_config.get('model'))
-        motion_model = kwargs.get('motion_model', preset_config.get('motion_model'))
-        steps = kwargs.get('steps', preset_config.get('steps', 20))
-        cfg_scale = kwargs.get('cfg_scale', preset_config.get('cfg_scale', 7.0))
+        # 从配置工具导入获取有效配置的函数
+        from hengline.utils.config_utils import get_effective_config
+        
+        # 获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
+        preset_config = get_effective_config('image_to_video', **kwargs)
+        
+        # 确保关键参数被正确设置
+        preset_config['image_path'] = image_path
+        preset_config['prompt'] = prompt
+        preset_config['negative_prompt'] = negative_prompt
+        
+        # 从有效配置中提取参数
+        duration = preset_config.get('duration', 5)
+        fps = preset_config.get('fps', 30)
+        model = preset_config.get('model')
+        motion_model = preset_config.get('motion_model')
+        steps = preset_config.get('steps', 20)
+        cfg_scale = preset_config.get('cfg_scale', 7.0)
 
         # 准备任务参数
         task_params = {
@@ -220,21 +228,28 @@ class WorkflowVideoManager(WorkflowManager):
             error(f"文生视频任务执行失败: {str(e)}")
             return {'success': False, 'message': f'文生视频任务执行失败: {str(e)}'}
 
-    def process_text_to_video(self, prompt, negative_prompt, preset='default', **kwargs):
+    def process_text_to_video(self, prompt, negative_prompt, **kwargs):
         """异步处理文生视频任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        # 从预设中获取配置
-        preset_config = self.workflow_presets.get('text_to_video', {}).get(preset, {})
-
-        # 参数优先级：kwargs > preset_config > 默认值
-        duration = kwargs.get('duration', preset_config.get('duration', 5))
-        fps = kwargs.get('fps', preset_config.get('fps', 30))
-        model = kwargs.get('model', preset_config.get('model'))
-        motion_model = kwargs.get('motion_model', preset_config.get('motion_model'))
-        steps = kwargs.get('steps', preset_config.get('steps', 20))
-        cfg_scale = kwargs.get('cfg_scale', preset_config.get('cfg_scale', 7.0))
+        # 从配置工具导入获取有效配置的函数
+        from hengline.utils.config_utils import get_effective_config
+        
+        # 获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
+        preset_config = get_effective_config('text_to_video', **kwargs)
+        
+        # 确保关键参数被正确设置
+        preset_config['prompt'] = prompt
+        preset_config['negative_prompt'] = negative_prompt
+        
+        # 从有效配置中提取参数
+        duration = preset_config.get('duration', 5)
+        fps = preset_config.get('fps', 30)
+        model = preset_config.get('model')
+        motion_model = preset_config.get('motion_model')
+        steps = preset_config.get('steps', 20)
+        cfg_scale = preset_config.get('cfg_scale', 7.0)
 
         # 准备任务参数
         task_params = {

@@ -41,17 +41,22 @@ def configure():
         # 获取当前配置
         current_config = get_config()
 
+        # 确保settings节点存在
+        if 'settings' not in current_config:
+            current_config['settings'] = {}
+        
         # 保存用户信息配置
-        from hengline.utils.config_utils import get_user_config
-        user_config = get_user_config()
+        user_config = get_user_configs()
         user_config['email'] = email
         user_config['nickname'] = nickname
         user_config['organization'] = organization
+        current_config['settings']['user'] = user_config
 
         # 保存ComfyUI配置
         from hengline.utils.config_utils import get_comfyui_config
         comfyui_config = get_comfyui_config()
         comfyui_config['api_url'] = comfyui_api_url
+        current_config['settings']['comfyui'] = comfyui_config
 
         # 模型参数配置将通过各个任务类型的设置函数进行更新
 
@@ -117,8 +122,6 @@ def configure():
             request.form.get('settings[text_to_image][batch_size]', text_to_image_params.get('batch_size', 1)))
         text_to_image_params['seed'] = int(
             request.form.get('settings[text_to_image][seed]', text_to_image_params.get('seed', -1)))
-        text_to_image_params['sampler'] = request.form.get('settings[text_to_image][sampler]',
-                                                           text_to_image_params.get('sampler', 'euler'))
         text_to_image_params['prompt'] = request.form.get('settings[text_to_image][prompt]',
                                                           text_to_image_params.get('prompt', ''))
         text_to_image_params['negative_prompt'] = request.form.get('settings[text_to_image][negative_prompt]',
@@ -203,6 +206,21 @@ def configure():
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(current_config, f, ensure_ascii=False, indent=2)
 
+        # 使用新的预设配置函数保存工作流预设
+        from hengline.utils.config_utils import save_workflow_preset
+        
+        # 保存文生图预设
+        save_workflow_preset('text_to_image', text_to_image_params)
+        
+        # 保存图生图预设
+        save_workflow_preset('image_to_image', image_to_image_params)
+        
+        # 保存文生视频预设
+        save_workflow_preset('text_to_video', text_to_video_params)
+        
+        # 保存图生视频预设
+        save_workflow_preset('image_to_video', image_to_video_params)
+
         # 重新加载配置
         reload_config()
 
@@ -219,11 +237,18 @@ def configure():
     user_nickname = user_config.get('nickname', '')
     user_organization = user_config.get('organization', '')
 
-    # 获取模型参数配置
-    settings = get_settings_config()
-
+    # 获取模型参数配置，使用get_workflow_preset函数确保优先使用setting节点的值
+    from hengline.utils.config_utils import get_workflow_preset
+    
+    settings = {
+        'text_to_image': get_workflow_preset('text_to_image'),
+        'image_to_image': get_workflow_preset('image_to_image'),
+        'text_to_video': get_workflow_preset('text_to_video'),
+        'image_to_video': get_workflow_preset('image_to_video')
+    }
+    
     # 确保所有必需的参数存在
-    if 'text_to_image' not in settings:
+    if 'text_to_image' not in settings or not settings['text_to_image']:
         settings['text_to_image'] = {
             'width': 1024,
             'height': 1024,
@@ -231,12 +256,11 @@ def configure():
             'cfg': 8.0,
             'batch_size': 1,
             'seed': -1,
-            'sampler': 'euler',
             'prompt': '',
             'negative_prompt': ''
         }
 
-    if 'image_to_image' not in settings:
+    if 'image_to_image' not in settings or not settings['image_to_image']:
         settings['image_to_image'] = {
             'width': 1024,
             'height': 1024,
@@ -250,7 +274,7 @@ def configure():
             'negative_prompt': ''
         }
 
-    if 'text_to_video' not in settings:
+    if 'text_to_video' not in settings or not settings['text_to_video']:
         settings['text_to_video'] = {
             'width': 576,
             'height': 320,
@@ -263,7 +287,7 @@ def configure():
             'default_prompt': ''
         }
 
-    if 'image_to_video' not in settings:
+    if 'image_to_video' not in settings or not settings['image_to_video']:
         settings['image_to_video'] = {
             'width': 576,
             'height': 320,
@@ -464,3 +488,22 @@ def api_config():
                 'success': False,
                 'message': f'保存配置失败：{str(e)}'
             }), 500
+
+
+@config_bp.route('/config/reset/<preset_type>', methods=['GET'])
+def reset_preset(preset_type):
+    """重置指定类型的工作流预设到初始值"""
+    from hengline.utils.config_utils import reset_workflow_preset
+    
+    # 验证预设类型
+    valid_types = ['text_to_image', 'image_to_image', 'text_to_video', 'image_to_video']
+    if preset_type not in valid_types:
+        flash('无效的预设类型', 'error')
+        return redirect(url_for('config.configure'))
+    
+    # 重置预设
+    reset_workflow_preset(preset_type)
+    
+    # 提示成功
+    flash(f"{preset_type.replace('_', ' ')}配置已恢复到初始值！", 'success')
+    return redirect(url_for('config.configure'))

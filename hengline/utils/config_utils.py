@@ -127,7 +127,9 @@ def get_workflows_dir():
 # ComfyUI 相关配置
 def get_comfyui_config():
     """获取ComfyUI相关配置"""
-    return get_config_section('comfyui', {
+    # 获取settings.comfyui配置，考虑到配置结构变更
+    settings = get_config_section('settings', {})
+    return settings.get('comfyui', {
         'api_url': 'http://127.0.0.1:8188',
         'auto_start_server': False
     })
@@ -140,13 +142,28 @@ def get_comfyui_api_url():
 
 def get_user_configs():
     """获取用户信息"""
-    return get_config_section('user', {
+    # 获取settings.user配置，考虑到配置结构变更
+    settings = get_config_section('settings', {})
+    return settings.get('user', {
         'email': '',
         'nickname': '',
         'avatar': 'default_avatar.png',
         'preferred_language': 'zh-CN',
         'organization': ''
     })
+
+
+def get_settings_config():
+    """获取整个settings配置"""
+    return get_config_section('settings', {})
+
+
+def update_settings_config(new_settings):
+    """更新整个settings配置"""
+    config = load_config()
+    config['settings'] = new_settings
+    save_config(config)
+    return new_settings
 
 # 输出设置
 def get_output_config():
@@ -231,57 +248,180 @@ def load_workflow_presets():
         error(f"加载工作流预设失败: {e}")
         # 返回默认预设
         return {
-            'presets': {
-                'text_to_image': {
-                    'default': {
-                        'model': 'v1-5-pruned-emaonly.safetensors',
-                        'vae': 'vae-ft-mse-840000-ema-pruned.safetensors',
-                        'sampler': 'dpmpp_2m_sde_karras',
-                        'steps': 20,
-                        'cfg': 7.0,
-                        'width': 512,
-                        'height': 512,
-                        'batch_size': 1
-                    }
+            'text_to_image': {
+                'default': {
+                    'width': 512,
+                    'height': 512,
+                    'steps': 10,
+                    'cfg': 6,
+                    'prompt': '',
+                    'negative_prompt': '',
+                    'batch_size': 1,
+                    'seed': -1
                 },
-                'image_to_image': {
-                    'default': {
-                        'model': 'v1-5-pruned-emaonly.safetensors',
-                        'vae': 'vae-ft-mse-840000-ema-pruned.safetensors',
-                        'sampler': 'dpmpp_2m_sde_karras',
-                        'steps': 20,
-                        'cfg': 7.0,
-                        'denoising_strength': 0.75,
-                        'width': 512,
-                        'height': 512
-                    }
+                'setting': {}
+            },
+            'image_to_image': {
+                'default': {
+                    'width': 512,
+                    'height': 512,
+                    'steps': 10,
+                    'cfg': 7.5,
+                    'batch_size': 1,
+                    'prompt': '',
+                    'negative_prompt': '',
+                    'seed': -1,
+                    'denoising_strength': 0.75
                 },
-                'image_to_video': {
-                    'default': {
-                        'model': 'svd.safetensors',
-                        'motion_bucket_id': 127,
-                        'noise_aug_strength': 0.02,
-                        'num_frames': 16,
-                        'fps': 8,
-                        'decode_chunk_size': 8,
-                        'width': 512,
-                        'height': 320
-                    }
+                'setting': {}
+            },
+            'image_to_video': {
+                'default': {
+                    'width': 512,
+                    'height': 384,
+                    'length': 121,
+                    'batch_size': 1,
+                    'shift': 8,
+                    'fps': 16,
+                    'prompt': '',
+                    'negative_prompt': '',
+                    'denoise': 1,
+                    'seed': -1,
+                    'cfg': 1
                 },
-                'text_to_video': {
-                    'default': {
-                        'model': 'svd.safetensors',
-                        'motion_bucket_id': 127,
-                        'noise_aug_strength': 0.02,
-                        'num_frames': 16,
-                        'fps': 8,
-                        'decode_chunk_size': 8,
-                        'width': 512,
-                        'height': 320
-                    }
-                }
+                'setting': {}
+            },
+            'text_to_video': {
+                'default': {
+                    'width': 576,
+                    'height': 320,
+                    'length': 121,
+                    'fps': 16,
+                    'shift': 8,
+                    'batch_size': 1,
+                    'denoise': 1,
+                    'seed': -1,
+                    'cfg': 1,
+                    'negative_prompt': '',
+                    'prompt': ''
+                },
+                'setting': {}
             }
         }
+
+
+def get_workflow_preset(task_type, preset_type='setting'):
+    """获取指定任务类型的预设配置
+    
+    Args:
+        task_type (str): 任务类型，如'text_to_image', 'image_to_video'等
+        preset_type (str): 预设类型，'setting'或'default'
+        
+    Returns:
+        dict: 预设配置
+    """
+    presets = load_workflow_presets()
+    # 如果请求的是setting但为空，则返回default
+    if preset_type == 'setting' and not presets.get(task_type, {}).get('setting', {}):
+        return presets.get(task_type, {}).get('default', {})
+    return presets.get(task_type, {}).get(preset_type, {})
+
+
+def save_workflow_preset(task_type, config):
+    """保存工作流预设配置
+    
+    Args:
+        task_type (str): 任务类型，如'text_to_image', 'image_to_video'等
+        config (dict): 要保存的配置
+        
+    Returns:
+        bool: 保存是否成功
+    """
+    try:
+        presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs', 'workflow_presets.json')
+        presets = load_workflow_presets()
+        
+        # 确保任务类型存在
+        if task_type not in presets:
+            presets[task_type] = {'default': {}, 'setting': {}}
+        
+        # 创建配置副本并处理特殊情况
+        config_copy = config.copy()
+        
+        # 对于文生图任务，移除sampler字段
+        if task_type == 'text_to_image' and 'sampler' in config_copy:
+            del config_copy['sampler']
+        
+        # 保存到setting节点
+        presets[task_type]['setting'] = config_copy
+        
+        # 写回文件
+        with open(presets_path, 'w', encoding='utf-8') as f:
+            json.dump(presets, f, ensure_ascii=False, indent=2)
+        
+        return True
+    except Exception as e:
+        error(f"保存工作流预设失败: {e}")
+        return False
+
+
+def reset_workflow_preset(task_type):
+    """重置工作流预设配置（清空setting节点）
+    
+    Args:
+        task_type (str): 任务类型，如'text_to_image', 'image_to_video'等
+        
+    Returns:
+        bool: 重置是否成功
+    """
+    try:
+        presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs', 'workflow_presets.json')
+        presets = load_workflow_presets()
+        
+        # 确保任务类型存在
+        if task_type in presets:
+            # 清空setting节点
+            presets[task_type]['setting'] = {}
+            
+            # 写回文件
+            with open(presets_path, 'w', encoding='utf-8') as f:
+                json.dump(presets, f, ensure_ascii=False, indent=2)
+        
+        return True
+    except Exception as e:
+        error(f"重置工作流预设失败: {e}")
+        return False
+
+
+def get_effective_config(task_type, **kwargs):
+    """获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
+    
+    Args:
+        task_type (str): 任务类型
+        **kwargs: 页面输入的参数
+        
+    Returns:
+        dict: 最终的有效配置
+    """
+    # 获取默认配置
+    default_config = get_workflow_preset(task_type, 'default')
+    # 获取用户设置配置
+    setting_config = get_workflow_preset(task_type, 'setting')
+    
+    # 创建结果配置，先使用默认配置
+    result_config = default_config.copy()
+    
+    # 用用户设置覆盖默认配置
+    for key, value in setting_config.items():
+        if value is not None and value != '':
+            result_config[key] = value
+    
+    # 用页面输入覆盖前面的配置
+    for key, value in kwargs.items():
+        if value is not None and value != '':
+            result_config[key] = value
+    
+    return result_config
 
         
 def get_workflow_path(task_type):
