@@ -352,6 +352,10 @@ def save_workflow_preset(task_type, config):
         if task_type == 'text_to_image' and 'sampler' in config_copy:
             del config_copy['sampler']
         
+        # 对于图生图任务，移除sampler字段
+        if task_type == 'image_to_image' and 'sampler' in config_copy:
+            del config_copy['sampler']
+        
         # 保存到setting节点
         presets[task_type]['setting'] = config_copy
         

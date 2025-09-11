@@ -390,7 +390,7 @@
             <div id="prompt-container">
                 <div class="form-group">
                     <label for="prompt">提示词 (必填)</label>
-                    <textarea id="prompt" name="prompt" placeholder="请输入视频内容描述，例如：beautiful forest scene with a river and mountains in the background, sunlight filtering through the trees, subtle movement of leaves and water">{{ default_params.default_prompt }}</textarea>
+                    <textarea id="prompt" name="prompt" placeholder="请输入视频内容描述，例如：beautiful forest scene with a river and mountains in the background, sunlight filtering through the trees, subtle movement of leaves and water">{{ default_params.prompt or '' }}</textarea>
                 </div>
                 
                 <div class="form-group">
@@ -401,17 +401,8 @@
             
             <!-- 模型参数设置 -->
             <div class="parameter-group collapsed">
-                <h3>视频生成参数</h3>
+                <h3>模型参数设置</h3>
                 <div class="parameter-content">
-                <div class="slider-container">
-                    <label for="strengthSlider">转换强度 (0-1)</label>
-                    <div class="slider-input-group">
-                        <input type="range" id="strengthSlider" class="slider" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}">
-                        <input type="number" id="strength" name="strength" min="0" max="1" step="0.1" value="{{ default_params.strength or 0.6 }}" class="slider-value">
-                    </div>
-                    <p class="parameter-description">值越低保留原图特征越多，值越高变化越大</p>
-                </div>
-                
                 <div class="slider-container">
                     <label for="stepsSlider">生成步数</label>
                     <div class="slider-input-group">
@@ -424,10 +415,43 @@
                 <div class="slider-container">
                     <label for="cfgScaleSlider">CFG Scale</label>
                     <div class="slider-input-group">
-                        <input type="range" id="cfgScaleSlider" class="slider" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}">
-                        <input type="number" id="cfg_scale" name="cfg_scale" min="1" max="30" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                        <input type="range" id="cfgScaleSlider" class="slider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" id="cfg_scale" name="cfg_scale" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">值越高，越严格遵循提示词</p>
+                </div>
+                </div>
+            </div>
+            
+            <!-- 视频生成设置 -->
+            <div class="parameter-group collapsed">
+                <h3>视频生成设置</h3>
+                <div class="parameter-content">
+                <div class="slider-container">
+                    <label for="widthSlider">视频宽度</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="widthSlider" class="slider" min="256" max="1024" step="64" value="{{ default_params.width or 512 }}">
+                        <input type="number" id="width" name="width" min="256" max="1024" step="64" value="{{ default_params.width or 512 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">视频宽度像素值</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="heightSlider">视频高度</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="heightSlider" class="slider" min="256" max="1024" step="64" value="{{ default_params.height or 384 }}">
+                        <input type="number" id="height" name="height" min="256" max="1024" step="64" value="{{ default_params.height or 384 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">视频高度像素值</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="video_lengthSlider">视频时长</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="video_lengthSlider" class="slider" min="2" max="10" step="1" value="{{ default_params.video_length or 5 }}">
+                        <input type="number" id="video_length" name="video_length" min="2" max="10" step="1" value="{{ default_params.video_length or 5 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">视频时长(秒)</p>
                 </div>
                 </div>
             </div>
@@ -503,9 +527,11 @@
             }
             
             // 设置所有滑块的同步
-            setupSliderSync('strengthSlider', 'strength');
             setupSliderSync('stepsSlider', 'steps');
             setupSliderSync('cfgScaleSlider', 'cfg_scale');
+            setupSliderSync('widthSlider', 'width');
+            setupSliderSync('heightSlider', 'height');
+            setupSliderSync('video_lengthSlider', 'video_length');
             
             // 设置参数折叠功能
             setupParameterFolding();

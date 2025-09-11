@@ -106,6 +106,166 @@ async function submitForm(url, data, method = 'POST') {
 }
 
 /**
+ * 显示自定义确认对话框
+ * @param {string} message - 确认消息
+ * @param {Object} options - 可选配置
+ * @returns {Promise<boolean>} 用户的选择（确认/取消）
+ */
+function showConfirmDialog(message, options = {}) {
+    return new Promise((resolve) => {
+        // 创建确认对话框容器
+        const dialogContainer = document.createElement('div');
+        dialogContainer.className = 'custom-confirm-dialog';
+        dialogContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        // 创建对话框内容
+        const dialogContent = document.createElement('div');
+        dialogContent.style.cssText = `
+            background-color: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        `;
+        
+        // 创建消息元素
+        const messageElement = document.createElement('p');
+        messageElement.textContent = message;
+        messageElement.style.cssText = `
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+        `;
+        
+        // 创建按钮容器
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.cssText = `
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        `;
+        
+        // 创建取消按钮
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = options.cancelText || '取消';
+        cancelButton.style.cssText = `
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        `;
+        
+        // 创建确认按钮
+        const confirmButton = document.createElement('button');
+        confirmButton.textContent = options.confirmText || '确定';
+        confirmButton.style.cssText = `
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4a6fa5;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        `;
+        
+        // 添加动画样式
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            @keyframes slideOut {
+                from {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+            }
+        `;
+        document.head.appendChild(styleElement);
+        
+        // 添加事件监听
+        cancelButton.addEventListener('click', () => {
+            cleanup();
+            resolve(false);
+        });
+        
+        confirmButton.addEventListener('click', () => {
+            cleanup();
+            resolve(true);
+        });
+        
+        // 点击背景关闭对话框
+        dialogContainer.addEventListener('click', (e) => {
+            if (e.target === dialogContainer) {
+                cleanup();
+                resolve(false);
+            }
+        });
+        
+        // 清理函数
+        function cleanup() {
+            dialogContainer.style.animation = 'fadeOut 0.3s ease';
+            dialogContent.style.animation = 'slideOut 0.3s ease';
+            
+            setTimeout(() => {
+                document.body.removeChild(dialogContainer);
+                document.head.removeChild(styleElement);
+            }, 300);
+        }
+        
+        // 组装对话框
+        buttonContainer.appendChild(cancelButton);
+        buttonContainer.appendChild(confirmButton);
+        dialogContent.appendChild(messageElement);
+        dialogContent.appendChild(buttonContainer);
+        dialogContainer.appendChild(dialogContent);
+        
+        // 添加到文档
+        document.body.appendChild(dialogContainer);
+    });
+}
+
+/**
  * 处理文件上传预览
  * @param {HTMLInputElement} inputElement - 文件输入元素
  * @param {HTMLImageElement} previewElement - 预览图像元素

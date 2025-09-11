@@ -28,17 +28,34 @@ image_to_image_bp = Blueprint('image_to_image', __name__)
 def image_to_image():
     """图生图页面路由"""
     if request.method == 'POST':
-        # 从配置工具获取默认参数
-        from hengline.utils.config_utils import get_task_settings
-        default_params = get_task_settings('image_to_image')
+        # 从配置工具获取有效参数，遵循页面输入 > setting节点 > default节点的优先级
+        from hengline.utils.config_utils import get_effective_config
         
-        prompt = request.form.get('prompt', '')
-        negative_prompt = request.form.get('negative_prompt', default_params.get('negative_prompt', ''))
-        width = int(request.form.get('width', default_params.get('width', 512)))
-        height = int(request.form.get('height', default_params.get('height', 512)))
-        denoising_strength = float(request.form.get('strength', default_params.get('strength', 0.6)))
-        steps = int(request.form.get('steps', default_params.get('steps', 30)))
-        cfg_scale = float(request.form.get('cfg_scale', default_params.get('cfg', 8.0)))
+        # 获取表单提交的参数
+        form_params = {
+            'prompt': request.form.get('prompt', ''),
+            'negative_prompt': request.form.get('negative_prompt', ''),
+            'width': request.form.get('width'),
+            'height': request.form.get('height'),
+            'strength': request.form.get('strength'),
+            'steps': request.form.get('steps'),
+            'cfg': request.form.get('cfg_scale')
+        }
+        
+        # 过滤掉空值
+        filtered_params = {k: v for k, v in form_params.items() if v not in (None, '')}
+        
+        # 获取最终的有效配置
+        effective_config = get_effective_config('image_to_image', **filtered_params)
+        
+        # 从有效配置中获取参数
+        prompt = effective_config.get('prompt', '')
+        negative_prompt = effective_config.get('negative_prompt', '')
+        width = effective_config.get('width', 512)
+        height = effective_config.get('height', 512)
+        denoising_strength = effective_config.get('denoising_strength', 0.6)  # 注意配置文件中是denoising_strength
+        steps = effective_config.get('steps', 30)
+        cfg_scale = effective_config.get('cfg', 8.0)
         
         # 检查是否有文件上传
         if 'image' not in request.files:
@@ -97,10 +114,17 @@ def image_to_image():
             flash('生成失败，请检查ComfyUI配置！', 'error')
             return render_template('image_to_image.html', default_params=default_params)
     
-    # 从配置工具获取默认参数
-    from hengline.utils.config_utils import get_task_settings
-    default_params = get_task_settings('image_to_image')
-    return render_template('image_to_image.html', default_params=default_params)
+    # 从配置工具获取页面显示的参数（setting节点优先于default节点）
+    from hengline.utils.config_utils import get_workflow_preset
+    display_params = get_workflow_preset('image_to_image', 'setting')
+    if not display_params:  # 如果setting节点为空，则使用default节点
+        display_params = get_workflow_preset('image_to_image', 'default')
+    
+    # 将denoising_strength重命名为strength，以匹配前端表单
+    if 'denoising_strength' in display_params:
+        display_params['strength'] = display_params['denoising_strength']
+    
+    return render_template('image_to_image.html', default_params=display_params)
 
 @image_to_image_bp.route('/api/image_to_image', methods=['POST'])
 def api_image_to_image():

@@ -40,14 +40,22 @@ class ImageToVideoTab:
             # 参数设置
             col1, col2 = st.columns(2)
             with col1:
+                width = st.slider("宽度 (像素)", min_value=256, max_value=1024, 
+                                 value=self.default_params.get('width', 512), step=64)
+                height = st.slider("高度 (像素)", min_value=256, max_value=768, 
+                                  value=self.default_params.get('height', 384), step=64)
                 video_length = st.slider("视频长度 (帧数)", min_value=8, max_value=60, 
                                        value=self.default_params.get('video_length', 16), step=4)
-                motion_amount = st.slider("运动强度", min_value=0.1, max_value=2.0, 
-                                        value=float(self.default_params.get('motion_amount', 0.5)), step=0.1)
+                steps = st.slider("生成步数", min_value=1, max_value=50, 
+                                 value=self.default_params.get('steps', 20), step=1)
 
             with col2:
                 fps = st.slider("帧率 (FPS)", min_value=8, max_value=30, 
                               value=self.default_params.get('fps', 16))
+                cfg_scale = st.slider("CFG Scale", min_value=0.1, max_value=20.0, 
+                                    value=float(self.default_params.get('cfg', 1.0)), step=0.1)
+                motion_amount = st.slider("运动强度", min_value=0.1, max_value=2.0, 
+                                        value=float(self.default_params.get('motion_amount', 0.5)), step=0.1)
                 consistency_scale = st.slider("一致性调整", min_value=0.1, max_value=2.0, 
                                           value=float(self.default_params.get('consistency_scale', 1.0)), step=0.1)
             
@@ -86,7 +94,11 @@ class ImageToVideoTab:
                         {
                             "prompt": prompt,
                             "image_path": temp_path,
+                            "width": width,
+                            "height": height,
                             "video_length": video_length,
+                            "steps": steps,
+                            "cfg_scale": cfg_scale,
                             "motion_amount": motion_amount,
                             "fps": fps,
                             "consistency_scale": consistency_scale

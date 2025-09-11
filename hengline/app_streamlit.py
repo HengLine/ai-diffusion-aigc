@@ -13,14 +13,14 @@ from typing import Optional, Dict, Any
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入自定义日志模块
-from hengline.utils.logger import info, error
+from hengline.logger import info, error
 # 导入启动任务监听器
-from hengline.utils.startup_task_listener import startup_task_listener
+from hengline.core.task_init import StartupTaskListener
 # 导入配置工具
 from hengline.utils.config_utils import get_config, get_paths_config, get_comfyui_api_url, get_workflow_path, get_task_settings
 
 # 导入工作流运行器
-from hengline.run_workflow import ComfyUIRunner
+from hengline.workflow.run_workflow import ComfyUIRunner
 # 导入拆分后的标签页模块
 from hengline.streamlit.text_to_image_tab import TextToImageTab
 from hengline.streamlit.image_to_image_tab import ImageToImageTab
@@ -394,7 +394,7 @@ class AIGCWebApp:
 
 if __name__ == "__main__":
     # 启动任务监听器，处理历史未完成任务
-    startup_task_listener.start()
+    StartupTaskListener().start()
     
     # 创建并运行Web应用
     app = AIGCWebApp()

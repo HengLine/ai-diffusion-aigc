@@ -84,22 +84,24 @@ def configure():
         # 验证文生视频参数
         text_to_video_width = request.form.get('settings[text_to_video][width]', '').strip()
         text_to_video_height = request.form.get('settings[text_to_video][height]', '').strip()
-        text_to_video_frames = request.form.get('settings[text_to_video][frames]', '').strip()
+        text_to_video_length = request.form.get('settings[text_to_video][length]', '').strip()
         text_to_video_fps = request.form.get('settings[text_to_video][fps]', '').strip()
         text_to_video_cfg = request.form.get('settings[text_to_video][cfg]', '').strip()
+        text_to_video_steps = request.form.get('settings[text_to_video][steps]', '').strip()
 
-        if not text_to_video_width or not text_to_video_height or not text_to_video_frames or not text_to_video_fps or not text_to_video_cfg:
-            validation_errors.append('文生视频：请填写所有必填字段（宽度、高度、帧数、帧率、CFG值）！')
+        if not text_to_video_width or not text_to_video_height or not text_to_video_length or not text_to_video_fps or not text_to_video_cfg or not text_to_video_steps:
+            validation_errors.append('文生视频：请填写所有必填字段（宽度、高度、视频长度、帧率、CFG值、步数）！')
 
         # 验证图生视频参数
         image_to_video_width = request.form.get('settings[image_to_video][width]', '').strip()
         image_to_video_height = request.form.get('settings[image_to_video][height]', '').strip()
-        image_to_video_frames = request.form.get('settings[image_to_video][frames]', '').strip()
+        image_to_video_length = request.form.get('settings[image_to_video][length]', '').strip()
         image_to_video_fps = request.form.get('settings[image_to_video][fps]', '').strip()
         image_to_video_cfg = request.form.get('settings[image_to_video][cfg]', '').strip()
+        image_to_video_steps = request.form.get('settings[image_to_video][steps]', '').strip()
 
-        if not image_to_video_width or not image_to_video_height or not image_to_video_frames or not image_to_video_fps or not image_to_video_cfg:
-            validation_errors.append('图生视频：请填写所有必填字段（宽度、高度、帧数、帧率、CFG值）！')
+        if not image_to_video_width or not image_to_video_height or not image_to_video_length or not image_to_video_fps or not image_to_video_cfg or not image_to_video_steps:
+            validation_errors.append('图生视频：请填写所有必填字段（宽度、高度、视频长度、帧率、CFG值、步数）！')
 
         # 如果有验证错误，显示错误消息并返回
         if validation_errors:
@@ -144,8 +146,6 @@ def configure():
         image_to_image_params['denoising_strength'] = float(
             request.form.get('settings[image_to_image][denoising_strength]',
                              image_to_image_params.get('denoising_strength', 0.7)))
-        image_to_image_params['sampler'] = request.form.get('settings[image_to_image][sampler]',
-                                                            image_to_image_params.get('sampler', 'euler'))
         image_to_image_params['prompt'] = request.form.get('settings[image_to_image][prompt]',
                                                            image_to_image_params.get('prompt', ''))
         image_to_image_params['negative_prompt'] = request.form.get('settings[image_to_image][negative_prompt]',
@@ -157,43 +157,49 @@ def configure():
             request.form.get('settings[text_to_video][width]', text_to_video_params.get('width', 576)))
         text_to_video_params['height'] = int(
             request.form.get('settings[text_to_video][height]', text_to_video_params.get('height', 320)))
-        text_to_video_params['frames'] = int(
-            request.form.get('settings[text_to_video][frames]', text_to_video_params.get('frames', 16)))
+        text_to_video_params['length'] = int(
+            request.form.get('settings[text_to_video][length]', text_to_video_params.get('length', 121)))
         text_to_video_params['fps'] = int(
-            request.form.get('settings[text_to_video][fps]', text_to_video_params.get('fps', 8)))
-        text_to_video_params['motion_bucket_id'] = int(request.form.get('settings[text_to_video][motion_bucket_id]',
-                                                                        text_to_video_params.get('motion_bucket_id',
-                                                                                                 120)))
-        text_to_video_params['noise_aug_strength'] = float(
-            request.form.get('settings[text_to_video][noise_aug_strength]',
-                             text_to_video_params.get('noise_aug_strength', 0.02)))
+            request.form.get('settings[text_to_video][fps]', text_to_video_params.get('fps', 16)))
+        text_to_video_params['shift'] = int(
+            request.form.get('settings[text_to_video][shift]', text_to_video_params.get('shift', 8)))
+        text_to_video_params['batch_size'] = int(
+            request.form.get('settings[text_to_video][batch_size]', text_to_video_params.get('batch_size', 1)))
+        text_to_video_params['denoise'] = float(
+            request.form.get('settings[text_to_video][denoise]', text_to_video_params.get('denoise', 1)))
         text_to_video_params['seed'] = int(
             request.form.get('settings[text_to_video][seed]', text_to_video_params.get('seed', -1)))
         text_to_video_params['cfg'] = float(
-            request.form.get('settings[text_to_video][cfg]', text_to_video_params.get('cfg', 12.0)))
-        text_to_video_params['default_prompt'] = request.form.get('settings[text_to_video][default_prompt]',
-                                                                  text_to_video_params.get('default_prompt', ''))
+            request.form.get('settings[text_to_video][cfg]', text_to_video_params.get('cfg', 1)))
+        text_to_video_params['prompt'] = request.form.get('settings[text_to_video][prompt]',
+                                                          text_to_video_params.get('prompt', ''))
+        text_to_video_params['negative_prompt'] = request.form.get('settings[text_to_video][negative_prompt]',
+                                                                   text_to_video_params.get('negative_prompt', ''))
 
         # 处理图生视频参数
         image_to_video_params = get_task_settings('image_to_video')
         image_to_video_params['width'] = int(
-            request.form.get('settings[image_to_video][width]', image_to_video_params.get('width', 576)))
+            request.form.get('settings[image_to_video][width]', image_to_video_params.get('width', 512)))
         image_to_video_params['height'] = int(
-            request.form.get('settings[image_to_video][height]', image_to_video_params.get('height', 320)))
-        image_to_video_params['frames'] = int(
-            request.form.get('settings[image_to_video][frames]', image_to_video_params.get('frames', 16)))
+            request.form.get('settings[image_to_video][height]', image_to_video_params.get('height', 384)))
+        image_to_video_params['length'] = int(
+            request.form.get('settings[image_to_video][length]', image_to_video_params.get('length', 121)))
         image_to_video_params['fps'] = int(
-            request.form.get('settings[image_to_video][fps]', image_to_video_params.get('fps', 8)))
-        image_to_video_params['motion_bucket_id'] = int(request.form.get('settings[image_to_video][motion_bucket_id]',
-                                                                         image_to_video_params.get('motion_bucket_id',
-                                                                                                   120)))
-        image_to_video_params['noise_aug_strength'] = float(
-            request.form.get('settings[image_to_video][noise_aug_strength]',
-                             image_to_video_params.get('noise_aug_strength', 0.02)))
+            request.form.get('settings[image_to_video][fps]', image_to_video_params.get('fps', 16)))
+        image_to_video_params['shift'] = int(
+            request.form.get('settings[image_to_video][shift]', image_to_video_params.get('shift', 8)))
+        image_to_video_params['batch_size'] = int(
+            request.form.get('settings[image_to_video][batch_size]', image_to_video_params.get('batch_size', 1)))
+        image_to_video_params['denoise'] = float(
+            request.form.get('settings[image_to_video][denoise]', image_to_video_params.get('denoise', 1)))
         image_to_video_params['seed'] = int(
             request.form.get('settings[image_to_video][seed]', image_to_video_params.get('seed', -1)))
         image_to_video_params['cfg'] = float(
-            request.form.get('settings[image_to_video][cfg]', image_to_video_params.get('cfg', 12.0)))
+            request.form.get('settings[image_to_video][cfg]', image_to_video_params.get('cfg', 1)))
+        image_to_video_params['prompt'] = request.form.get('settings[image_to_video][prompt]',
+                                                           image_to_video_params.get('prompt', ''))
+        image_to_video_params['negative_prompt'] = request.form.get('settings[image_to_video][negative_prompt]',
+                                                                    image_to_video_params.get('negative_prompt', ''))
 
         # 确保配置目录存在
         config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -240,64 +246,13 @@ def configure():
     # 获取模型参数配置，使用get_workflow_preset函数确保优先使用setting节点的值
     from hengline.utils.config_utils import get_workflow_preset
     
+    # 获取配置，get_workflow_preset已经实现了setting节点优先的逻辑
     settings = {
         'text_to_image': get_workflow_preset('text_to_image'),
         'image_to_image': get_workflow_preset('image_to_image'),
         'text_to_video': get_workflow_preset('text_to_video'),
         'image_to_video': get_workflow_preset('image_to_video')
     }
-    
-    # 确保所有必需的参数存在
-    if 'text_to_image' not in settings or not settings['text_to_image']:
-        settings['text_to_image'] = {
-            'width': 1024,
-            'height': 1024,
-            'steps': 20,
-            'cfg': 8.0,
-            'batch_size': 1,
-            'seed': -1,
-            'prompt': '',
-            'negative_prompt': ''
-        }
-
-    if 'image_to_image' not in settings or not settings['image_to_image']:
-        settings['image_to_image'] = {
-            'width': 1024,
-            'height': 1024,
-            'steps': 20,
-            'cfg': 8.0,
-            'batch_size': 1,
-            'seed': -1,
-            'denoising_strength': 0.7,
-            'sampler': 'euler',
-            'prompt': '',
-            'negative_prompt': ''
-        }
-
-    if 'text_to_video' not in settings or not settings['text_to_video']:
-        settings['text_to_video'] = {
-            'width': 576,
-            'height': 320,
-            'frames': 16,
-            'fps': 8,
-            'motion_bucket_id': 120,
-            'noise_aug_strength': 0.02,
-            'seed': -1,
-            'cfg': 12.0,
-            'default_prompt': ''
-        }
-
-    if 'image_to_video' not in settings or not settings['image_to_video']:
-        settings['image_to_video'] = {
-            'width': 576,
-            'height': 320,
-            'frames': 16,
-            'fps': 8,
-            'motion_bucket_id': 120,
-            'noise_aug_strength': 0.02,
-            'seed': -1,
-            'cfg': 12.0
-        }
 
     return render_template('config.html',
                            comfyui_api_url=comfyui_api_url,
@@ -312,61 +267,8 @@ def api_config():
     """配置的API接口"""
 
     if request.method == 'GET':
-        # 获取当前配置
+        # 获取当前配置，get_settings_config已经实现了配置的加载
         settings = get_settings_config()
-
-        # 确保所有必需的参数存在
-        if 'text_to_image' not in settings:
-            settings['text_to_image'] = {
-                'width': 1024,
-                'height': 1024,
-                'steps': 20,
-                'cfg': 8.0,
-                'batch_size': 1,
-                'seed': -1,
-                'sampler': 'euler',
-                'prompt': '',
-                'negative_prompt': ''
-            }
-
-        if 'image_to_image' not in settings:
-            settings['image_to_image'] = {
-                'width': 1024,
-                'height': 1024,
-                'steps': 20,
-                'cfg': 8.0,
-                'batch_size': 1,
-                'seed': -1,
-                'denoising_strength': 0.7,
-                'sampler': 'euler',
-                'prompt': '',
-                'negative_prompt': ''
-            }
-
-        if 'text_to_video' not in settings:
-            settings['text_to_video'] = {
-                'width': 576,
-                'height': 320,
-                'frames': 16,
-                'fps': 8,
-                'motion_bucket_id': 120,
-                'noise_aug_strength': 0.02,
-                'seed': -1,
-                'cfg': 12.0,
-                'default_prompt': ''
-            }
-
-        if 'image_to_video' not in settings:
-            settings['image_to_video'] = {
-                'width': 576,
-                'height': 320,
-                'frames': 16,
-                'fps': 8,
-                'motion_bucket_id': 120,
-                'noise_aug_strength': 0.02,
-                'seed': -1,
-                'cfg': 12.0
-            }
 
         user_config = get_user_configs()
 
@@ -439,8 +341,8 @@ def api_config():
                 if settings_data.get('text_to_video'):
                     text_to_video = settings_data['text_to_video']
                     if not text_to_video.get('width') or not text_to_video.get('height') or not text_to_video.get(
-                            'frames') or not text_to_video.get('fps') or text_to_video.get('cfg') is None:
-                        validation_errors.append('文生视频：请填写所有必填字段（宽度、高度、帧数、帧率、CFG值）！')
+                            'frames') or not text_to_video.get('fps') or text_to_video.get('cfg') is None or not text_to_video.get('steps'):
+                        validation_errors.append('文生视频：请填写所有必填字段（宽度、高度、帧数、帧率、CFG值、步数）！')
 
                     text_to_video_params = get_task_settings('text_to_video')
                     text_to_video_params.update(text_to_video)
@@ -449,8 +351,8 @@ def api_config():
                 if settings_data.get('image_to_video'):
                     image_to_video = settings_data['image_to_video']
                     if not image_to_video.get('width') or not image_to_video.get('height') or not image_to_video.get(
-                            'frames') or not image_to_video.get('fps') or image_to_video.get('cfg') is None:
-                        validation_errors.append('图生视频：请填写所有必填字段（宽度、高度、帧数、帧率、CFG值）！')
+                            'frames') or not image_to_video.get('fps') or image_to_video.get('cfg') is None or not image_to_video.get('steps'):
+                        validation_errors.append('图生视频：请填写所有必填字段（宽度、高度、帧数、帧率、CFG值、步数）！')
 
                     image_to_video_params = get_task_settings('image_to_video')
                     image_to_video_params.update(image_to_video)

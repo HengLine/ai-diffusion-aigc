@@ -25,12 +25,14 @@ class WorkflowVideoManager(WorkflowManager):
         prompt = params['prompt']
         negative_prompt = params['negative_prompt']
         # 从参数中获取配置，同时提供默认值
-        duration = params.get('duration', 5)
-        fps = params.get('fps', 30)
+        length = params.get('length', 121)  # 使用配置文件中的参数名
+        fps = params.get('fps', 16)  # 使用配置文件中的默认值
         model = params.get('model')
         motion_model = params.get('motion_model')
         steps = params.get('steps', 20)
-        cfg_scale = params.get('cfg_scale', 7.0)
+        cfg_scale = params.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
+        width = params.get('width')
+        height = params.get('height')
 
         try:
             info(f"处理图生视频任务")
@@ -53,9 +55,15 @@ class WorkflowVideoManager(WorkflowManager):
                 "prompt": prompt,
                 "negative_prompt": negative_prompt,
                 "image_path": image_path,
-                "duration": duration,
+                "length": length,  # 使用配置文件中的参数名
                 "fps": fps
             }
+
+            # 添加宽度和高度参数
+            if width:
+                update_params["width"] = width
+            if height:
+                update_params["height"] = height
 
             # 添加可选参数（如果存在）
             if model:
@@ -103,21 +111,29 @@ class WorkflowVideoManager(WorkflowManager):
         preset_config['negative_prompt'] = negative_prompt
         
         # 从有效配置中提取参数
-        duration = preset_config.get('duration', 5)
-        fps = preset_config.get('fps', 30)
+        length = preset_config.get('length', 121)  # 使用配置文件中的参数名
+        fps = preset_config.get('fps', 16)  # 使用配置文件中的默认值
         model = preset_config.get('model')
         motion_model = preset_config.get('motion_model')
         steps = preset_config.get('steps', 20)
-        cfg_scale = preset_config.get('cfg_scale', 7.0)
+        cfg_scale = preset_config.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
+        width = preset_config.get('width')
+        height = preset_config.get('height')
 
         # 准备任务参数
         task_params = {
             'image_path': image_path,
             'prompt': prompt,
             'negative_prompt': negative_prompt,
-            'duration': duration,
+            'length': length,  # 使用配置文件中的参数名
             'fps': fps
         }
+
+        # 添加宽度和高度参数
+        if width:
+            task_params['width'] = width
+        if height:
+            task_params['height'] = height
 
         # 添加可选参数
         if model:
@@ -168,12 +184,12 @@ class WorkflowVideoManager(WorkflowManager):
         prompt = params['prompt']
         negative_prompt = params['negative_prompt']
         # 从参数中获取配置，同时提供默认值
-        duration = params.get('duration', 5)
-        fps = params.get('fps', 30)
+        length = params.get('length', 121)  # 使用配置文件中的参数名
+        fps = params.get('fps', 16)  # 使用配置文件中的默认值
         model = params.get('model')
         motion_model = params.get('motion_model')
         steps = params.get('steps', 20)
-        cfg_scale = params.get('cfg_scale', 7.0)
+        cfg_scale = params.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
 
         try:
             info(f"处理文生视频任务: {prompt}")
@@ -195,9 +211,15 @@ class WorkflowVideoManager(WorkflowManager):
             update_params = {
                 "prompt": prompt,
                 "negative_prompt": negative_prompt,
-                "duration": duration,
+                "length": length,  # 使用配置文件中的参数名
                 "fps": fps
             }
+
+            # 添加宽度和高度参数
+            if width:
+                update_params["width"] = width
+            if height:
+                update_params["height"] = height
 
             # 添加可选参数（如果存在）
             if model:
@@ -244,20 +266,28 @@ class WorkflowVideoManager(WorkflowManager):
         preset_config['negative_prompt'] = negative_prompt
         
         # 从有效配置中提取参数
-        duration = preset_config.get('duration', 5)
-        fps = preset_config.get('fps', 30)
+        length = preset_config.get('length', 121)  # 使用配置文件中的参数名
+        fps = preset_config.get('fps', 16)  # 使用配置文件中的默认值
         model = preset_config.get('model')
         motion_model = preset_config.get('motion_model')
         steps = preset_config.get('steps', 20)
-        cfg_scale = preset_config.get('cfg_scale', 7.0)
+        cfg_scale = preset_config.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
+        width = preset_config.get('width')
+        height = preset_config.get('height')
 
         # 准备任务参数
         task_params = {
             'prompt': prompt,
             'negative_prompt': negative_prompt,
-            'duration': duration,
+            'length': length,  # 使用配置文件中的参数名
             'fps': fps
         }
+
+        # 添加宽度和高度参数
+        if width:
+            task_params['width'] = width
+        if height:
+            task_params['height'] = height
 
         # 添加可选参数
         if model:
