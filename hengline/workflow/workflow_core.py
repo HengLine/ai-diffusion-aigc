@@ -5,7 +5,7 @@
 """
 from hengline.core.task_queue import task_queue_manager
 # 导入配置工具
-from hengline.utils.config_utils import max_concurrent_tasks, load_workflow_presets, get_comfyui_api_url, \
+from hengline.utils.config_utils import load_workflow_presets, get_comfyui_api_url, \
     get_output_folder
 from hengline.workflow.run_workflow import ComfyUIRunner
 

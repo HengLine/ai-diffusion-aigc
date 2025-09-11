@@ -326,11 +326,24 @@ class TaskQueueManager:
             with task_lock:
                 # 检查任务是否遇到连接异常
                 if result and isinstance(result, dict) and result.get('queued'):
-                    # 如果ComfyUI服务器连接失败，将任务标记为连接异常状态
-                    info(f"任务执行失败，ComfyUI服务器连接异常: {task.task_id}")
-                    task.status = "failed"
-                    task.task_msg = "ComfyUI 工作流连接超时，请检查ComfyUI服务器是否运行，或配置中URL是否修改。"
-                    task.end_time = time.time()
+                    # 如果ComfyUI服务器连接失败，将任务重新加入队列
+                    info(f"任务执行失败，ComfyUI服务器连接异常，将任务重新加入队列: {task.task_id}")
+                    task.status = "queued"
+                    task.task_msg = "ComfyUI 工作流连接超时，任务将在稍后重试。请检查ComfyUI服务器是否运行，或配置中URL是否正确。"
+                    task.end_time = None  # 清除结束时间
+                    
+                    # 将任务重新加入队列
+                    self.task_queue.put(task)
+                    self.task_type_counters[task.task_type] = self.task_type_counters.get(task.task_type, 0) + 1
+                    
+                    # 从运行中任务列表移除
+                    if task.task_id in self.running_tasks:
+                        del self.running_tasks[task.task_id]
+                    
+                    # 直接异步保存任务历史，避免阻塞
+                    self._async_save_history()
+                    
+                    return  # 提前返回，避免后续处理
                 elif result is None:
                     # 任务未返回结果，可能是执行过程中出错
                     task.status = "failed"
@@ -412,7 +425,7 @@ class TaskQueueManager:
         # 检查线程是否还在运行
         if callback_thread.is_alive():
             error(f"任务执行超时: {task.task_id}")
-            return None
+            return {'success': False, 'message': f'任务执行超时({timeout}秒)', 'timeout': True}
 
         # 检查是否有异常
         if exception:

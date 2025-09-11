@@ -66,38 +66,36 @@
    pip install -r requirements.txt
    ```
 
-3. 下载所需的模型文件（如SD、SVD、Flux、Wan等），并放置在ComfyUI/models 的相应目录中：
+3. 下载所需的模型文件（如SD、Wan等），并放置在ComfyUI/models 的相应目录中：
    
    > 1. **文生图、图生图**（共约2G）：
    >
    >    /**checkpoints**/==v1-5-pruned-emaonly-fp16.safetensors==
    >    下载路径（https://hf-mirror.com/Comfy-Org/stable-diffusion-v1-5-archive/resolve/main/v1-5-pruned-emaonly-fp16.safetensors）
    >
-   >    
+   > 
    >
-   > 2. **图生视频**（共约18G）：
-   >
-   >    - /**checkpoints**/==ltx-video-2b-v0.9.safetensors==	
-   >      下载路径（https://hf-mirror.com/Lightricks/LTX-Video/resolve/main/ltx-video-2b-v0.9.safetensors）
-   >    - /**text_encoders**/==t5xxl_fp16.safetensors==		
+   > 2. **图生视频**（共约21G）：
+   >    - /**text_encoders**/==t5xxl_fp16.safetensors==（9.2G）
    >      下载路径（https://hf-mirror.com/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors）
+   >    - **/diffusion_models** / ==wan2.2_ti2v_5B_fp16.safetensors==（9.3G）
+   >      下载路径（https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors）
+   >    - /**vae**/==wan2.2_vae.safetensors==（1.3G）
+   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors）
+   >    - **/clip_vision** / ==clip_vision_h.safetensors==（1.2G）
+   >      下载路径（https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors?download=true）
    >
-   >    
+   > 
    >
-   > 3. **文生视频**（共约35G）：
-   >
-   >    - /**text_encoders**/==umt5_xxl_fp8_e4m3fn_scaled.safetensors==	
-   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors）
-   >    - /**vae**/==wan_2.1_vae.safetensors==	
-   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors）
-   >    - /**diffusion_models**/==wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors==	
-   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors）
-   >    - /**diffusion_models**/==wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors==
-   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors）
-   >    - /**loras**/==wan2.2_t2v_lightx2v_4steps_lora_v1.1_high_noise.safetensors==
-   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_t2v_lightx2v_4steps_lora_v1.1_high_noise.safetensors）
-   >    - /**loras**/==wan2.2_t2v_lightx2v_4steps_lora_v1.1_low_noise.safetensors==
-   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_t2v_lightx2v_4steps_lora_v1.1_low_noise.safetensors）
+   > 3. **文生视频**（共约20G）：
+   >    - /**text_encoders**/==t5xxl_fp16.safetensors==（9.2G）	
+   >      下载路径（https://hf-mirror.com/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors）
+   >    - /**vae**/==wan2.2_vae.safetensors==（1.3G）	
+   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors）
+   >    - **/diffusion_models** / ==wan2.2_ti2v_5B_fp16.safetensors==（9.3G）
+   >      下载路径（https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors）
+   
+   
 
 #### 步骤2：安装本项目
 
@@ -163,7 +161,13 @@
 - **文生视频**：输入文本描述，调整相关参数，点击生成按钮获取动态视频
 - **图生视频**：上传静态图像，设置视频参数，生成动态视频
 
+
+
 ## 4. 效果图展示
+
+硬件资源有限，在CPU环境，都是用的最低配参数和模型生成的效果。
+
+
 
 ### Streamlit界面效果图
 
@@ -179,19 +183,38 @@
 
 ### Flask界面效果图
 
-![Flask主界面](/imgs/image-20250904161336645.png)
+![image-20250911201329323](./imgs/image-20250911201329323.png)
 
 #### 文生图效果
 
-![Flask文生图效果](/imgs/image-20250904163923815.png)
+![image-20250911201408406](./imgs/image-20250911201408406.png)
 
 #### 图生图效果
 
-![Flask图生图效果](/imgs/image-20250904164853358.png)
+![image-20250911201236613](./imgs/image-20250911201236613.png)
 
-### 视频生成功能（开发中）
 
-文生视频和图生视频功能正在持续开发和优化中，敬请期待！
+
+#### 文生视频效果
+
+本人选的最低参数和最低配的模型，本地电脑用 CPU 环境测试。
+
+内存占用始终 80% 以上，用时近 5 小时才完成。
+
+	16.0 GB
+	
+	可用	2.7 GB
+	已缓存	2.1 GB
+	已提交	21.5/29.7 GB
+	分页缓冲池	939 MB
+	非分页缓冲池	1.0 GB
+	使用中(已压缩)	13.0 GB (143 MB)
+
+
+
+最低配的效果图，画面很模糊（5 步，512 * 256, 7秒时长）。用的 umt5_xxl_fp8_e4m3fn_scaled.safetensors
+
+![text_video_time](./imgs/text_video_time.PNG)
 
 
 
@@ -203,3 +226,4 @@
 - 生成的内容应遵守相关法律法规，不得用于非法用途。
 - 定期更新您的模型文件以获得更好的生成效果。
 - 如果您在使用过程中遇到问题，可以查看 ComfyUI 的官方文档或提交 Issue。
+
