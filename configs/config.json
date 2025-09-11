@@ -1,114 +1,46 @@
 {
-  "flask": {
-    "secret_key": "your-secret-key-here",
-    "debug": false,
-    "allowed_extensions": [
-      "png",
-      "jpg",
-      "jpeg",
-      "gif"
-    ]
-  },
-  "workflows": {
-    "text_to_image": "workflows/text_to_image.json",
-    "image_to_image": "workflows/image_to_image.json",
-    "image_to_video": "workflows/text_to_video.json",
-    "text_to_video": "workflows/text_to_video.json"
-  },
-  "paths": {
-    "temp_folder": "uploads",
-    "output_folder": "outputs",
-    "workflows_dir": "workflows"
-  },
-  "comfyui": {
-    "api_url": "http://127.0.0.1:8188",
-    "auto_start_server": false
-  },
-  "output": {
-    "dir": "outputs",
-    "format": {
-      "image": "png",
-      "video": "mp4"
+    "flask": {
+        "secret_key": "your-secret-key-here",
+        "debug": false,
+        "allowed_extensions": [
+            "png",
+            "jpg",
+            "jpeg",
+            "gif"
+        ]
     },
-    "quality": {
-      "image": 95,
-      "video": 25
+    "workflows": {
+        "text_to_image": "workflows/text_to_image.json",
+        "image_to_image": "workflows/image_to_image.json",
+        "image_to_video": "workflows/text_to_video.json",
+        "text_to_video": "workflows/text_to_video.json"
+    },
+    "paths": {
+        "temp_folder": "uploads",
+        "output_folder": "outputs",
+        "workflows_dir": "workflows"
+    },
+    "settings": {
+        "user": {
+            "email": "haeng2015@foxmail.com",
+            "nickname": "haeng2015",
+            "organization": ""
+        },
+        "email": {
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587,
+            "username": "HengLine",
+            "from_email": "haeng2030@gmail.com",
+            "from_name": "AIGC 创意平台"
+        },
+        "comfyui": {
+            "api_url": "http://127.0.0.1:8188",
+            "auto_start_server": false
+        },
+        "common": {
+            "max_concurrent_tasks": 2,
+            "cache_enabled": true,
+            "cache_size": 1024
+        }
     }
-  },
-  "user": {
-    "email": "haeng2015@foxmail.com",
-    "nickname": "haeng2015",
-    "avatar": "default_avatar.png",
-    "preferred_language": "zh-CN",
-    "organization": ""
-  },
-  "email": {
-    "smtp_server": "smtp.gmail.com",
-    "smtp_port": 587,
-    "username": "HangLine",
-    "from_email": "haeng2030@gmail.com",
-    "from_name": "AIGC 创意平台"
-  },
-  "settings": {
-    "text_to_image": {
-      "width": 512,
-      "height": 512,
-      "steps": 10,
-      "cfg": 6.0,
-      "batch_size": 1,
-      "seed": -1,
-      "prompt": "a beautiful sunset over a mountain range",
-      "negative_prompt": "low quality, blurry, unrealistic, static, boring",
-      "sampler": "DPM++ 2M Karras",
-      "restore_faces": false,
-      "tiling": false,
-      "enable_highres_fix": false,
-      "highres_steps": 15,
-      "denoising_strength": 0.5
-    },
-    "image_to_image": {
-      "width": 512,
-      "height": 512,
-      "steps": 10,
-      "cfg": 7.5,
-      "batch_size": 1,
-      "seed": -1,
-      "prompt": "The sunrise over the sea of clouds reflects on the mountain peaks",
-      "negative_prompt": "low quality, blurry, unrealistic, static, boring",
-      "denoising_strength": 0.75,
-      "sampler": "DPM++ 2M Karras",
-      "resize_mode": "just_resize",
-      "mask_blur": 4
-    },
-    "image_to_video": {
-      "width": 512,
-      "height": 384,
-      "frames": 15,
-      "fps": 8,
-      "motion_bucket_id": 127,
-      "noise_aug_strength": 0.02,
-      "decode_chunk_size": 8,
-      "seed": -1,
-      "cfg": 1.0,
-      "prompt": "A beautiful landscape with mountains and river, cinematic lighting, smooth camera movement",
-      "negative_prompt": "low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres"
-    },
-    "text_to_video": {
-      "width": 576,
-      "height": 320,
-      "frames": 16,
-      "fps": 8,
-      "motion_bucket_id": 127,
-      "noise_aug_strength": 0.02,
-      "decode_chunk_size": 8,
-      "seed": -1,
-      "cfg": 1.0,
-      "default_prompt": "beautiful forest scene with a river and mountains in the background, sunlight filtering through the trees"
-    },
-    "common": {
-      "max_concurrent_tasks": 2,
-      "cache_enabled": true,
-      "cache_size": 1024
-    }
-  }
 }
