@@ -54,7 +54,7 @@ TEMP_FOLDER = os.path.join(project_root, 'temp')  # 使用固定的临时目录
 # 全局变量存储任务队列管理器
 from hengline.core.task_queue import task_queue_manager
 
-from hengline.core.task_monitor import task_monitor
+# from hengline.core.task_monitor import task_monitor
 # 导入启动任务监听器
 from hengline.core.task_init import startup_task_listener
 
@@ -133,7 +133,7 @@ def handle_shutdown(signum, frame):
     info("接收到终止信号，正在异步关闭任务队列管理器...")
 
     # 停止任务监控器
-    task_monitor.stop()
+    # task_monitor.stop()
 
     # 异步调用shutdown方法
     shutdown_thread = threading.Thread(target=task_queue_manager.shutdown)

@@ -448,8 +448,8 @@
                 <div class="slider-container">
                     <label for="lengthSlider">视频时长</label>
                     <div class="slider-input-group">
-                        <input type="range" id="lengthSlider" class="slider" min="2" max="10" step="1" value="{{ default_params.length or 5 }}">
-                        <input type="number" id="length" name="length" min="2" max="10" step="1" value="{{ default_params.length or 5 }}" class="slider-value">
+                        <input type="range" id="lengthSlider" class="slider" min="2" max="30" step="1" value="{{ default_params.length or 5 }}">
+                        <input type="number" id="length" name="length" min="2" max="30" step="1" value="{{ default_params.length or 5 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">视频时长(秒)</p>
                 </div>
@@ -551,8 +551,16 @@
                     return;
                 }
                 
-                // 构建表单数据
-                const formData = new FormData(form);
+                // 构建JSON数据
+                const formData = {
+                    prompt: document.getElementById('prompt').value.trim(),
+                    negative_prompt: document.getElementById('negative_prompt').value,
+                    length: document.getElementById('length').value,
+                    width: document.getElementById('width').value,
+                    height: document.getElementById('height').value,
+                    steps: document.getElementById('steps').value,
+                    cfg: document.getElementById('cfg').value
+                };
                 
                 // 显示加载状态
                 showLoading(true);
@@ -560,12 +568,16 @@
                 generateButton.textContent = '生成中...';
                 progressInfo.classList.add('show');
                 
-                // 使用公共组件中的submitForm函数提交表单
-                submitForm('/text_to_video', formData, 'POST')
+                // 使用ajaxRequest发送JSON格式数据
+                ajaxRequest('/api/text_to_video', { method: 'POST', body: formData })
                     .then(function(data) {
                         // 提交成功处理
                         showLoading(false);
-                        showNotification('任务已提交到队列，请在"我的任务"中查看进度', 'success');
+                        if (data && data.success) {
+                            showNotification('任务已提交到队列，请在"我的任务"中查看进度', 'success');
+                        } else {
+                            showNotification('任务提交失败: ' + (data && data.message || '未知错误'), 'error');
+                        }
                         
                         // 恢复按钮状态
                         generateButton.disabled = false;

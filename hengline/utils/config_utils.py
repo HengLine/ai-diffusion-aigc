@@ -1,7 +1,8 @@
 # 配置工具模块，统一管理配置获取
-import os
 import json
-from hengline.logger import info, error, warning, debug
+import os
+
+from hengline.logger import error, debug
 
 # 全局配置变量
 _config = None
@@ -17,7 +18,7 @@ def load_config():
     global _config
     if _config is not None:
         return _config
-    
+
     config_path = _get_config_path()
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
@@ -144,26 +145,13 @@ def get_user_configs():
     """获取用户信息"""
     # 获取settings.user配置，考虑到配置结构变更
     settings = get_config_section('settings', {})
-    return settings.get('user', {
-        'email': '',
-        'nickname': '',
-        'avatar': 'default_avatar.png',
-        'preferred_language': 'zh-CN',
-        'organization': ''
-    })
+    return settings.get('user', {})
 
 
 def get_settings_config():
     """获取整个settings配置"""
     return get_config_section('settings', {})
 
-
-def update_settings_config(new_settings):
-    """更新整个settings配置"""
-    config = load_config()
-    config['settings'] = new_settings
-    save_config(config)
-    return new_settings
 
 # 输出设置
 def get_output_config():
@@ -230,7 +218,8 @@ def get_workflows_config():
 # 加载工作流预设
 def load_workflow_presets():
     """加载工作流预设配置"""
-    presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs', 'workflow_presets.json')
+    presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs',
+                                'workflow_presets.json')
     try:
         with open(presets_path, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -328,31 +317,32 @@ def save_workflow_preset(task_type, config):
         bool: 保存是否成功
     """
     try:
-        presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs', 'workflow_presets.json')
+        presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs',
+                                    'workflow_presets.json')
         presets = load_workflow_presets()
-        
+
         # 确保任务类型存在
         if task_type not in presets:
             presets[task_type] = {'default': {}, 'setting': {}}
-        
+
         # 创建配置副本并处理特殊情况
         config_copy = config.copy()
-        
+
         # 对于文生图任务，移除sampler字段
         if task_type == 'text_to_image' and 'sampler' in config_copy:
             del config_copy['sampler']
-        
+
         # 对于图生图任务，移除sampler字段
         if task_type == 'image_to_image' and 'sampler' in config_copy:
             del config_copy['sampler']
-        
+
         # 保存到setting节点
         presets[task_type]['setting'] = config_copy
-        
+
         # 写回文件
         with open(presets_path, 'w', encoding='utf-8') as f:
             json.dump(presets, f, ensure_ascii=False, indent=2)
-        
+
         return True
     except Exception as e:
         error(f"保存工作流预设失败: {e}")
@@ -369,18 +359,19 @@ def reset_workflow_preset(task_type):
         bool: 重置是否成功
     """
     try:
-        presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs', 'workflow_presets.json')
+        presets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'configs',
+                                    'workflow_presets.json')
         presets = load_workflow_presets()
-        
+
         # 确保任务类型存在
         if task_type in presets:
             # 清空setting节点
             presets[task_type]['setting'] = {}
-            
+
             # 写回文件
             with open(presets_path, 'w', encoding='utf-8') as f:
                 json.dump(presets, f, ensure_ascii=False, indent=2)
-        
+
         return True
     except Exception as e:
         error(f"重置工作流预设失败: {e}")
@@ -401,23 +392,23 @@ def get_effective_config(task_type, **kwargs):
     default_config = get_workflow_preset(task_type, 'default')
     # 获取用户设置配置
     setting_config = get_workflow_preset(task_type, 'setting')
-    
+
     # 创建结果配置，先使用默认配置
     result_config = default_config.copy()
-    
+
     # 用用户设置覆盖默认配置
     for key, value in setting_config.items():
         if value is not None and value != '':
             result_config[key] = value
-    
+
     # 用页面输入覆盖前面的配置
     for key, value in kwargs.items():
         if value is not None and value != '':
             result_config[key] = value
-    
+
     return result_config
 
-        
+
 def get_workflow_path(task_type):
     """获取指定任务类型的工作流文件路径"""
     return get_workflows_config().get(task_type)
@@ -428,5 +419,3 @@ config = load_config()
 
 # 导出常用配置变量
 max_concurrent_tasks = get_max_concurrent_tasks()
-
-

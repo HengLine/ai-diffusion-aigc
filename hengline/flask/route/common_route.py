@@ -3,7 +3,6 @@ Flask路由公共组件模块
 封装四个AIGC功能模块的共用路由逻辑
 """
 
-import logging
 import os
 import sys
 import time
@@ -36,10 +35,6 @@ class BaseRoute:
 
         # 创建Blueprint
         self.bp = Blueprint(blueprint_name, __name__)
-
-        # 配置日志
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        self.logger = logging.getLogger(f'{blueprint_name}_api')
 
         # 注册页面路由
         self.bp.route(f'/{blueprint_name}', methods=['GET', 'POST'])(self.page_route)

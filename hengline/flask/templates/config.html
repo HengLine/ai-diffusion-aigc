@@ -203,19 +203,19 @@
                         <label for="tti_steps">步数 <span style="color: red;">*</span></label>
                         <input type="number" id="tti_steps" name="settings[text_to_image][steps]" 
                                value="{{ settings.text_to_image.steps }}" min="1" max="100">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 20-30</small>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 30-50</small>
                     </div>
                     <div class="form-group">
                         <label for="tti_cfg">CFG Scale <span style="color: red;">*</span></label>
                         <input type="number" id="tti_cfg" name="settings[text_to_image][cfg]" 
-                               value="{{ settings.text_to_image.cfg }}" min="1" max="30" step="0.5">
+                               value="{{ settings.text_to_image.cfg }}" min="1" max="100" step="0.5">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
                         <label for="tti_batch_size">批量大小</label>
                         <input type="number" id="tti_batch_size" name="settings[text_to_image][batch_size]" 
-                               value="{{ settings.text_to_image.batch_size }}" min="1" max="10">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">一次生成的图片数量，值越高消耗资源越多，建议值: 1-4</small>
+                               value="{{ settings.text_to_image.batch_size }}" min="1" max="20">
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">一次生成的图片数量，值越高消耗资源越多，建议值: 5-10</small>
                     </div>
                     <div class="form-group">
                         <label for="tti_seed">随机种子 (-1表示随机)</label>
@@ -265,19 +265,19 @@
                         <label for="iti_steps">步数 <span style="color: red;">*</span></label>
                         <input type="number" id="iti_steps" name="settings[image_to_image][steps]" 
                                value="{{ settings.image_to_image.steps }}" min="1" max="100">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 20-30</small>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 30-50</small>
                     </div>
                     <div class="form-group">
                         <label for="iti_cfg">CFG Scale <span style="color: red;">*</span></label>
                         <input type="number" id="iti_cfg" name="settings[image_to_image][cfg]" 
-                               value="{{ settings.image_to_image.cfg }}" min="1" max="30" step="0.5">
+                               value="{{ settings.image_to_image.cfg }}" min="1" max="100" step="0.5">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
                         <label for="iti_batch_size">批量大小</label>
                         <input type="number" id="iti_batch_size" name="settings[image_to_image][batch_size]" 
-                               value="{{ settings.image_to_image.batch_size }}" min="1" max="10">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">一次生成的图片数量，值越高消耗资源越多，建议值: 1-4</small>
+                               value="{{ settings.image_to_image.batch_size }}" min="1" max="20">
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">一次生成的图片数量，值越高消耗资源越多，建议值: 5-10</small>
                     </div>
                     <div class="form-group">
                         <label for="iti_seed">随机种子 (-1表示随机)</label>
@@ -330,29 +330,35 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">生成视频的垂直像素数，建议值: 432</small>
                     </div>
                     <div class="form-group">
+                        <label for="ttv_length">生成视频长度（秒） <span style="color: red;">*</span></label>
+                        <input type="number" id="ttv_length" name="settings[text_to_video][length]"
+                               value="{{ settings.text_to_video.length }}" min="2" max="30" step="1">
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成视频总时长，值越高速度越慢，建议值: 5-10</small>
+                    </div>
+                    <div class="form-group">
                         <label for="ttv_steps">步数 <span style="color: red;">*</span></label>
                         <input type="number" id="ttv_steps" name="settings[text_to_video][steps]" 
                                value="{{ settings.text_to_video.steps }}" min="1" max="100">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 20-30</small>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 30-50</small>
                     </div>
-                    <div class="form-group">
-                        <label for="ttv_length">视频长度 <span style="color: red;">*</span></label>
-                        <input type="number" id="ttv_length" name="settings[text_to_video][length]" 
-                               value="{{ settings.text_to_video.length }}" min="1" max="300">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成视频的总帧数，值越高视频越长，建议值: 121</small>
+                     <div class="form-group">
+                        <label for="ttv_cfg">CFG Scale <span style="color: red;">*</span></label>
+                        <input type="number" id="ttv_cfg" name="settings[text_to_video][cfg]"
+                               value="{{ settings.text_to_video.cfg }}" min="1" max="100" step="0.5">
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
                         <label for="ttv_fps">帧率 <span style="color: red;">*</span></label>
                         <input type="number" id="ttv_fps" name="settings[text_to_video][fps]" 
-                               value="{{ settings.text_to_video.fps }}" min="1" max="30">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">每秒显示的帧数，值越高视频越流畅，建议值: 16</small>
+                               value="{{ settings.text_to_video.fps }}" min="1" max="120" step="1">
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">每秒显示的帧数，值越高视频越流畅速度越慢，建议值: 16</small>
                     </div>
-                    <div class="form-group">
+                    {#<div class="form-group">
                         <label for="ttv_shift">帧移</label>
                         <input type="number" id="ttv_shift" name="settings[text_to_video][shift]" 
                                value="{{ settings.text_to_video.shift }}" min="1" max="32">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">视频生成过程中的帧移参数，影响视频流畅度，建议值: 8</small>
-                    </div>
+                    </div>#}
                     <div class="form-group">
                         <label for="ttv_batch_size">批次大小</label>
                         <input type="number" id="ttv_batch_size" name="settings[text_to_video][batch_size]" 
@@ -370,12 +376,6 @@
                         <input type="number" id="ttv_seed" name="settings[text_to_video][seed]" 
                                value="{{ settings.text_to_video.seed }}" min="-1">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成过程的随机性，使用相同种子可复现相同结果，建议值: -1 (随机)</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="ttv_cfg">CFG Scale <span style="color: red;">*</span></label>
-                        <input type="number" id="ttv_cfg" name="settings[text_to_video][cfg]" 
-                               value="{{ settings.text_to_video.cfg }}" min="0.5" max="30" step="0.5">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 1</small>
                     </div>
                 </div>
                 
@@ -415,29 +415,35 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">生成视频的垂直像素数，建议值: 384</small>
                     </div>
                     <div class="form-group">
+                        <label for="itv_length">生成视频长度（秒） <span style="color: red;">*</span></label>
+                        <input type="number" id="itv_length" name="settings[image_to_video][length]"
+                               value="{{ settings.image_to_video.length }}" min="2" max="30">
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成视频总时长，值越高速度越慢，建议值: 5-10</small>
+                    </div>
+                    <div class="form-group">
                         <label for="itv_steps">步数 <span style="color: red;">*</span></label>
                         <input type="number" id="itv_steps" name="settings[image_to_video][steps]" 
                                value="{{ settings.image_to_video.steps }}" min="1" max="100">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 20-30</small>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 30-50</small>
                     </div>
                     <div class="form-group">
-                        <label for="itv_length">视频长度 <span style="color: red;">*</span></label>
-                        <input type="number" id="itv_length" name="settings[image_to_video][length]" 
-                               value="{{ settings.image_to_video.length }}" min="1" max="300">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">生成视频的总帧数，值越高视频越长，建议值: 121</small>
+                        <label for="itv_cfg">CFG Scale <span style="color: red;">*</span></label>
+                        <input type="number" id="itv_cfg" name="settings[image_to_video][cfg]"
+                               value="{{ settings.image_to_video.cfg }}" min="1" max="100" step="0.5">
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
                         <label for="itv_fps">帧率 <span style="color: red;">*</span></label>
                         <input type="number" id="itv_fps" name="settings[image_to_video][fps]" 
-                               value="{{ settings.image_to_video.fps }}" min="1" max="30">
+                               value="{{ settings.image_to_video.fps }}" min="1" max="120" step="1">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">每秒显示的帧数，值越高视频越流畅，建议值: 16</small>
                     </div>
-                    <div class="form-group">
+                    {#<div class="form-group">
                         <label for="itv_shift">帧移</label>
                         <input type="number" id="itv_shift" name="settings[image_to_video][shift]" 
                                value="{{ settings.image_to_video.shift }}" min="1" max="32">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">视频生成过程中的帧移参数，影响视频流畅度，建议值: 8</small>
-                    </div>
+                    </div>#}
                     <div class="form-group">
                         <label for="itv_batch_size">批次大小</label>
                         <input type="number" id="itv_batch_size" name="settings[image_to_video][batch_size]" 
@@ -455,12 +461,6 @@
                         <input type="number" id="itv_seed" name="settings[image_to_video][seed]" 
                                value="{{ settings.image_to_video.seed }}" min="-1">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成过程的随机性，使用相同种子可复现相同结果，建议值: -1 (随机)</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="itv_cfg">CFG Scale <span style="color: red;">*</span></label>
-                        <input type="number" id="itv_cfg" name="settings[image_to_video][cfg]" 
-                               value="{{ settings.image_to_video.cfg }}" min="0.5" max="30" step="0.5">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 1</small>
                     </div>
                 </div>
                 

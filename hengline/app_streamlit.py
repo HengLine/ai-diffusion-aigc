@@ -13,7 +13,7 @@ from typing import Optional, Dict, Any
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入自定义日志模块
-from hengline.logger import info, error
+from hengline.logger import error, warning, debug, error
 # 导入启动任务监听器
 from hengline.core.task_init import StartupTaskListener
 # 导入配置工具

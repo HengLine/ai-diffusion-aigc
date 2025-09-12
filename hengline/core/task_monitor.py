@@ -11,17 +11,14 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 
+# 导入邮件发送模块
+from hengline.core.task_email import _async_send_failure_email
 # 导入任务队列管理器
 from hengline.core.task_queue import task_queue_manager
 # 导入自定义日志模块
-from hengline.logger import info, error, debug, warning
+from hengline.logger import error, debug, warning
 from hengline.utils.config_utils import config
-# 导入邮件发送模块
-from hengline.utils.email_utils import send_email
 
-
-# 导入ComfyUIRunner
-# 导入配置工具
 
 
 class TaskMonitor:
@@ -180,11 +177,7 @@ class TaskMonitor:
                 error(f"任务 {task_id} 执行失败，已达到最大重试次数")
 
                 # 异步发送邮件通知
-                threading.Thread(
-                    target=self._async_send_failure_email,
-                    args=(task_id, task.task_type, task.task_msg, self.max_execution_count),
-                    daemon=True
-                ).start()
+                _async_send_failure_email(task_id, task.task_type, task.task_msg, self.max_execution_count)
 
                 return needs_save
 
@@ -211,16 +204,6 @@ class TaskMonitor:
             return True
 
         return False
-
-    def _async_send_failure_email(self, task_id: str, task_type: str, task_msg: str, max_execution_count: int):
-        """异步发送任务失败邮件通知"""
-        try:
-            send_email(
-                subject=f"任务 {task_id} 执行失败",
-                message=f"您提交的{task_type}任务已重试（{max_execution_count}次），但是由于：{task_msg}，请检查后再次提交任务"
-            )
-        except Exception as e:
-            error(f"发送任务失败邮件通知失败: {str(e)}")
 
     def _handle_running_task(self, task_id: str, task_info: Dict[str, Any]) -> bool:
         """处理运行中的任务 - 优化版本"""
@@ -360,16 +343,5 @@ class TaskMonitor:
 
         return result[0], time.time()
 
-    def _async_send_success_email(self, task_id: str, task_type: str, start_time: float, end_time: float):
-        """异步发送任务成功邮件通知"""
-        try:
-            send_email(
-                subject=f"任务 {task_id} 执行成功",
-                message=f"您提交的{task_type}任务已成功完成！\n\n任务类型: {task_type}\n开始时间: {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}\n结束时间: {datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')}\n耗时: {end_time - start_time:.1f}秒"
-            )
-        except Exception as e:
-            error(f"发送任务成功邮件通知失败: {str(e)}")
-
-
 # 全局任务监控器实例
-task_monitor = TaskMonitor()
+# task_monitor = TaskMonitor()

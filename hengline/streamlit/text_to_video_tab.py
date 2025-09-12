@@ -8,7 +8,7 @@ from hengline.workflow.run_workflow import ComfyUIRunner
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # 导入自定义日志模块
-from hengline.logger import info, error
+from hengline.logger import info, error, debug
 # 导入配置工具
 from hengline.utils.config_utils import get_task_settings, get_workflow_path
 

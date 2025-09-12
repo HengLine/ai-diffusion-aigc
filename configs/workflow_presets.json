@@ -30,7 +30,7 @@
     "default": {
       "width": 512,
       "height": 384,
-      "length": 121,
+      "length": 10,
       "batch_size": 1,
       "steps": 20,
       "shift": 8,
@@ -47,7 +47,7 @@
     "default": {
       "width": 576,
       "height": 320,
-      "length": 121,
+      "length": 10,
       "steps": 20,
       "fps": 16,
       "shift": 8,

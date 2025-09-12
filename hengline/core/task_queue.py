@@ -14,7 +14,9 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, Callable, Tuple, Optional, List
 
-from hengline.logger import info, error, debug, warning
+# 导入邮件发送模块
+from hengline.core.task_email import _async_send_failure_email
+from hengline.logger import error, debug, warning, info
 from hengline.utils.config_utils import max_concurrent_tasks
 
 
@@ -235,9 +237,11 @@ class TaskQueueManager:
         Returns:
             float: 预估等待时间（秒）
         """
+        task_default_duration = 20.0  # 默认任务执行时间（秒）
+
         # 如果队列位置小于等于最大并发数，无需等待
         if queue_position <= self.max_concurrent_tasks:
-            return 20.0
+            return task_default_duration
 
         # 计算前面有多少个任务在等待
         waiting_tasks = queue_position - self.max_concurrent_tasks
@@ -248,7 +252,7 @@ class TaskQueueManager:
         # 预估等待时间 = 前面等待的任务数 * 该类型任务的平均执行时间
         estimated_waiting_time = waiting_tasks * avg_duration
 
-        return estimated_waiting_time
+        return estimated_waiting_time + task_default_duration
 
     def _process_tasks(self):
         """处理队列中的任务 - 任务级锁优化版本"""
@@ -334,37 +338,43 @@ class TaskQueueManager:
                         max_retry_count = settings_config.get('task', {}).get('max_retry_count', 3)
                     except:
                         pass
-                    
+
                     # 检查是否超过最大重试次数
                     if task.execution_count > max_retry_count:
                         warning(f"任务 {task.task_id} 执行次数已达到最大限制 {max_retry_count}，不再重试")
                         task.status = "failed"
                         task.task_msg = f"ComfyUI 工作流连接超时，任务已重试 {max_retry_count} 次。请检查ComfyUI服务器是否运行，或配置中URL是否正确。"
                         task.end_time = time.time()
+
+                        _async_send_failure_email(task.task_id, task.task_type, task.task_msg, max_retry_count)
+
                     else:
                         # 如果未超过最大重试次数，将任务重新加入队列
                         warning(f"任务执行失败，ComfyUI服务器连接异常，将任务重新加入队列: {task.task_id}")
                         task.status = "queued"
                         task.task_msg = "ComfyUI 工作流连接超时，任务将在稍后重试。请检查ComfyUI服务器是否运行，或配置中URL是否正确。"
                         task.end_time = None  # 清除结束时间
-                        
+
                         # 将任务重新加入队列
                         self.task_queue.put(task)
                         self.task_type_counters[task.task_type] = self.task_type_counters.get(task.task_type, 0) + 1
-                    
+
                     # 从运行中任务列表移除
                     if task.task_id in self.running_tasks:
                         del self.running_tasks[task.task_id]
-                    
+
                     # 直接异步保存任务历史，避免阻塞
                     self._async_save_history()
-                    
+
                     return  # 提前返回，避免后续处理
                 elif result is None:
                     # 任务未返回结果，可能是执行过程中出错
                     task.status = "failed"
                     task.task_msg = f"任务执行未返回结果: {task.task_id}"
                     task.end_time = time.time()
+
+                    _async_send_failure_email(task.task_id, task.task_type, task.task_msg, task.execution_count)
+
                 elif isinstance(result, dict) and not result.get('success', True):
                     # 任务返回结果但标记为失败
                     task.status = "failed"
@@ -399,7 +409,7 @@ class TaskQueueManager:
                 # 直接异步保存任务历史，避免阻塞
                 self._async_save_history()
 
-            debug(f"任务执行完成: {task.task_id}, 类型: {task.task_type}, 状态: {task.status}")
+            info(f"任务执行完成: {task.task_id}, 类型: {task.task_type}, 状态: {task.status}")
 
         except Exception as e:
             error(f"任务执行异常: {task.task_id}, 错误: {str(e)}")
