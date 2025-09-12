@@ -23,7 +23,7 @@ class ImageToImageTab:
         
     def render(self):
         """渲染图生图标签页"""
-        info("====== 进入[图生图]标签页 ======")
+        debug("====== 进入[图生图]标签页 ======")
         st.subheader("图生图 (Image to Image)")
         
         # 创建表单

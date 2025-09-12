@@ -72,7 +72,7 @@ class DailyRotatingFileHandler(RotatingFileHandler):
 
 class Logger:
     """自定义日志类"""
-    def __init__(self, name: str = 'aigc_demo', log_dir: Optional[str] = None, max_bytes: int = 10*1024*1024):
+    def __init__(self, name: str = 'hengLine', log_dir: Optional[str] = None, max_bytes: int = 10*1024*1024):
         """
         初始化日志器
         
@@ -81,8 +81,37 @@ class Logger:
             log_dir: 日志目录路径，默认在项目根目录下的logs目录
             max_bytes: 单个日志文件最大字节数，默认10MB
         """
+        # 初始化日志器
         self.logger = logging.getLogger(name)
-        self.logger.setLevel(logging.INFO)
+        
+        # 默认日志级别设为DEBUG
+        self.logger.setLevel(logging.DEBUG)
+        
+        try:
+            # 延迟导入以避免循环依赖
+            from hengline.utils.config_utils import get_settings_config
+            
+            # 获取日志配置
+            settings_config = get_settings_config()
+            logging_config = settings_config.get('logging', {})
+            
+            # 设置日志级别，默认为DEBUG
+            level_map = {
+                'DEBUG': logging.DEBUG,
+                'INFO': logging.INFO,
+                'WARNING': logging.WARNING,
+                'ERROR': logging.ERROR,
+                'CRITICAL': logging.CRITICAL
+            }
+            
+            # 获取配置的日志级别
+            log_level_str = logging_config.get('level', 'DEBUG').upper()
+            log_level = level_map.get(log_level_str, logging.DEBUG)
+            self.logger.setLevel(log_level)
+            
+        except ImportError:
+            # 如果导入失败，使用默认的DEBUG级别
+            pass
         
         # 如果已经有处理器，则清除
         if self.logger.handlers:
@@ -94,17 +123,81 @@ class Logger:
         # 控制台处理器
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
+        console_handler.setLevel(logging.DEBUG)  # 默认使用DEBUG级别
         self.logger.addHandler(console_handler)
+        
+        try:
+            # 再次尝试获取配置以设置处理器级别
+            from hengline.utils.config_utils import get_settings_config
+            settings_config = get_settings_config()
+            logging_config = settings_config.get('logging', {})
+            
+            level_map = {
+                'DEBUG': logging.DEBUG,
+                'INFO': logging.INFO,
+                'WARNING': logging.WARNING,
+                'ERROR': logging.ERROR,
+                'CRITICAL': logging.CRITICAL
+            }
+            
+            # 获取配置的日志级别
+            log_level_str = logging_config.get('level', 'INFO').upper()
+            log_level = level_map.get(log_level_str, logging.INFO)
+            
+            # 设置控制台处理器级别
+            console_level_str = logging_config.get('console_level', log_level_str).upper()
+            console_level = level_map.get(console_level_str, log_level)
+            console_handler.setLevel(console_level)
+            
+        except ImportError:
+            # 如果导入失败，保持默认的DEBUG级别
+            pass
         
         # 文件处理器
         if log_dir is None:
             # 默认日志目录：项目根目录下的logs文件夹
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            # 使用当前文件所在路径向上回溯到项目根目录
+            current_file = os.path.abspath(__file__)
+            # logger.py位于hengline目录下，所以需要向上两级才能到达项目根目录
+            project_root = os.path.dirname(os.path.dirname(current_file))
             log_dir = os.path.join(project_root, 'logs')
         
         file_handler = DailyRotatingFileHandler(log_dir, name, max_bytes)
         file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.INFO)  # 默认使用INFO级别
         self.logger.addHandler(file_handler)
+        
+        try:
+            # 设置文件处理器级别
+            from hengline.utils.config_utils import get_settings_config
+            settings_config = get_settings_config()
+            logging_config = settings_config.get('logging', {})
+            
+            level_map = {
+                'DEBUG': logging.DEBUG,
+                'INFO': logging.INFO,
+                'WARNING': logging.WARNING,
+                'ERROR': logging.ERROR,
+                'CRITICAL': logging.CRITICAL
+            }
+            
+            # 获取配置的日志级别
+            log_level_str = logging_config.get('level', 'INFO').upper()
+            log_level = level_map.get(log_level_str, logging.INFO)
+            
+            # 设置文件处理器级别
+            file_level_str = logging_config.get('file_level', log_level_str).upper()
+            file_level = level_map.get(file_level_str, log_level)
+            file_handler.setLevel(file_level)
+            
+            # 禁用不必要的日志
+            if logging_config.get('disable_unnecessary_logs', True):
+                # 禁用第三方库的日志
+                for logger_name in ['urllib3', 'requests', 'PIL', 'matplotlib']:
+                    logging.getLogger(logger_name).setLevel(logging.WARNING)
+        except ImportError:
+            # 如果导入失败，保持默认设置
+            pass
     
     def debug(self, message: str):
         """记录调试信息"""

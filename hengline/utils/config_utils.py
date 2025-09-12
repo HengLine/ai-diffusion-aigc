@@ -1,7 +1,7 @@
 # 配置工具模块，统一管理配置获取
 import os
 import json
-from hengline.logger import info, error, warning
+from hengline.logger import info, error, warning, debug
 
 # 全局配置变量
 _config = None
@@ -22,7 +22,7 @@ def load_config():
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             _config = json.load(f)
-            info(f"成功加载配置文件: {config_path}")
+            debug(f"成功加载配置文件: {config_path}")
             return _config
     except Exception as e:
         error(f"加载配置文件失败: {str(e)}")

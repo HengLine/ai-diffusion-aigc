@@ -128,7 +128,7 @@ def api_image_to_video():
     接受multipart/form-data格式的请求，包含图像文件和参数
     """
     request_id = f"{time.strftime('%Y%m%d%H%M%S')}_{os.urandom(4).hex()}"
-    logger.info(f"[{request_id}] 接收到图生视频API请求")
+    logger.debug(f"[{request_id}] 接收到图生视频API请求")
 
     try:
         # 记录所有请求头，用于调试
@@ -198,7 +198,7 @@ def api_image_to_video():
         if result:
             if result.get('queued'):
                 # 任务已排队
-                logger.info(f"[{request_id}] 任务已排队: {result.get('message')}")
+                logger.debug(f"[{request_id}] 任务已排队: {result.get('message')}")
                 return jsonify({
                     'success': True,
                     'message': result.get('message'),
@@ -206,7 +206,7 @@ def api_image_to_video():
                 }), 200
             elif result.get('success'):
                 # 任务立即完成
-                logger.info(f"[{request_id}] 任务提交成功")
+                logger.debug(f"[{request_id}] 任务提交成功")
                 return jsonify({
                     'success': True,
                     'message': '任务提交成功，请在"我的任务"中查看进度'

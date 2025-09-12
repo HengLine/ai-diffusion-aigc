@@ -41,6 +41,12 @@
             "max_concurrent_tasks": 2,
             "cache_enabled": true,
             "cache_size": 1024
+        },
+        "logging": {
+            "level": "WARNING",
+            "console_level": "DEBUG",
+            "file_level": "INFO",
+            "disable_unnecessary_logs": true
         }
     }
 }

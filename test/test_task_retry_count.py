@@ -16,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from hengline.utils.task_queue_utils import TaskQueueManager, Task
+from hengline.logger import debug, info, warning, error
 
 # 添加全局调试函数
 def debug_log(message):
@@ -23,7 +24,7 @@ def debug_log(message):
     caller_name = frame.f_code.co_name
     caller_line = frame.f_lineno
     thread_name = threading.current_thread().name
-    print(f"[DEBUG {thread_name} {caller_name}:{caller_line}] {message}")
+    debug(f"[DEBUG {thread_name} {caller_name}:{caller_line}] {message}")
 
 class TestTaskRetryCount(unittest.TestCase):
     def setUp(self):
@@ -128,7 +129,7 @@ class TestTaskRetryCount(unittest.TestCase):
             )
             task.execution_count = 1  # 初始化为1
             
-            print(f"创建任务: task_id={task_id}, execution_count={task.execution_count}")
+            info(f"创建任务: task_id={task_id}, execution_count={task.execution_count}")
             debug_log(f"创建任务对象完成: {task_id}")
             
             # 添加任务到队列
@@ -139,7 +140,7 @@ class TestTaskRetryCount(unittest.TestCase):
             debug_log("添加任务到队列完成")
             
             # 运行_process_tasks来获取任务并开始执行
-            print("开始执行第一次任务")
+            info("开始执行第一次任务")
             debug_log("执行第一次任务前")
             self.task_queue_manager._process_tasks()
             debug_log("执行第一次任务完成")
@@ -150,26 +151,26 @@ class TestTaskRetryCount(unittest.TestCase):
             debug_log(f"获取任务对象完成: {task_id}, 状态: {task.status if task else None}")
             
             if task is None:
-                print("错误: 任务不在历史记录中")
+                error("任务不在历史记录中")
                 self.fail("任务不在历史记录中")
             
             # 验证任务失败，执行次数仍然为1（因为我们在_execute_task中不再增加）
-            print(f"第一次执行后: status={task.status}, execution_count={task.execution_count}")
+            debug(f"第一次执行后: status={task.status}, execution_count={task.execution_count}")
             debug_log(f"验证第一次执行结果: status={task.status}, execution_count={task.execution_count}")
             self.assertEqual(task.status, "failed", f"第一次执行后状态应为failed，实际为{task.status}")
             self.assertEqual(task.execution_count, 1, f"第一次执行后执行次数应为1，实际为{task.execution_count}")
-            print(f"第一次执行成功: status={task.status}, execution_count={task.execution_count}")
+            info(f"第一次执行成功: status={task.status}, execution_count={task.execution_count}")
             debug_log("第一次执行验证通过")
             
             # 重新入队失败任务 - 这里应该增加执行次数到2
-            print("重新入队第一次失败的任务")
+            info("重新入队第一次失败的任务")
             debug_log("重新入队第一次失败任务前")
             requeued_count = self.task_queue_manager.requeue_failed_tasks(max_execution_count=max_execution_count)
             debug_log(f"重新入队第一次失败任务完成，数量: {requeued_count}")
-            print(f"重新入队数量: {requeued_count}")
+            debug(f"重新入队数量: {requeued_count}")
             
             # 运行_process_tasks来处理重新入队的任务
-            print("开始执行第二次任务")
+            info("开始执行第二次任务")
             debug_log("执行第二次任务前")
             self.task_queue_manager._process_tasks()
             debug_log("执行第二次任务完成")
@@ -180,26 +181,26 @@ class TestTaskRetryCount(unittest.TestCase):
             debug_log(f"获取任务对象完成: {task_id}, 状态: {task.status}")
             
             if task is None:
-                print("错误: 任务不在历史记录中")
+                error("任务不在历史记录中")
                 self.fail("任务不在历史记录中")
             
             # 验证任务再次失败，执行次数为2
-            print(f"第二次执行后: status={task.status}, execution_count={task.execution_count}")
+            debug(f"第二次执行后: status={task.status}, execution_count={task.execution_count}")
             debug_log(f"验证第二次执行结果: status={task.status}, execution_count={task.execution_count}")
             self.assertEqual(task.status, "failed", f"第二次执行后状态应为failed，实际为{task.status}")
             self.assertEqual(task.execution_count, 2, f"第二次执行后执行次数应为2，实际为{task.execution_count}")
-            print(f"第二次执行成功: status={task.status}, execution_count={task.execution_count}")
+            info(f"第二次执行成功: status={task.status}, execution_count={task.execution_count}")
             debug_log("第二次执行验证通过")
             
             # 再次重新入队失败任务 - 这里应该增加执行次数到3
-            print("重新入队第二次失败的任务")
+            info("重新入队第二次失败的任务")
             debug_log("重新入队第二次失败任务前")
             requeued_count = self.task_queue_manager.requeue_failed_tasks(max_execution_count=max_execution_count)
             debug_log(f"重新入队第二次失败任务完成，数量: {requeued_count}")
-            print(f"重新入队数量: {requeued_count}")
+            debug(f"重新入队数量: {requeued_count}")
             
             # 运行_process_tasks来处理再次重新入队的任务
-            print("开始执行第三次任务")
+            info("开始执行第三次任务")
             debug_log("执行第三次任务前")
             self.task_queue_manager._process_tasks()
             debug_log("执行第三次任务完成")
@@ -210,28 +211,28 @@ class TestTaskRetryCount(unittest.TestCase):
             debug_log(f"获取任务对象完成: {task_id}, 状态: {task.status}")
             
             if task is None:
-                print("错误: 任务不在历史记录中")
+                error("任务不在历史记录中")
                 self.fail("任务不在历史记录中")
             
             # 验证任务第三次失败，执行次数为3
-            print(f"第三次执行后: status={task.status}, execution_count={task.execution_count}")
+            debug(f"第三次执行后: status={task.status}, execution_count={task.execution_count}")
             debug_log(f"验证第三次执行结果: status={task.status}, execution_count={task.execution_count}")
             self.assertEqual(task.status, "failed", f"第三次执行后状态应为failed，实际为{task.status}")
             self.assertEqual(task.execution_count, 3, f"第三次执行后执行次数应为3，实际为{task.execution_count}")
-            print(f"第三次执行成功: status={task.status}, execution_count={task.execution_count}")
+            info(f"第三次执行成功: status={task.status}, execution_count={task.execution_count}")
             debug_log("第三次执行验证通过")
             
             # 再次尝试重新入队失败任务（应该不再重新入队）
-            print("尝试重新入队达到最大重试次数的任务")
+            info("尝试重新入队达到最大重试次数的任务")
             debug_log("尝试重新入队达到最大重试次数的任务前")
             requeued_count = self.task_queue_manager.requeue_failed_tasks(max_execution_count=max_execution_count)
             debug_log(f"尝试重新入队达到最大重试次数的任务完成，数量: {requeued_count}")
-            print(f"重新入队数量: {requeued_count}")
+            debug(f"重新入队数量: {requeued_count}")
             
             # 验证没有任务被重新入队
             debug_log(f"验证重新入队数量: {requeued_count}")
             self.assertEqual(requeued_count, 0, f"达到最大重试次数后不应有任务被重新入队，实际重新入队{requeued_count}个任务")
-            print(f"达到最大重试次数后未重新入队任务: requeued_count={requeued_count}")
+            info(f"达到最大重试次数后未重新入队任务: requeued_count={requeued_count}")
             debug_log("重新入队数量验证通过")
             
             # 验证任务状态仍然是failed
@@ -240,23 +241,23 @@ class TestTaskRetryCount(unittest.TestCase):
             debug_log(f"获取任务对象完成: {task_id}, 状态: {task.status}")
             
             if task is None:
-                print("错误: 任务不在历史记录中")
+                error("任务不在历史记录中")
                 self.fail("任务不在历史记录中")
             
             debug_log(f"验证最终状态: {task.status}")
             self.assertEqual(task.status, "failed", f"达到最大重试次数后状态应为failed，实际为{task.status}")
-            print(f"最终状态验证成功: status={task.status}")
+            info(f"最终状态验证成功: status={task.status}")
             debug_log("最终状态验证通过")
             
-            print("所有测试验证成功!")
+            info("所有测试验证成功!")
             debug_log("所有测试验证成功!")
         except Exception as e:
-            print(f"测试失败: {str(e)}")
+            error(f"测试失败: {str(e)}")
             debug_log(f"测试失败: {str(e)}")
             traceback.print_exc()
             self.fail(f"测试失败: {str(e)}")
 
 if __name__ == '__main__':
-    print(f"测试脚本启动，进程ID: {os.getpid()}")
+    info(f"测试脚本启动，进程ID: {os.getpid()}")
     debug_log("测试脚本启动")
     unittest.main()

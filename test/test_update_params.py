@@ -9,12 +9,13 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from hengline.logger import debug, info
 from hengline.workflow.run_workflow import ComfyUIRunner
 from hengline.utils.config_utils import get_effective_config, load_workflow_presets
 
 def test_update_workflow_params():
     """测试工作流参数更新功能"""
-    print("开始测试工作流参数更新功能...")
+    info("开始测试工作流参数更新功能...")
     
     # 初始化工作流运行器
     runner = ComfyUIRunner(output_dir="./outputs")
@@ -76,34 +77,34 @@ def test_update_workflow_params():
     updated_workflow = runner.update_workflow_params(test_workflow, test_params)
     
     # 验证结果
-    print("\n更新后的工作流参数:")
-    print(json.dumps(updated_workflow, ensure_ascii=False, indent=2))
+    info("\n更新后的工作流参数:")
+    debug(json.dumps(updated_workflow, ensure_ascii=False, indent=2))
     
     # 检查特定节点的更新情况
-    print("\n验证更新结果:")
+    info("\n验证更新结果:")
     clip1 = updated_workflow["prompt"]["1"]
     clip2 = updated_workflow["prompt"]["2"]
     ksampler = updated_workflow["prompt"]["3"]
     latent = updated_workflow["prompt"]["4"]
     other = updated_workflow["prompt"]["5"]
     
-    print(f"1. CLIPTextEncode1 提示词: {clip1['inputs']['text']} (应为: {test_params['prompt']})")
-    print(f"2. CLIPTextEncode2 负提示词: {clip2['inputs']['text']} (应为: {test_params['negative_prompt']})")
-    print(f"3. KSampler steps: {ksampler['inputs']['steps']} (应为: {test_params['steps']})")
-    print(f"4. KSampler cfg: {ksampler['inputs']['cfg']} (应为: {test_params['cfg']})")
-    print(f"5. EmptyLatentImage width: {latent['inputs']['width']} (应为: {test_params['width']})")
-    print(f"6. EmptyLatentImage height: {latent['inputs']['height']} (应为: {test_params['height']})")
-    print(f"7. SomeOtherNode custom_param: {other['inputs']['custom_param']} (应为: {test_params['custom_param']})")
-    print(f"8. SomeOtherNode another_param: {other['inputs']['another_param']} (应为: {test_params['another_param']})")
-    print(f"9. SomeOtherNode new_param: {'存在' if 'new_param' in other['inputs'] else '不存在'} (应为: 不存在，因为原始节点中没有这个参数)")
+    debug(f"1. CLIPTextEncode1 提示词: {clip1['inputs']['text']} (应为: {test_params['prompt']})")
+    debug(f"2. CLIPTextEncode2 负提示词: {clip2['inputs']['text']} (应为: {test_params['negative_prompt']})")
+    debug(f"3. KSampler steps: {ksampler['inputs']['steps']} (应为: {test_params['steps']})")
+    debug(f"4. KSampler cfg: {ksampler['inputs']['cfg']} (应为: {test_params['cfg']})")
+    debug(f"5. EmptyLatentImage width: {latent['inputs']['width']} (应为: {test_params['width']})")
+    debug(f"6. EmptyLatentImage height: {latent['inputs']['height']} (应为: {test_params['height']})")
+    debug(f"7. SomeOtherNode custom_param: {other['inputs']['custom_param']} (应为: {test_params['custom_param']})")
+    debug(f"8. SomeOtherNode another_param: {other['inputs']['another_param']} (应为: {test_params['another_param']})")
+    debug(f"9. SomeOtherNode new_param: {'存在' if 'new_param' in other['inputs'] else '不存在'} (应为: 不存在，因为原始节点中没有这个参数)")
     
     # 测试真实工作流预设
-    print("\n测试真实工作流预设更新:")
+    info("\n测试真实工作流预设更新:")
     presets = load_workflow_presets()
     for task_type in presets.keys():
-        print(f"\n任务类型: {task_type}")
+        info(f"\n任务类型: {task_type}")
         effective_config = get_effective_config(task_type)
-        print(f"有效配置: {effective_config}")
+        debug(f"有效配置: {effective_config}")
         
         # 创建一个简单的工作流来测试该任务类型的参数更新
         test_task_workflow = {
@@ -124,9 +125,9 @@ def test_update_workflow_params():
         
         # 验证更新
         updated_node = updated_task_workflow["prompt"]["1"]
-        print(f"参数更新数量: {sum(1 for k, v in updated_node['inputs'].items() if v != 'original_value')}/{len(effective_config)}")
+        debug(f"参数更新数量: {sum(1 for k, v in updated_node['inputs'].items() if v != 'original_value')}/{len(effective_config)}")
     
-    print("\n测试完成!")
+    info("\n测试完成!")
 
 if __name__ == "__main__":
     test_update_workflow_params()

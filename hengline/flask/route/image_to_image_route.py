@@ -133,7 +133,7 @@ def api_image_to_image():
     接受multipart/form-data格式的请求，包含图像文件和参数
     """
     request_id = f"{time.strftime('%Y%m%d%H%M%S')}_{os.urandom(4).hex()}"
-    logger.info(f"[{request_id}] 接收到图生图API请求")
+    logger.debug(f"[{request_id}] 接收到图生图API请求")
     
     try:
         # 记录所有请求头，用于调试
@@ -199,7 +199,7 @@ def api_image_to_image():
             }), 400
         
         # 记录任务信息
-        logger.info(f"[{request_id}] 开始处理图生图任务 - prompt: {prompt[:50]}..., image: {file.filename}")
+        logger.debug(f"[{request_id}] 开始处理图生图任务 - prompt: {prompt[:50]}..., image: {file.filename}")
         
         # 执行图生图任务
         result = workflow_image_manager.process_image_to_image(
@@ -217,7 +217,7 @@ def api_image_to_image():
             if result.get('queued'):
                 # 任务已排队，返回排队信息
                 queue_position = result.get('queue_position', 0)
-                logger.info(f"[{request_id}] 图生图任务已排队 - 队列位置: {queue_position}")
+                logger.debug(f"[{request_id}] 图生图任务已排队 - 队列位置: {queue_position}")
                 return jsonify({
                     'success': True,  # 任务成功提交到队列
                     'queued': True,
@@ -232,7 +232,7 @@ def api_image_to_image():
                 # 任务立即完成（这种情况在异步模式下不会发生）
                 if 'output_path' in result:
                     result_filename = os.path.basename(result['output_path'])
-                    logger.info(f"[{request_id}] 图生图任务处理成功 - 文件名: {result_filename}")
+                    logger.debug(f"[{request_id}] 图生图任务处理成功 - 文件名: {result_filename}")
                     return jsonify({
                         'success': True,
                         'message': '图生图任务处理成功',

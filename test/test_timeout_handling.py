@@ -1,5 +1,6 @@
 import sys
 import os
+import sys
 import time
 import uuid
 import threading
@@ -7,6 +8,8 @@ from threading import Thread
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from hengline.logger import debug, info, warning, error
 
 from hengline.core.task_queue import TaskQueueManager, Task
 
@@ -18,7 +21,7 @@ def timeout_task_callback(params):
 
 # 测试任务队列的超时处理
 if __name__ == "__main__":
-    print("开始测试任务队列的超时处理...")
+    info("开始测试任务队列的超时处理...")
     
     # 获取任务队列管理器实例
     task_queue_manager = TaskQueueManager()
@@ -40,20 +43,20 @@ if __name__ == "__main__":
     # 设置start_time属性
     test_task.start_time = time.time()
     
-    print(f"创建测试任务: {test_task.task_id}")
+    info(f"创建测试任务: {test_task.task_id}")
     
     # 直接调用_execute_callback_with_timeout方法测试超时处理
     # 设置一个短超时时间（2秒）来强制超时
-    print("执行任务并设置2秒超时...")
+    info("执行任务并设置2秒超时...")
     result = task_queue_manager._execute_callback_with_timeout(test_task, timeout=2)
     
     # 检查结果
-    print(f"任务执行结果: {result}")
+    debug(f"任务执行结果: {result}")
     
     if isinstance(result, dict) and not result.get('success', True) and result.get('timeout', False):
-        print("测试成功: 任务超时处理正常工作，返回了包含timeout标记的错误信息")
-        print(f"错误消息: {result.get('message')}")
+        info("测试成功: 任务超时处理正常工作，返回了包含timeout标记的错误信息")
+        info(f"错误消息: {result.get('message')}")
     else:
-        print("测试失败: 任务超时处理不正确")
+        error("测试失败: 任务超时处理不正确")
     
-    print("测试完成")
+    info("测试完成")

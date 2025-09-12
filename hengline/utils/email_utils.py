@@ -78,7 +78,7 @@ class EmailSender:
             if self.username and self.password:
                 self.server.login(self.username, self.password)
 
-            info(f"成功连接到SMTP服务器: {self.smtp_server}")
+            debug(f"成功连接到SMTP服务器: {self.smtp_server}")
             return True
         except Exception as e:
             error(f"连接SMTP服务器失败: {str(e)}")
@@ -90,7 +90,7 @@ class EmailSender:
         if self.server:
             try:
                 self.server.quit()
-                info("已断开与SMTP服务器的连接")
+                debug("已断开与SMTP服务器的连接")
             except Exception as e:
                 warning(f"断开SMTP连接时出错: {str(e)}")
             finally:
@@ -144,7 +144,7 @@ class EmailSender:
 
             # 发送邮件
             self.server.send_message(msg)
-            info(f"成功发送邮件到: {to_email}, 主题: {subject}")
+            debug(f"成功发送邮件到: {to_email}, 主题: {subject}")
             return True
         except Exception as e:
             error(f"发送邮件失败: {str(e)}")

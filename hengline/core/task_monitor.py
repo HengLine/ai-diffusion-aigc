@@ -48,7 +48,7 @@ class TaskMonitor:
     def start(self):
         """启动任务监控器"""
         if self.running:
-            info("任务监控器已经在运行中")
+            debug("任务监控器已经在运行中")
             return
 
         self.running = True
@@ -57,7 +57,7 @@ class TaskMonitor:
         self.monitor_thread.start()
 
         # current_thread = threading.current_thread()
-        info(
+        debug(
             f"任务监控器已启动，检查间隔：{self.check_interval}秒 - 实例ID: {self.instance_id}, 进程ID: {self.process_id}")
         # debug(f"启动线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
         # debug(f"监控线程ID: {self.monitor_thread.ident}, 线程名称: {self.monitor_thread.name}")
@@ -65,14 +65,14 @@ class TaskMonitor:
     def stop(self):
         """停止任务监控器"""
         if not self.running:
-            info("任务监控器未运行")
+            debug("任务监控器未运行")
             return
 
         self.running = False
         if self.monitor_thread and self.monitor_thread.is_alive():
             self.monitor_thread.join(timeout=5)
 
-        info("任务监控器已停止")
+        debug("任务监控器已停止")
 
     def _monitor_loop(self):
         """监控循环"""
@@ -205,7 +205,7 @@ class TaskMonitor:
             if task_id in task_queue_manager.running_tasks:
                 del task_queue_manager.running_tasks[task_id]
 
-            info(f"任务 {task_id} 已重新加入队列，等待重试，失败原因：{failure_reason}")
+            debug(f"任务 {task_id} 已重新加入队列，等待重试，失败原因：{failure_reason}")
 
             # 任务已更新，需要保存
             return True
@@ -291,7 +291,7 @@ class TaskMonitor:
 
                         if isinstance(prompt_data, dict) and "outputs" in prompt_data:
                             # 任务已完成
-                            info(f"任务 {task_id} 在ComfyUI中已完成，正在更新状态")
+                            debug(f"任务 {task_id} 在ComfyUI中已完成，正在更新状态")
 
                             # 更新任务状态
                             task.status = "completed"

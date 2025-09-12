@@ -43,21 +43,21 @@ class StartupTaskListener:
 
     def start(self):
         """启动监听器，处理历史任务"""
-        info("=" * 50)
-        info("          启动历史任务监听器          ")
-        info("=" * 50)
+        debug("=" * 50)
+        debug("          启动历史任务监听器          ")
+        debug("=" * 50)
 
         try:
             # 获取今天的日期
             today_date = datetime.now().strftime('%Y-%m-%d')
-            info(f"当前日期: {today_date}")
+            debug(f"当前日期: {today_date}")
 
             # 加载并处理历史任务
             self._process_historical_tasks(today_date)
 
-            info(f"启动任务监听器处理完成，共处理了 {self.processed_tasks_count} 个任务")
-            info("启动任务监听器已结束")
-            info("=" * 50)
+            debug(f"启动任务监听器处理完成，共处理了 {self.processed_tasks_count} 个任务")
+            debug("启动任务监听器已结束")
+            debug("=" * 50)
 
         except Exception as e:
             error(f"启动任务监听器执行异常: {str(e)}")
@@ -71,7 +71,7 @@ class StartupTaskListener:
         # with self.lock:
         # 获取所有任务历史记录
         all_tasks = task_queue_manager.get_all_tasks(today_date)
-        info(f"总任务历史记录数: {len(all_tasks)}")
+        debug(f"总任务历史记录数: {len(all_tasks)}")
 
         # 筛选今天未完成且重试未超过3次的任务
         pending_tasks = []
@@ -115,7 +115,7 @@ class StartupTaskListener:
             status = task_info['status']
             execution_count = task_info.get('execution_count', 1)
 
-            info(f"处理任务: {task_id}, 类型: {task_type}, 状态: {status}, 执行次数: {execution_count}")
+            debug(f"处理任务: {task_id}, 类型: {task_type}, 状态: {status}, 执行次数: {execution_count}")
 
             # 根据不同状态进行处理
             if status == 'queued':
@@ -169,7 +169,7 @@ class StartupTaskListener:
 
                 # 如果超过最大运行时间或没有prompt_id，则重新加入队列
                 if runtime_hours > self.max_runtime_hours or not prompt_id:
-                    info(f"任务 {task_id} 运行时间超过{self.max_runtime_hours}小时或没有prompt_id，重新加入队列")
+                    debug(f"任务 {task_id} 运行时间超过{self.max_runtime_hours}小时或没有prompt_id，重新加入队列")
                     self._requeue_task(task_id, task.task_type, "运行时间过长或无prompt_id，重新加入队列")
                     return
 
@@ -204,7 +204,7 @@ class StartupTaskListener:
 
                     if isinstance(prompt_data, dict) and "outputs" in prompt_data:
                         # 任务已完成，更新任务状态并保存结果
-                        info(f"任务 {task_id} 在ComfyUI中已完成，正在更新状态")
+                        debug(f"任务 {task_id} 在ComfyUI中已完成，正在更新状态")
                         with task_queue_manager.lock:
                             task = task_queue_manager.task_history.get(task_id)
                             if task:
@@ -233,11 +233,11 @@ class StartupTaskListener:
                         return
                     else:
                         # 任务尚未完成
-                        info(f"任务 {task_id} 在ComfyUI中仍在处理中")
+                        debug(f"任务 {task_id} 在ComfyUI中仍在处理中")
                         # 不做任何操作，让任务继续在ComfyUI中运行
                         return
                 else:
-                    info(f"任务 {task_id} 在ComfyUI中未找到，可能已被清理")
+                    debug(f"任务 {task_id} 在ComfyUI中未找到，可能已被清理")
                     # 重新加入队列
                     self._requeue_task(task_id, task_type, "ComfyUI中未找到任务，重新加入队列")
             else:
@@ -283,7 +283,7 @@ class StartupTaskListener:
                 # 将任务重新加入队列
                 task_queue_manager.task_queue.put(task)
 
-                info(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
+                debug(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
         except Exception as e:
             error(f"将任务 {task_id} 重新加入队列时发生异常: {str(e)}")
 
@@ -319,7 +319,7 @@ class StartupTaskListener:
                 # 保存任务历史
                 task_queue_manager._save_task_history()
 
-                info(f"任务 {task_id} ({task_type}) 已标记为最终失败，执行次数: {execution_count}")
+                debug(f"任务 {task_id} ({task_type}) 已标记为最终失败，执行次数: {execution_count}")
                 
                 # 异步发送邮件通知
                 threading.Thread(

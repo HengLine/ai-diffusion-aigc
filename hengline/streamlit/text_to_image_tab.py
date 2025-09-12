@@ -34,7 +34,7 @@ class TextToImageTab:
         
     def render(self):
         """渲染文生图标签页"""
-        info("====== 进入[文生图]标签页 ======")
+        debug("====== 进入[文生图]标签页 ======")
         st.subheader("文生图 (Text to Image)")
         
         # 创建表单

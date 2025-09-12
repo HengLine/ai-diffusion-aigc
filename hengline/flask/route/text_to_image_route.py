@@ -110,7 +110,7 @@ def api_text_to_image():
     接受JSON格式的请求参数，返回JSON格式的响应
     """
     request_id = f"{time.strftime('%Y%m%d%H%M%S')}_{os.urandom(4).hex()}"
-    logger.info(f"[{request_id}] 接收到文生图API请求")
+    logger.debug(f"[{request_id}] 接收到文生图API请求")
 
     try:
         # 记录所有请求头，用于调试
@@ -126,17 +126,17 @@ def api_text_to_image():
             }), 415
 
         # 从请求体中获取JSON数据
-        logger.info(f"[{request_id}] 尝试获取JSON数据")
+        logger.debug(f"[{request_id}] 尝试获取JSON数据")
         # 添加异常处理，以便更好地诊断JSON解析问题
         try:
             data = request.get_json()
-            logger.info(f"[{request_id}] JSON数据获取成功")
+            logger.debug(f"[{request_id}] JSON数据获取成功")
         except Exception as e:
             logger.error(f"[{request_id}] JSON数据解析失败: {str(e)}")
             # 尝试直接读取原始请求体，用于调试
             try:
                 raw_data = request.get_data().decode('utf-8')
-                logger.info(f"[{request_id}] 原始请求体: {raw_data[:200]}...")  # 只记录前200个字符
+                logger.debug(f"[{request_id}] 原始请求体: {raw_data[:200]}...")  # 只记录前200个字符
             except Exception as e2:
                 logger.error(f"[{request_id}] 无法读取原始请求体: {str(e2)}")
             return jsonify({
@@ -151,7 +151,7 @@ def api_text_to_image():
                 'message': '请求体必须包含JSON数据'
             }), 400
 
-        logger.info(f"[{request_id}] 接收到的请求数据: {data}")
+        logger.debug(f"[{request_id}] 接收到的请求数据: {data}")
 
         # 从配置工具获取默认参数
         from hengline.utils.config_utils import get_task_settings
@@ -174,7 +174,7 @@ def api_text_to_image():
             }), 400
 
         # 记录任务信息
-        logger.info(f"[{request_id}] 开始处理文生图任务 - prompt: {prompt[:50]}..., size: {width}x{height}")
+        logger.debug(f"[{request_id}] 开始处理文生图任务 - prompt: {prompt[:50]}..., size: {width}x{height}")
 
         # 执行文生图任务，设置任务ID
         result = workflow_image_manager.process_text_to_image(
@@ -190,7 +190,7 @@ def api_text_to_image():
             if result.get('queued'):
                 # 任务已排队，返回排队信息
                 queue_position = result.get('queue_position', 0)
-                logger.info(f"[{request_id}] 文生图任务已排队 - 队列位置: {queue_position}")
+                logger.debug(f"[{request_id}] 文生图任务已排队 - 队列位置: {queue_position}")
                 return jsonify({
                     'success': True,  # 任务成功提交到队列
                     'queued': True,
@@ -205,7 +205,7 @@ def api_text_to_image():
                 # 任务立即完成（这种情况在异步模式下不会发生）
                 if 'output_path' in result:
                     result_filename = os.path.basename(result['output_path'])
-                    logger.info(f"[{request_id}] 文生图任务处理成功 - 文件名: {result_filename}")
+                    logger.debug(f"[{request_id}] 文生图任务处理成功 - 文件名: {result_filename}")
                     return jsonify({
                         'success': True,
                         'message': '文生图任务处理成功',

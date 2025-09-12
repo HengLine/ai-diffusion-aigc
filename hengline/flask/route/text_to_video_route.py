@@ -22,6 +22,11 @@ def text_to_video():
     if request.method == 'POST':
         # 从配置工具获取有效参数，遵循页面输入 > setting节点 > default节点的优先级
         from hengline.utils.config_utils import get_effective_config
+        import uuid
+        import logging
+        logger = logging.getLogger(__name__)
+        request_id = str(uuid.uuid4())
+        logger.debug(f"[{request_id}] 接收到文生视频API请求")
         
         # 获取表单提交的参数
         form_params = {
@@ -69,6 +74,7 @@ def text_to_video():
         if result:
             if result.get('queued'):
                 # 任务已排队，显示排队信息
+                logger.debug(f"[{request_id}] 任务已排队: {result.get('message')}")
                 flash(result.get('message'), 'info')
                 return render_template('text_to_video.html', default_params=display_params)
             elif result.get('success'):
@@ -76,9 +82,11 @@ def text_to_video():
                 if 'output_path' in result:
                     import os
                     result_filename = os.path.basename(result['output_path'])
+                    logger.debug(f"[{request_id}] 任务提交成功")
                     flash('任务提交成功，已生成结果', 'success')
                     return render_template('text_to_video.html', default_params=default_params)
                 else:
+                    logger.debug(f"[{request_id}] 任务提交成功")
                     flash('任务提交成功，请在"我的任务"中查看进度', 'success')
                     return render_template('text_to_video.html', default_params=display_params)
             else:

@@ -35,7 +35,7 @@ class WorkflowVideoManager(WorkflowManager):
         height = params.get('height')
 
         try:
-            info(f"处理图生视频任务")
+            debug(f"处理图生视频任务")
 
             # 生成唯一的输出文件名
             output_filename = f"image_to_video_{int(time.time())}_{uuid.uuid4().hex[:8]}.mp4"
@@ -192,7 +192,7 @@ class WorkflowVideoManager(WorkflowManager):
         cfg_scale = params.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
 
         try:
-            info(f"处理文生视频任务: {prompt}")
+            debug(f"处理文生视频任务: {prompt}")
 
             # 生成唯一的输出文件名
             output_filename = f"text_to_video_{int(time.time())}_{uuid.uuid4().hex[:8]}.mp4"

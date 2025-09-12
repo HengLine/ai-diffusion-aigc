@@ -58,7 +58,7 @@ class AIGCWebApp:
     
     def _text_to_image_tab(self) -> None:
         """文生图标签页"""
-        info("====== 进入文生图标签页 ======")
+        debug("====== 进入文生图标签页 ======")
         st.subheader("📝 文生图")
         
         # 获取默认配置
@@ -143,7 +143,7 @@ class AIGCWebApp:
     
     def _image_to_image_tab(self) -> None:
         """图生图标签页"""
-        info("====== 进入图生图标签页 ======")
+        debug("====== 进入图生图标签页 ======")
         st.subheader("🖼️ 图生图")
         
         # 获取默认配置
@@ -248,7 +248,7 @@ class AIGCWebApp:
     
     def _image_to_video_tab(self) -> None:
         """图生视频标签页"""
-        info("====== 进入图生视频标签页 ======")
+        debug("====== 进入图生视频标签页 ======")
         st.subheader("🎬 图生视频")
         
         # 获取默认配置

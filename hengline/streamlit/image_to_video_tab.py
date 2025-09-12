@@ -25,7 +25,7 @@ class ImageToVideoTab:
         
     def render(self):
         """渲染图生视频标签页"""
-        info("====== 进入[图生视频]标签页 ======")
+        debug("====== 进入[图生视频]标签页 ======")
         st.subheader("图生视频 (Image to Video)")
         
         # 创建表单

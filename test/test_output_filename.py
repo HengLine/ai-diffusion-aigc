@@ -1,6 +1,10 @@
 import time
 import sys
 import os
+import time
+
+# 导入logger
+from hengline.logger import debug, info, warning, error
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -22,7 +26,7 @@ task.execution_count = 1
 # 将任务添加到历史记录
 task_manager.task_history[task.task_id] = task
 
-print(f'初始任务状态: status={task.status}, output_filename={task.output_filename}')
+debug(f'初始任务状态: status={task.status}, output_filename={task.output_filename}')
 
 # 模拟TaskMonitor的任务包装逻辑
 class MockComfyUIRunner:
@@ -45,10 +49,10 @@ task_type = 'text_to_image'
 output_filename = f"{task.task_id}_{int(time.time())}.png"
 task.output_filename = output_filename
 
-print(f'应用修复后: output_filename={task.output_filename}')
+debug(f'应用修复后: output_filename={task.output_filename}')
 
 # 验证修复是否有效
 if task.output_filename:
-    print('测试成功: 任务重试时output_filename已被正确设置!')
+    info('测试成功: 任务重试时output_filename已被正确设置!')
 else:
-    print('测试失败: 任务重试时output_filename仍然为空!')
+    error('测试失败: 任务重试时output_filename仍然为空!')

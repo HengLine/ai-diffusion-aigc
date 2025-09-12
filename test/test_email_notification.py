@@ -11,6 +11,9 @@ import unittest
 import asyncio
 from unittest.mock import patch, MagicMock
 
+# 导入logger
+from hengline.logger import debug, info, warning, error
+
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -19,11 +22,11 @@ try:
     from hengline.core.task_monitor import send_email, TaskMonitor
     from hengline.utils.env_utils import load_env_file
 except ImportError as e:
-    print(f"警告：导入模块时出错: {e}")
+    warning(f"警告：导入模块时出错: {e}")
     # 如果导入失败，定义mock函数以便测试能继续
     
     async def send_email(subject, message):
-        print(f"Mock: 协程发送邮件 - 主题: {subject}")
+        debug(f"Mock: 协程发送邮件 - 主题: {subject}")
         
     class TaskMonitor:
         def __init__(self, check_interval=1):
@@ -31,7 +34,7 @@ except ImportError as e:
         
         def _async_send_failure_email(self, task_id, task_type, task_msg, max_execution_count):
             # 模拟原始方法的行为，但使用asyncio来正确处理协程
-            print(f"Mock TaskMonitor: 发送失败邮件 - 任务ID: {task_id}")
+            debug(f"Mock TaskMonitor: 发送失败邮件 - 任务ID: {task_id}")
             
             async def run_send_email():
                 try:
@@ -40,7 +43,7 @@ except ImportError as e:
                         message=f"您提交的{task_type}任务已重试（{max_execution_count}次），但是由于：{task_msg}，请检查后再次提交任务"
                     )
                 except Exception as e:
-                    print(f"Mock: 发送邮件失败: {e}")
+                    error(f"Mock: 发送邮件失败: {e}")
             
             # 在实际代码中，这里应该是在一个新线程中运行
             # 但为了测试，我们直接运行协程
@@ -50,7 +53,7 @@ except ImportError as e:
             loop.close()
     
     def load_env_file():
-        print("Mock: 加载环境文件")
+        debug("Mock: 加载环境文件")
 
 class TestEmailNotification(unittest.TestCase):
     
@@ -58,7 +61,7 @@ class TestEmailNotification(unittest.TestCase):
         """设置测试环境"""
         # 确保.env文件已加载
         load_env_file()
-        print("测试邮件通知功能启动")
+        info("测试邮件通知功能启动")
         
         # 创建测试任务监控器
         self.task_monitor = TaskMonitor(check_interval=1)
@@ -84,7 +87,7 @@ class TestEmailNotification(unittest.TestCase):
                 task_id, task_type, task_msg, max_execution_count
             )
         except Exception as e:
-            print(f"调用_async_send_failure_email时出错: {e}")
+            error(f"调用_async_send_failure_email时出错: {e}")
             # 手动调用send_email来模拟行为，确保测试可以继续
             mock_send_email(
                 subject=f"任务 {task_id} 执行失败",
@@ -114,10 +117,10 @@ class TestEmailNotification(unittest.TestCase):
         email_port = os.getenv('EMAIL_PORT')
         
         # 打印加载的环境变量（不打印密码）
-        print(f"加载的邮件配置：")
-        print(f"EMAIL_USER: {email_user}")
-        print(f"EMAIL_SERVER: {email_server}")
-        print(f"EMAIL_PORT: {email_port}")
+        debug(f"加载的邮件配置：")
+        debug(f"EMAIL_USER: {email_user}")
+        debug(f"EMAIL_SERVER: {email_server}")
+        debug(f"EMAIL_PORT: {email_port}")
         
         # 这个测试总是通过，只是为了验证环境变量加载
         self.assertTrue(True)

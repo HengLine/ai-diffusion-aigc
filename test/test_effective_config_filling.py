@@ -6,6 +6,9 @@ import json
 import os
 import sys
 
+# 导入logger
+from hengline.logger import debug, info, warning
+
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -15,7 +18,7 @@ from hengline.utils.config_utils import get_effective_config, load_workflow_pres
 
 def test_effective_config_filling():
     """测试从get_effective_config()获取的值是否都能正确填充到工作流JSON中"""
-    print("开始测试有效配置填充功能...")
+    info("开始测试有效配置填充功能...")
     
     # 初始化工作流运行器
     runner = ComfyUIRunner(output_dir="./outputs")
@@ -24,13 +27,13 @@ def test_effective_config_filling():
     task_types = ["text_to_image", "image_to_image", "image_to_video", "text_to_video"]
     
     for task_type in task_types:
-        print(f"\n\n======= 测试任务类型: {task_type} =======")
+        info(f"\n\n======= 测试任务类型: {task_type} =======")
         
         # 1. 获取有效配置
         effective_config = get_effective_config(task_type)
-        print(f"\n1. 有效配置 ({len(effective_config)}个属性):")
+        debug(f"\n1. 有效配置 ({len(effective_config)}个属性):")
         for key, value in effective_config.items():
-            print(f"   {key}: {value}")
+            debug(f"   {key}: {value}")
         
         # 2. 创建一个模拟的工作流，包含所有可能的节点类型
         test_workflow = {
@@ -100,7 +103,7 @@ def test_effective_config_filling():
         updated_workflow = runner.update_workflow_params(test_workflow, effective_config)
         
         # 4. 验证结果
-        print(f"\n3. 验证参数更新结果:")
+        debug(f"\n3. 验证参数更新结果:")
         
         # 统计成功更新的参数数量
         success_count = 0
@@ -139,19 +142,19 @@ def test_effective_config_filling():
             if found_and_updated:
                 success_count += 1
             
-            print(f"   {status} - {param_name}: {expected_value}")
+            debug(f"   {status} - {param_name}: {expected_value}")
             if updated_node_info:
-                print(f"     更新位置: {', '.join(updated_node_info)}")
+                debug(f"     更新位置: {', '.join(updated_node_info)}")
         
         # 输出总体结果
-        print(f"\n4. 总体更新结果: {success_count}/{total_count} 个参数成功更新")
+        debug(f"\n4. 总体更新结果: {success_count}/{total_count} 个参数成功更新")
         
         # 5. 检查真实工作流文件
         workflow_path = get_workflow_path(task_type)
         if workflow_path:
             full_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), workflow_path)
             if os.path.exists(full_path):
-                print(f"\n5. 检查真实工作流文件: {full_path}")
+                debug(f"\n5. 检查真实工作流文件: {full_path}")
                 with open(full_path, 'r', encoding='utf-8') as f:
                     real_workflow = json.load(f)
                 
@@ -166,7 +169,7 @@ def test_effective_config_filling():
                         if "inputs" in node_data:
                             all_input_keys.update(node_data["inputs"].keys())
                 
-                print(f"   工作流中存在的输入参数键数量: {len(all_input_keys)}")
+                debug(f"   工作流中存在的输入参数键数量: {len(all_input_keys)}")
                 
                 # 检查有效配置中的参数是否在工作流中存在
                 missing_in_workflow = [param for param in effective_config.keys() 
@@ -177,15 +180,15 @@ def test_effective_config_filling():
                                       and not (param == "image_path" and "image" in all_input_keys)]
                 
                 if missing_in_workflow:
-                    print(f"   有效配置中存在但工作流中不存在的参数: {missing_in_workflow}")
+                    warning(f"   有效配置中存在但工作流中不存在的参数: {missing_in_workflow}")
                 else:
-                    print(f"   有效配置中的所有参数在工作流中都有对应的输入节点")
+                    debug(f"   有效配置中的所有参数在工作流中都有对应的输入节点")
             else:
-                print(f"   工作流文件不存在: {full_path}")
+                warning(f"   工作流文件不存在: {full_path}")
         else:
-            print(f"   未找到该任务类型的工作流配置")
+            warning(f"   未找到该任务类型的工作流配置")
     
-    print("\n\n======= 测试完成 =======")
+    info("\n\n======= 测试完成 =======")
 
 
 if __name__ == "__main__":

@@ -91,7 +91,7 @@ class TaskQueueManager:
 
         # 加载已保存的任务历史
         self._load_task_history()
-        info(f"TaskQueueManager初始化完成，task_history长度={len(self.task_history)}")
+        debug(f"TaskQueueManager初始化完成，task_history长度={len(self.task_history)}")
 
         # 启动任务处理线程
         self.running = True
@@ -119,9 +119,9 @@ class TaskQueueManager:
             self.task_queue.put(task)
             queued_tasks_added += 1
 
-        info(f"任务队列管理器已启动，最大并发任务数: {max_concurrent_tasks}")
-        info(f"已加载任务历史记录: {len(self.task_history)} 个任务")
-        info(f"已将今天 {queued_tasks_added} 个排队中的任务添加到队列")
+        debug(f"任务队列管理器已启动，最大并发任务数: {max_concurrent_tasks}")
+        debug(f"已加载任务历史记录: {len(self.task_history)} 个任务")
+        debug(f"已将今天 {queued_tasks_added} 个排队中的任务添加到队列")
 
     def _get_task_lock(self, task_id: str) -> threading.Lock:
         """获取指定任务的锁，如果不存在则创建"""
@@ -175,7 +175,7 @@ class TaskQueueManager:
                 # 更新任务类型计数器
                 self.task_type_counters[task_type] = self.task_type_counters.get(task_type, 0) + 1
 
-                info(f"新任务已加入队列: {task_id}, 类型: {task_type}")
+                debug(f"新任务已加入队列: {task_id}, 类型: {task_type}")
 
                 # 计算队列中的位置（包括正在运行的任务）
                 queue_position = len(self.running_tasks) + self.task_queue.qsize()
@@ -208,7 +208,7 @@ class TaskQueueManager:
                 # 更新任务类型计数器
                 self.task_type_counters[task_type] = self.task_type_counters.get(task_type, 0) + 1
 
-                info(f"任务已更新并重新加入队列: {task_id}, 类型: {task_type}")
+                debug(f"任务已更新并重新加入队列: {task_id}, 类型: {task_type}")
 
                 # 计算队列中的位置（包括正在运行的任务）
                 queue_position = len(self.running_tasks) + self.task_queue.qsize()
@@ -292,7 +292,7 @@ class TaskQueueManager:
                                 # 记录到历史
                                 self.task_history[task.task_id] = task
 
-                            info(f"开始执行任务: {task.task_id}, 类型: {task.task_type}")
+                            debug(f"开始执行任务: {task.task_id}, 类型: {task.task_type}")
 
                             # 直接异步保存任务历史，避免阻塞
                             self._async_save_history()
@@ -327,7 +327,7 @@ class TaskQueueManager:
                 # 检查任务是否遇到连接异常
                 if result and isinstance(result, dict) and result.get('queued'):
                     # 如果ComfyUI服务器连接失败，将任务重新加入队列
-                    info(f"任务执行失败，ComfyUI服务器连接异常，将任务重新加入队列: {task.task_id}")
+                    debug(f"任务执行失败，ComfyUI服务器连接异常，将任务重新加入队列: {task.task_id}")
                     task.status = "queued"
                     task.task_msg = "ComfyUI 工作流连接超时，任务将在稍后重试。请检查ComfyUI服务器是否运行，或配置中URL是否正确。"
                     task.end_time = None  # 清除结束时间
@@ -383,7 +383,7 @@ class TaskQueueManager:
                 # 直接异步保存任务历史，避免阻塞
                 self._async_save_history()
 
-            info(f"任务执行完成: {task.task_id}, 类型: {task.task_type}, 状态: {task.status}")
+            debug(f"任务执行完成: {task.task_id}, 类型: {task.task_type}, 状态: {task.status}")
 
         except Exception as e:
             error(f"任务执行异常: {task.task_id}, 错误: {str(e)}")
@@ -586,14 +586,14 @@ class TaskQueueManager:
             temp_tasks.append(task)
             # 将任务添加到历史记录，保持"queued"状态
             self.task_history[task.task_id] = task
-            info(f"将排队任务添加到历史记录: {task.task_id}, 类型: {task.task_type}")
+            debug(f"将排队任务添加到历史记录: {task.task_id}, 类型: {task.task_type}")
 
         # 保存任务历史
         self._save_task_history()
 
         if self.worker_thread.is_alive():
             self.worker_thread.join(timeout=5)
-        info("任务队列管理器已关闭，已保存所有排队任务到历史记录")
+        debug("任务队列管理器已关闭，已保存所有排队任务到历史记录")
 
     def _save_task_history(self):
         """保存任务历史到按日期分类的文件 - 优化版本"""
@@ -685,12 +685,12 @@ class TaskQueueManager:
     def _load_task_history(self):
         """从按日期分类的文件加载任务历史 - 优化版本"""
         try:
-            # 重新导入datetime，确保在任何环境中可用
-            from datetime import datetime
+            # 重新导入datetime和timedelta，确保在任何环境中可用
+            from datetime import datetime, timedelta
 
             if not os.path.exists(self.data_dir):
                 os.makedirs(self.data_dir)
-                info(f"创建数据目录: {self.data_dir}")
+                debug(f"创建数据目录: {self.data_dir}")
                 return
 
             # 查找所有历史文件
@@ -698,10 +698,10 @@ class TaskQueueManager:
             for filename in os.listdir(self.data_dir):
                 if filename.startswith('task_history_') and filename.endswith('.json'):
                     history_files.append(os.path.join(self.data_dir, filename))
-                    info(f"找到任务历史文件: {filename}")
+                    debug(f"找到任务历史文件: {filename}")
 
             if not history_files:
-                info(f"没有找到任务历史文件")
+                debug(f"没有找到任务历史文件")
                 return
 
             # 按日期排序，先加载最近的任务
@@ -758,7 +758,7 @@ class TaskQueueManager:
                 except Exception as e:
                     error(f"处理任务历史文件 {file_name} 失败: {str(e)}")
 
-            info(f"已加载任务历史，共 {loaded_task_count} 个任务")
+            debug(f"已加载任务历史，共 {loaded_task_count} 个任务")
         except Exception as e:
             error(f"加载任务历史失败: {str(e)}")
 
@@ -778,7 +778,7 @@ class TaskQueueManager:
             from datetime import datetime
 
             # 添加日志，查看task_history的长度
-            info(f"get_all_tasks被调用，date={date}，task_history长度={len(self.task_history)}")
+            debug(f"get_all_tasks被调用，date={date}，task_history长度={len(self.task_history)}")
 
             # 直接访问数据，不使用锁以提高查询速度
             # 获取运行中任务的ID集合

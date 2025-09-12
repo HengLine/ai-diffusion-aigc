@@ -1,5 +1,8 @@
 from flask import Blueprint, jsonify, url_for, request
 from hengline.core.task_queue import task_queue_manager
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 创建任务队列管理的蓝图
 task_queue_bp = Blueprint('task_queue', __name__)
@@ -13,6 +16,7 @@ def get_task_queue_status():
     支持按任务类型过滤
     """
     try:
+        logger.debug(f"获取任务队列状态")
         # 获取任务类型参数
         task_type = request.args.get('task_type')
         
@@ -95,6 +99,7 @@ def get_task_status(task_id):
     获取指定任务状态的API端点
     """
     try:
+        logger.debug(f"获取任务详情: {task_id}")
         # 获取任务状态
         task_status = task_queue_manager.get_task_status(task_id)
         

@@ -25,7 +25,7 @@ class TextToVideoTab:
         
     def render(self):
         """渲染文生视频标签页"""
-        info("====== 进入[文生视频]标签页 ======")
+        debug("====== 进入[文生视频]标签页 ======")
         st.subheader("文生视频 (Text to Video)")
         
         # 创建表单

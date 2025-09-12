@@ -34,7 +34,7 @@ class WorkflowImageManager(WorkflowManager):
         batch_size = params.get('batch_size')
 
         try:
-            info(f"处理文生图任务: {prompt}")
+            debug(f"处理文生图任务: {prompt}")
 
             # 生成唯一的输出文件名
             output_filename = f"text_to_image_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
@@ -168,7 +168,7 @@ class WorkflowImageManager(WorkflowManager):
         batch_size = params.get('batch_size')
 
         try:
-            info(f"处理图生图任务: {prompt}")
+            debug(f"处理图生图任务: {prompt}")
 
             # 生成唯一的输出文件名
             output_filename = f"image_to_image_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"

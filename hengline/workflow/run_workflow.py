@@ -101,7 +101,7 @@ class ComfyUIRunner:
                         if "prompt" in params and node_data["inputs"]["text"] == params["prompt"]:
                             positive_prompt_processed = True
 
-        info(f"工作流参数已更新: {params}")
+        debug(f"工作流参数已更新: {params}")
         return updated_workflow
         
     def _update_node_inputs(self, node_data: Dict[str, Any], params: Dict[str, Any], positive_prompt_processed: bool) -> None:
@@ -151,14 +151,14 @@ class ComfyUIRunner:
             # 确保ComfyUI服务器正在运行
             server_running = self._check_server_running()
             if not server_running:
-                info("ComfyUI服务器未运行，请手动启动后再试...")
+                debug("ComfyUI服务器未运行，请手动启动后再试...")
 
                 if not self._check_server_running():
                     error("无法连接到ComfyUI服务器，请确保服务器已启动")
                     return False
 
             # 统一使用requests库，不使用httpx，避免混乱
-            info("ComfyUI服务器连接成功")
+            debug("ComfyUI服务器连接成功")
 
             # 将工作流转换为ComfyUI API期望的格式
             # 检查是否已经是正确的格式，如果不是则转换
@@ -188,7 +188,7 @@ class ComfyUIRunner:
             }
 
             # 发送POST请求运行工作流
-            info(f"正在向 {self.api_url}/prompt 发送请求...")
+            debug(f"正在向 {self.api_url}/prompt 发送请求...")
             response = requests.post(f"{self.api_url}/prompt", json=prompt_data)
 
             if response.status_code != 200:
@@ -207,7 +207,7 @@ class ComfyUIRunner:
                 error(f"无法获取prompt_id，响应内容: {response_json}")
                 return False
 
-            info(f"工作流已提交，prompt_id: {prompt_id}")
+            debug(f"工作流已提交，prompt_id: {prompt_id}")
 
             # 等待工作流完成
             workflow_completed = self._wait_for_workflow_completion(prompt_id)
@@ -220,7 +220,7 @@ class ComfyUIRunner:
             success = self._get_workflow_outputs(prompt_id, output_path)
 
             if success:
-                info(f"工作流运行完成，结果保存至: {output_path}")
+                debug(f"工作流运行完成，结果保存至: {output_path}")
             else:
                 error("无法获取工作流结果")
 
@@ -239,7 +239,7 @@ class ComfyUIRunner:
 
     def _wait_for_workflow_completion(self, prompt_id: str) -> bool:
         """等待工作流完成并返回状态"""
-        info("等待工作流处理完成...")
+        debug("等待工作流处理完成...")
 
         # 设置最大等待时间为300秒（5分钟）
         max_wait_time = 300
@@ -275,7 +275,7 @@ class ComfyUIRunner:
 
                         # 检查工作流是否完成
                         if "outputs" in prompt_data:
-                            info("工作流处理完成")
+                            debug("工作流处理完成")
                             return True
                 time.sleep(1)  # 每秒检查一次
                 # 重置连续失败计数
@@ -338,7 +338,7 @@ class ComfyUIRunner:
             if not os.path.exists(output_dir):
                 try:
                     os.makedirs(output_dir, exist_ok=True)
-                    info(f"[ComfyUI API] 创建输出目录: {output_dir}")
+                    debug(f"[ComfyUI API] 创建输出目录: {output_dir}")
                 except Exception as mkdir_err:
                     error(f"[ComfyUI API] 创建输出目录失败: {str(mkdir_err)}")
                     return False
@@ -402,7 +402,7 @@ class ComfyUIRunner:
                                         try:
                                             with open(save_path, 'wb') as f:
                                                 f.write(image_data.content)
-                                            info(f"[ComfyUI API] 图像保存成功: {save_path}")
+                                            debug(f"[ComfyUI API] 图像保存成功: {save_path}")
                                             found_output = True
                                             success = True
                                         except PermissionError:
@@ -479,7 +479,7 @@ class ComfyUIRunner:
                                         try:
                                             with open(save_path, 'wb') as f:
                                                 f.write(video_data.content)
-                                            info(f"[ComfyUI API] 视频保存成功: {save_path}")
+                                            debug(f"[ComfyUI API] 视频保存成功: {save_path}")
                                             found_output = True
                                             success = True
                                         except PermissionError:
@@ -515,7 +515,7 @@ class ComfyUIRunner:
 
             # 检查是否找到并成功保存了输出
             if found_output:
-                info(f"[ComfyUI API] 工作流输出保存成功")
+                debug(f"[ComfyUI API] 工作流输出保存成功")
                 return True
             else:
                 error("[ComfyUI API] 工作流没有产生可保存的图像或视频输出")
