@@ -184,24 +184,14 @@ def get_output_config():
 # 邮件配置
 def get_email_config():
     """获取邮件配置"""
-    return get_config_section('email', {
+    # 正确的路径应该是从settings节点下获取email配置
+    settings = get_config_section('settings', {})
+    return settings.get('email', {
         'smtp_server': '',
         'smtp_port': 587,
         'username': '',
         'from_email': '',
         'from_name': ''
-    })
-
-
-# 任务默认设置
-def get_settings_config():
-    """获取所有任务设置"""
-    return get_config_section('settings', {
-        'common': {
-            'max_concurrent_tasks': 2,
-            'cache_enabled': True,
-            'cache_size': 1024
-        }
     })
 
 
@@ -438,4 +428,5 @@ config = load_config()
 
 # 导出常用配置变量
 max_concurrent_tasks = get_max_concurrent_tasks()
+
 

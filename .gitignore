@@ -11,6 +11,7 @@ temp/
 uploads/
 .git/
 .svn/
+.env
 bin/
 .settings/
 __pycache__/

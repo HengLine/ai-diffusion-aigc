@@ -13,6 +13,7 @@ from typing import Dict, Optional
 
 from hengline.logger import info, error, warning
 from hengline.utils.config_utils import get_email_config, get_user_configs
+from hengline.utils.env_utils import get_env_var
 
 class EmailSender:
     """邮件发送类，提供发送邮件的功能"""
@@ -31,13 +32,14 @@ class EmailSender:
             from_email: 发件人邮箱
             from_name: 发件人名称
         """
-        # 优先从传入参数获取配置，如果没有则从环境变量获取，最后使用默认值
-        self.smtp_server = smtp_server or os.environ.get('SMTP_SERVER', '')
-        self.smtp_port = smtp_port or int(os.environ.get('SMTP_PORT', ''))
-        self.username = username or os.environ.get('SMTP_USERNAME', '')
-        self.password = password or os.environ.get('SMTP_PASSWORD', '')
-        self.from_email = from_email or os.environ.get('FROM_EMAIL', '')
+        # 优先从传入参数获取配置，如果没有则从环境变量获取
+        self.smtp_server = smtp_server or get_env_var('SMTP_SERVER', '')
+        self.smtp_port = smtp_port or (int(get_env_var('SMTP_PORT', '')) if get_env_var('SMTP_PORT', '') else None)
+        self.username = username or get_env_var('SMTP_USERNAME', '')
+        self.password = password or get_env_var('SMTP_PASSWORD', '')
+        self.from_email = from_email or get_env_var('FROM_EMAIL', '')
 
+        # 然后从配置文件获取（非敏感信息）
         email_config = get_email_config()
 
         if not self.smtp_server:
@@ -45,13 +47,12 @@ class EmailSender:
         if not self.smtp_port:
             self.smtp_port = int(email_config.get('smtp_port', '587'))
         if not self.from_email:
-            from_email = email_config.get('from_email', '')
+            self.from_email = email_config.get('from_email', '')
         if not self.from_name:
             self.from_name = email_config.get('from_name', 'AIGC 创意平台')
-        if not self.username:
-            self.username = email_config.get('username', 'HangLine')
-        if not self.password:
-            self.password = email_config.get('password', '')
+        if not self.username and self.from_email:
+            # 如果没有单独设置用户名，使用发件人邮箱作为用户名
+            self.username = self.from_email
 
         # 验证配置
         if not all([self.smtp_server, self.username, self.password, self.from_email]):
@@ -173,28 +174,8 @@ def init_email_sender(config: Optional[Dict] = None) -> None:
     """
     global email_sender
 
-    # 如果没有提供配置，则从配置文件加载
-    if config is None:
-        config = get_email_config()
-
-    if config:
-        smtp_server = config.get('smtp_server')
-        smtp_port = config.get('smtp_port')
-        username = config.get('username')
-        password = config.get('password')
-        from_email = config.get('from_email')
-        from_name = config.get('from_name')
-
-        email_sender = EmailSender(
-            smtp_server=smtp_server,
-            smtp_port=smtp_port,
-            username=username,
-            password=password,
-            from_email=from_email,
-            from_name=from_name
-        )
-    else:
-        email_sender = EmailSender()
+    # 注意：这里不再从config中读取敏感信息，而是通过EmailSender类的初始化方法从环境变量获取
+    email_sender = EmailSender()
 
 
 # 提供简单的发送接口，符合用户需求

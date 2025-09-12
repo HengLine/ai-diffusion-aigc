@@ -184,7 +184,7 @@ class ComfyUIRunner:
             prompt_data = {
                 "prompt": comfyui_workflow,
                 # "client_id": uuid.uuid4().hex
-                "client_id": f"pengline-aigc"
+                "client_id": f"hengline-aigc"
             }
 
             # 发送POST请求运行工作流

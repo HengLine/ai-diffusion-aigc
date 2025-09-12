@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""启动任务监听器模块
-
+"""
+启动任务监听器模块
 功能：
 1. 在应用程序启动时只查询一次历史记录
 2. 筛选今天未完成且重试未超过3次的任务
 3. 根据不同任务状态进行相应处理并加入队列
-4. 处理完成后自动结束，不再定时运行
+4. 处理完成后自动结束，不再定时运行 
 """
 
 import os
 import sys
 import time
+import threading
 from datetime import datetime
 from threading import Lock
 from typing import Dict, Any
@@ -25,6 +26,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from hengline.logger import info, error, warning, debug
 from hengline.core.task_queue import task_queue_manager
+# 导入邮件发送模块
+from hengline.utils.email_utils import send_email
 
 
 class StartupTaskListener:
@@ -317,8 +320,35 @@ class StartupTaskListener:
                 task_queue_manager._save_task_history()
 
                 info(f"任务 {task_id} ({task_type}) 已标记为最终失败，执行次数: {execution_count}")
+                
+                # 异步发送邮件通知
+                threading.Thread(
+                    target=self._async_send_failure_email,
+                    args=(task_id, task_type, task.task_msg, self.max_retry_count),
+                    daemon=True
+                ).start()
         except Exception as e:
             error(f"将任务 {task_id} 标记为失败时发生异常: {str(e)}")
+    
+    def _async_send_failure_email(self, task_id: str, task_type: str, task_msg: str, max_execution_count: int):
+        """异步发送任务失败邮件通知"""
+        try:
+            # 导入asyncio用于处理协程
+            import asyncio
+            
+            # 创建事件循环并运行协程
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(send_email(
+                subject=f"任务 {task_id} 执行失败",
+                message=f"您提交的{task_type}任务已重试（{max_execution_count}次），但是由于：{task_msg}，请检查后再次提交任务"
+            ))
+            loop.close()
+            
+            if not result:
+                error(f"邮件发送失败，返回结果: {result}")
+        except Exception as e:
+            error(f"发送任务失败邮件通知失败: {str(e)}")
 
 
 # 创建全局启动任务监听器实例
