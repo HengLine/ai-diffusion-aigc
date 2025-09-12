@@ -72,7 +72,7 @@ class DailyRotatingFileHandler(RotatingFileHandler):
 
 class Logger:
     """自定义日志类"""
-    def __init__(self, name: str = 'hengLine', log_dir: Optional[str] = None, max_bytes: int = 10*1024*1024):
+    def __init__(self, name: str = 'HengLine', log_dir: Optional[str] = None, max_bytes: int = 10*1024*1024):
         """
         初始化日志器
         
@@ -220,7 +220,7 @@ class Logger:
         self.logger.critical(message)
 
 # 创建全局日志实例
-logger = Logger()
+logger = Logger(name="hengline")
 
 # 方便使用的函数
 

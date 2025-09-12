@@ -494,10 +494,10 @@
                 </div>
                 
                 <div class="slider-container">
-                    <label for="cfg_scale">CFG Scale</label>
+                    <label for="cfg">CFG Scale</label>
                     <div class="slider-input-group">
                         <input type="range" class="slider" id="cfgScaleSlider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
-                        <input type="number" class="slider-value" id="cfg_scale" name="cfg_scale" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" class="slider-value" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
                     </div>
                     <div class="parameter-description">
                         值越高，越严格遵循提示词
@@ -533,10 +533,10 @@
                 </div>
                 
                 <div class="slider-container">
-                    <label for="video_length">视频时长</label>
+                    <label for="length">视频时长</label>
                     <div class="slider-input-group">
-                        <input type="range" class="slider" id="video_lengthSlider" min="2" max="10" step="1" value="{{ default_params.video_length or 5 }}">
-                        <input type="number" class="slider-value" id="video_length" name="video_length" min="2" max="10" step="1" value="{{ default_params.video_length or 5 }}">
+                        <input type="range" class="slider" id="lengthSlider" min="2" max="10" step="1" value="{{ default_params.length or 5 }}">
+                        <input type="number" class="slider-value" id="length" name="length" min="2" max="10" step="1" value="{{ default_params.length or 5 }}">
                     </div>
                     <div class="parameter-description">
                         视频时长(秒)
@@ -642,10 +642,10 @@
         
         // 设置所有滑块的同步
         setupSliderSync('stepsSlider', 'steps');
-        setupSliderSync('cfgScaleSlider', 'cfg_scale');
+        setupSliderSync('cfgScaleSlider', 'cfg');
         setupSliderSync('widthSlider', 'width');
         setupSliderSync('heightSlider', 'height');
-        setupSliderSync('video_lengthSlider', 'video_length');
+        setupSliderSync('lengthSlider', 'length');
         
         // 设置参数折叠功能
         setupParameterFolding();
@@ -681,10 +681,10 @@
             const prompt = document.getElementById('prompt').value;
             const negativePrompt = document.getElementById('negative_prompt').value;
             const steps = document.getElementById('steps').value;
-            const cfgScale = document.getElementById('cfg_scale').value;
+            const cfgScale = document.getElementById('cfg').value;
             const width = document.getElementById('width').value;
             const height = document.getElementById('height').value;
-            const videoLength = document.getElementById('video_length').value;
+            const videoLength = document.getElementById('length').value;
             const fileInput = document.getElementById('image');
             const file = fileInput.files[0];
             
@@ -705,10 +705,10 @@
             formData.append('prompt', prompt);
             formData.append('negative_prompt', negativePrompt);
             formData.append('steps', steps);
-            formData.append('cfg_scale', cfgScale);
+            formData.append('cfg', cfgScale);
             formData.append('width', width);
             formData.append('height', height);
-            formData.append('video_length', videoLength);
+            formData.append('length', videoLength);
             
             // 显示加载状态和进度信息
             showLoading(true);

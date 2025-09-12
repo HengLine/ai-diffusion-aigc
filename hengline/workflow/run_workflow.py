@@ -67,6 +67,7 @@ class ComfyUIRunner:
         # 如果都不是上述格式，则尝试直接返回（可能需要进一步处理）
         return workflow
 
+
     def update_workflow_params(self, workflow: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
         """更新工作流参数"""
         # 使用深拷贝来确保所有属性都被正确保留
@@ -132,9 +133,9 @@ class ComfyUIRunner:
                 continue
             
             # 处理参数名称映射（如cfg和cfg_scale可能指向同一个属性）
-            if param_name == "cfg_scale" and "cfg" in inputs:
+            if param_name == "cfg" and "cfg" in inputs:
                 inputs["cfg"] = param_value
-            elif param_name == "denoising_strength" and "denoise" in inputs:
+            elif param_name == "denoise" and "denoise" in inputs:
                 inputs["denoise"] = param_value
             elif param_name == "image_path" and "image" in inputs and class_type == "LoadImage":
                 inputs["image"] = param_value

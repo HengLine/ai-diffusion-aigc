@@ -152,13 +152,9 @@ def handle_shutdown(signum, frame):
 
     info("服务正在关闭...")
 
-    # 如果是Werkzeug服务器，尝试优雅关闭
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is not None:
-        func()
-    else:
-        # 如果不是Werkzeug服务器，强制退出
-        sys.exit(0)
+    # 在信号处理上下文中，我们不应该尝试通过request.environ获取shutdown函数
+    # 因为此时没有活跃的HTTP请求上下文，直接退出程序
+    sys.exit(0)
 
 
 @app.route('/shutdown', methods=['POST'])

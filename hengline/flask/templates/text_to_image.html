@@ -382,10 +382,10 @@
                 </div>
                 
                 <div class="slider-container">
-                    <label for="cfg_scale">CFG Scale</label>
+                    <label for="cfg">CFG Scale</label>
                     <div class="slider-input-group">
                         <input type="range" class="slider" id="cfgScaleSlider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
-                        <input type="number" class="slider-value" id="cfg_scale" name="cfg_scale" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" class="slider-value" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
                     </div>
                     <div class="parameter-description">
                         值越高，越严格遵循提示词
@@ -481,7 +481,7 @@
             setupSliderSync('widthSlider', 'width');
             setupSliderSync('heightSlider', 'height');
             setupSliderSync('stepsSlider', 'steps');
-            setupSliderSync('cfgScaleSlider', 'cfg_scale');
+            setupSliderSync('cfgScaleSlider', 'cfg');
             
             // 设置参数折叠功能
             setupParameterFolding();
@@ -544,7 +544,7 @@
                     const width = document.getElementById('width').value;
                     const height = document.getElementById('height').value;
                     const steps = document.getElementById('steps').value;
-                    const cfgScale = document.getElementById('cfg_scale').value;
+                    const cfgScale = document.getElementById('cfg').value;
                     
                     // 准备JSON数据 - 注意：文生图不需要strength参数
                     const jsonData = {
@@ -553,7 +553,7 @@
                         width: parseInt(width),
                         height: parseInt(height),
                         steps: parseInt(steps),
-                        cfg_scale: parseFloat(cfgScale)
+                        cfg: parseFloat(cfgScale)
                     };
                     
                     // 禁用按钮防止重复点击

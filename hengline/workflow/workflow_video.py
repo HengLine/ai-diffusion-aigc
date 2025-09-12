@@ -8,7 +8,9 @@ import time
 import uuid
 
 from hengline.core.task_queue import task_queue_manager
-from hengline.logger import info, error, warning
+from hengline.logger import error, warning, debug
+# 从配置工具导入获取有效配置的函数
+from hengline.utils.config_utils import get_effective_config
 # 导入配置工具
 from hengline.workflow.workflow_core import WorkflowManager
 
@@ -20,19 +22,6 @@ class WorkflowVideoManager(WorkflowManager):
         """实际执行图生视频任务的方法，用于队列调用"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
-
-        image_path = params['image_path']
-        prompt = params['prompt']
-        negative_prompt = params['negative_prompt']
-        # 从参数中获取配置，同时提供默认值
-        length = params.get('length', 121)  # 使用配置文件中的参数名
-        fps = params.get('fps', 16)  # 使用配置文件中的默认值
-        model = params.get('model')
-        motion_model = params.get('motion_model')
-        steps = params.get('steps', 20)
-        cfg_scale = params.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
-        width = params.get('width')
-        height = params.get('height')
 
         try:
             debug(f"处理图生视频任务")
@@ -51,31 +40,8 @@ class WorkflowVideoManager(WorkflowManager):
 
             # 加载和更新工作流
             workflow = self.runner.load_workflow(workflow_path)
-            update_params = {
-                "prompt": prompt,
-                "negative_prompt": negative_prompt,
-                "image_path": image_path,
-                "length": length,  # 使用配置文件中的参数名
-                "fps": fps
-            }
 
-            # 添加宽度和高度参数
-            if width:
-                update_params["width"] = width
-            if height:
-                update_params["height"] = height
-
-            # 添加可选参数（如果存在）
-            if model:
-                update_params["model"] = model
-            if motion_model:
-                update_params["motion_model"] = motion_model
-            if steps:
-                update_params["steps"] = steps
-            if cfg_scale:
-                update_params["cfg_scale"] = cfg_scale
-
-            updated_workflow = self.runner.update_workflow_params(workflow, update_params)
+            updated_workflow = self.runner.update_workflow_params(workflow, params)
 
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
@@ -99,51 +65,30 @@ class WorkflowVideoManager(WorkflowManager):
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        # 从配置工具导入获取有效配置的函数
-        from hengline.utils.config_utils import get_effective_config
-        
         # 获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
         preset_config = get_effective_config('image_to_video', **kwargs)
-        
+
         # 确保关键参数被正确设置
         preset_config['image_path'] = image_path
         preset_config['prompt'] = prompt
         preset_config['negative_prompt'] = negative_prompt
-        
-        # 从有效配置中提取参数
-        length = preset_config.get('length', 121)  # 使用配置文件中的参数名
-        fps = preset_config.get('fps', 16)  # 使用配置文件中的默认值
-        model = preset_config.get('model')
-        motion_model = preset_config.get('motion_model')
-        steps = preset_config.get('steps', 20)
-        cfg_scale = preset_config.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
-        width = preset_config.get('width')
-        height = preset_config.get('height')
 
         # 准备任务参数
         task_params = {
-            'image_path': image_path,
-            'prompt': prompt,
-            'negative_prompt': negative_prompt,
-            'length': length,  # 使用配置文件中的参数名
-            'fps': fps
+            'image_path': preset_config.get('image_path', ''),
+            'prompt': preset_config.get('prompt', ''),
+            'negative_prompt': preset_config.get('negative_prompt', ''),
+            'width': preset_config.get('width', 512),
+            'height': preset_config.get('height', 512),
+            'length': preset_config.get('length', 121),
+            'steps': preset_config.get('steps', 20),
+            'cfg': preset_config.get('cfg', 7.0),
+            'seed': preset_config.get('seed', -1),
+            'batch_size': preset_config.get('batch_size', 1),
+            'shift': preset_config.get('shift', 1),
+            'fps': preset_config.get('fps', 1),
+            "denoise": preset_config.get('denoise', 1)
         }
-
-        # 添加宽度和高度参数
-        if width:
-            task_params['width'] = width
-        if height:
-            task_params['height'] = height
-
-        # 添加可选参数
-        if model:
-            task_params['model'] = model
-        if motion_model:
-            task_params['motion_model'] = motion_model
-        if steps:
-            task_params['steps'] = steps
-        if cfg_scale:
-            task_params['cfg_scale'] = cfg_scale
 
         # 任务回调函数
         def task_callback(params):
@@ -173,26 +118,18 @@ class WorkflowVideoManager(WorkflowManager):
             'queued': True,
             'task_id': task_id,
             'queue_position': queue_position,
-            'waiting_time': waiting_time
+            'waiting_time': waiting_str
         }
+
+    """文生视频任务处理方法"""
 
     def _execute_text_to_video(self, params):
         """实际执行文生视频任务的方法，用于队列调用"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        prompt = params['prompt']
-        negative_prompt = params['negative_prompt']
-        # 从参数中获取配置，同时提供默认值
-        length = params.get('length', 121)  # 使用配置文件中的参数名
-        fps = params.get('fps', 16)  # 使用配置文件中的默认值
-        model = params.get('model')
-        motion_model = params.get('motion_model')
-        steps = params.get('steps', 20)
-        cfg_scale = params.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
-
         try:
-            debug(f"处理文生视频任务: {prompt}")
+            debug(f"处理文生视频任务:")
 
             # 生成唯一的输出文件名
             output_filename = f"text_to_video_{int(time.time())}_{uuid.uuid4().hex[:8]}.mp4"
@@ -208,30 +145,8 @@ class WorkflowVideoManager(WorkflowManager):
 
             # 加载和更新工作流
             workflow = self.runner.load_workflow(workflow_path)
-            update_params = {
-                "prompt": prompt,
-                "negative_prompt": negative_prompt,
-                "length": length,  # 使用配置文件中的参数名
-                "fps": fps
-            }
 
-            # 添加宽度和高度参数
-            if width:
-                update_params["width"] = width
-            if height:
-                update_params["height"] = height
-
-            # 添加可选参数（如果存在）
-            if model:
-                update_params["model"] = model
-            if motion_model:
-                update_params["motion_model"] = motion_model
-            if steps:
-                update_params["steps"] = steps
-            if cfg_scale:
-                update_params["cfg_scale"] = cfg_scale
-
-            updated_workflow = self.runner.update_workflow_params(workflow, update_params)
+            updated_workflow = self.runner.update_workflow_params(workflow, params)
 
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
@@ -257,47 +172,29 @@ class WorkflowVideoManager(WorkflowManager):
 
         # 从配置工具导入获取有效配置的函数
         from hengline.utils.config_utils import get_effective_config
-        
+
         # 获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
         preset_config = get_effective_config('text_to_video', **kwargs)
-        
+
         # 确保关键参数被正确设置
         preset_config['prompt'] = prompt
         preset_config['negative_prompt'] = negative_prompt
-        
-        # 从有效配置中提取参数
-        length = preset_config.get('length', 121)  # 使用配置文件中的参数名
-        fps = preset_config.get('fps', 16)  # 使用配置文件中的默认值
-        model = preset_config.get('model')
-        motion_model = preset_config.get('motion_model')
-        steps = preset_config.get('steps', 20)
-        cfg_scale = preset_config.get('cfg_scale', 1.0)  # 使用配置文件中的默认值
-        width = preset_config.get('width')
-        height = preset_config.get('height')
 
         # 准备任务参数
         task_params = {
-            'prompt': prompt,
-            'negative_prompt': negative_prompt,
-            'length': length,  # 使用配置文件中的参数名
-            'fps': fps
+            'prompt': preset_config.get('prompt', ''),
+            'negative_prompt': preset_config.get('negative_prompt', ''),
+            'width': preset_config.get('width', 512),
+            'height': preset_config.get('height', 512),
+            'length': preset_config.get('length', 121),
+            'steps': preset_config.get('steps', 20),
+            'cfg': preset_config.get('cfg', 7.0),
+            'seed': preset_config.get('seed', -1),
+            'batch_size': preset_config.get('batch_size', 1),
+            'shift': preset_config.get('shift', 1),
+            'fps': preset_config.get('fps', 1),
+            "denoise": preset_config.get('denoise', 1)
         }
-
-        # 添加宽度和高度参数
-        if width:
-            task_params['width'] = width
-        if height:
-            task_params['height'] = height
-
-        # 添加可选参数
-        if model:
-            task_params['model'] = model
-        if motion_model:
-            task_params['motion_model'] = motion_model
-        if steps:
-            task_params['steps'] = steps
-        if cfg_scale:
-            task_params['cfg_scale'] = cfg_scale
 
         # 任务回调函数
         def task_callback(params):
@@ -327,7 +224,7 @@ class WorkflowVideoManager(WorkflowManager):
             'queued': True,
             'task_id': task_id,
             'queue_position': queue_position,
-            'waiting_time': waiting_time
+            'waiting_time': waiting_str
         }
 
 

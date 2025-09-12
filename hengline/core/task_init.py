@@ -19,7 +19,7 @@ from typing import Dict, Any
 
 import requests
 
-from hengline.utils.config_utils import config
+from hengline.utils.config_utils import get_settings_config
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -37,9 +37,10 @@ class StartupTaskListener:
         """初始化启动任务监听器"""
         self.lock = Lock()
         self.processed_tasks_count = 0
-        self.max_retry_count = 3  # 最大重试次数
-        self.max_runtime_hours = 2  # 最大运行时间（小时）
-        self.comfyui_api_url = config.get('comfyui', {}).get('api_url', 'http://127.0.0.1:8188')
+        settings_config = get_settings_config()
+        self.max_retry_count = settings_config.get('task', {}).get('max_retry_count', 3)  # 最大重试次数
+        self.max_runtime_hours = settings_config.get('task', {}).get('max_runtime_hours', 2)  # 最大运行时间（小时）
+        self.comfyui_api_url = settings_config.get('comfyui', {}).get('api_url', 'http://127.0.0.1:8188')
 
     def start(self):
         """启动监听器，处理历史任务"""
@@ -50,13 +51,11 @@ class StartupTaskListener:
         try:
             # 获取今天的日期
             today_date = datetime.now().strftime('%Y-%m-%d')
-            debug(f"当前日期: {today_date}")
 
             # 加载并处理历史任务
             self._process_historical_tasks(today_date)
 
             debug(f"启动任务监听器处理完成，共处理了 {self.processed_tasks_count} 个任务")
-            debug("启动任务监听器已结束")
             debug("=" * 50)
 
         except Exception as e:

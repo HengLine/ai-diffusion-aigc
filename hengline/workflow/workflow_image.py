@@ -8,7 +8,9 @@ import time
 import uuid
 
 from hengline.core.task_queue import task_queue_manager
-from hengline.logger import info, error, warning
+from hengline.logger import error, warning, debug
+# 从配置工具导入获取有效配置的函数
+from hengline.utils.config_utils import get_effective_config
 # 导入配置工具
 from hengline.workflow.workflow_core import WorkflowManager
 
@@ -16,25 +18,17 @@ from hengline.workflow.workflow_core import WorkflowManager
 class WorkflowImageManager(WorkflowManager):
     """工作流管理器类，用于处理各种AI生成任务"""
 
+    """
+    实际执行文生图任务的方法，用于队列调用
+    """
+
     def _execute_text_to_image(self, params):
         """实际执行文生图任务的方法，用于队列调用"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        prompt = params['prompt']
-        negative_prompt = params['negative_prompt']
-        # 从参数中获取配置，同时提供默认值
-        width = params.get('width', 512)
-        height = params.get('height', 512)
-        steps = params.get('steps', 20)
-        cfg_scale = params.get('cfg_scale', 7.0)
-        model = params.get('model')
-        vae = params.get('vae')
-        sampler = params.get('sampler')
-        batch_size = params.get('batch_size')
-
         try:
-            debug(f"处理文生图任务: {prompt}")
+            debug(f"处理文生图任务: {params['prompt']}")
 
             # 生成唯一的输出文件名
             output_filename = f"text_to_image_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
@@ -50,26 +44,8 @@ class WorkflowImageManager(WorkflowManager):
 
             # 加载和更新工作流
             workflow = self.runner.load_workflow(workflow_path)
-            update_params = {
-                "prompt": prompt,
-                "negative_prompt": negative_prompt,
-                "width": width,
-                "height": height,
-                "steps": steps,
-                "cfg_scale": cfg_scale
-            }
 
-            # 添加可选参数（如果存在）
-            if model:
-                update_params["model"] = model
-            if vae:
-                update_params["vae"] = vae
-            if sampler:
-                update_params["sampler"] = sampler
-            if batch_size:
-                update_params["batch_size"] = batch_size
-
-            updated_workflow = self.runner.update_workflow_params(workflow, update_params)
+            updated_workflow = self.runner.update_workflow_params(workflow, params)
 
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
@@ -88,17 +64,18 @@ class WorkflowImageManager(WorkflowManager):
             error(f"文生图任务执行失败: {str(e)}")
             return {'success': False, 'message': f'文生图任务执行失败: {str(e)}'}
 
+    """
+    文生图任务处理方法
+    """
+
     def process_text_to_image(self, prompt, negative_prompt, **kwargs):
         """异步处理文生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        # 从配置工具导入获取有效配置的函数
-        from hengline.utils.config_utils import get_effective_config
-        
         # 获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
         preset_config = get_effective_config('text_to_image', **kwargs)
-        
+
         # 确保prompt和negative_prompt被正确设置
         preset_config['prompt'] = prompt
         preset_config['negative_prompt'] = negative_prompt
@@ -110,11 +87,9 @@ class WorkflowImageManager(WorkflowManager):
             'width': preset_config.get('width', 512),
             'height': preset_config.get('height', 512),
             'steps': preset_config.get('steps', 20),
-            'cfg_scale': preset_config.get('cfg', 7.0),
-            'model': preset_config.get('model'),
-            'vae': preset_config.get('vae'),
-            'sampler': preset_config.get('sampler'),
-            'batch_size': preset_config.get('batch_size')
+            'cfg': preset_config.get('cfg', 7.0),
+            'seed': preset_config.get('seed', -1),
+            'batch_size': preset_config.get('batch_size', 1)
         }
 
         # 任务回调函数
@@ -145,30 +120,20 @@ class WorkflowImageManager(WorkflowManager):
             'queued': True,
             'task_id': task_id,
             'queue_position': queue_position,
-            'waiting_time': waiting_time
+            'waiting_time': waiting_str
         }
+
+    """
+    实际执行图生图任务的方法，用于队列调用
+    """
 
     def _execute_image_to_image(self, params):
         """实际执行图生图任务的方法，用于队列调用"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        image_path = params['image_path']
-        prompt = params['prompt']
-        negative_prompt = params['negative_prompt']
-        # 从参数中获取配置，同时提供默认值
-        width = params.get('width', 512)
-        height = params.get('height', 512)
-        steps = params.get('steps', 20)
-        cfg_scale = params.get('cfg_scale', 7.0)
-        denoising_strength = params.get('denoising_strength', 0.75)
-        model = params.get('model')
-        vae = params.get('vae')
-        sampler = params.get('sampler')
-        batch_size = params.get('batch_size')
-
         try:
-            debug(f"处理图生图任务: {prompt}")
+            debug(f"处理图生图任务: {params['prompt']}")
 
             # 生成唯一的输出文件名
             output_filename = f"image_to_image_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
@@ -184,28 +149,8 @@ class WorkflowImageManager(WorkflowManager):
 
             # 加载和更新工作流
             workflow = self.runner.load_workflow(workflow_path)
-            update_params = {
-                "prompt": prompt,
-                "negative_prompt": negative_prompt,
-                "image_path": image_path,
-                "width": width,
-                "height": height,
-                "steps": steps,
-                "cfg_scale": cfg_scale,
-                "denoising_strength": denoising_strength
-            }
 
-            # 添加可选参数（如果存在）
-            if model:
-                update_params["model"] = model
-            if vae:
-                update_params["vae"] = vae
-            if sampler:
-                update_params["sampler"] = sampler
-            if batch_size:
-                update_params["batch_size"] = batch_size
-
-            updated_workflow = self.runner.update_workflow_params(workflow, update_params)
+            updated_workflow = self.runner.update_workflow_params(workflow, params)
 
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():
@@ -224,54 +169,37 @@ class WorkflowImageManager(WorkflowManager):
             error(f"图生图任务执行失败: {str(e)}")
             return {'success': False, 'message': f'图生图任务执行失败: {str(e)}'}
 
+    """
+    图生图任务处理方法
+    """
+
     def process_image_to_image(self, image_path, prompt, negative_prompt, **kwargs):
         """异步处理图生图任务，将任务加入队列并立即返回"""
         if not self.init_runner():
             return {'success': False, 'message': '无法初始化工作流运行器'}
 
-        # 从配置工具导入获取有效配置的函数
-        from hengline.utils.config_utils import get_effective_config
-        
         # 获取最终的有效配置，遵循优先级：页面输入 > setting节点 > default节点
         preset_config = get_effective_config('image_to_image', **kwargs)
-        
+
         # 确保关键参数被正确设置
         preset_config['image_path'] = image_path
         preset_config['prompt'] = prompt
         preset_config['negative_prompt'] = negative_prompt
-        
-        # 从有效配置中提取参数
-        width = preset_config.get('width', 512)
-        height = preset_config.get('height', 512)
-        steps = preset_config.get('steps', 20)
-        cfg_scale = preset_config.get('cfg', 7.0)
-        denoising_strength = preset_config.get('denoising_strength', 0.75)
-        model = preset_config.get('model')
-        vae = preset_config.get('vae')
-        sampler = preset_config.get('sampler')
-        batch_size = preset_config.get('batch_size')
 
+        # 从有效配置中提取参数
         # 准备任务参数
         task_params = {
             'image_path': image_path,
             'prompt': prompt,
             'negative_prompt': negative_prompt,
-            'width': width,
-            'height': height,
-            'steps': steps,
-            'cfg_scale': cfg_scale,
-            'denoising_strength': denoising_strength
+            'width': preset_config.get('width', 512),
+            'height': preset_config.get('height', 512),
+            'steps': preset_config.get('steps', 20),
+            'cfg': preset_config.get('cfg', 7.0),
+            'denoise': preset_config.get('denoise', 0.75),
+            'seed': preset_config.get('seed', -1),
+            'batch_size': preset_config.get('batch_size', 1)
         }
-
-        # 添加可选参数
-        if model:
-            task_params['model'] = model
-        if vae:
-            task_params['vae'] = vae
-        if sampler:
-            task_params['sampler'] = sampler
-        if batch_size:
-            task_params['batch_size'] = batch_size
 
         # 任务回调函数
         def task_callback(params):
@@ -301,7 +229,7 @@ class WorkflowImageManager(WorkflowManager):
             'queued': True,
             'task_id': task_id,
             'queue_position': queue_position,
-            'waiting_time': waiting_time
+            'waiting_time': waiting_str
         }
 
 
