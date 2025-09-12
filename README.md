@@ -1,6 +1,4 @@
-# AIGC AI 生成内容演示项目
-
-# AIGC创意平台
+# AIGC 创意平台
 
 这是一个功能丰富的AIGC（人工智能生成内容）平台，基于ComfyUI工作流，集成了多种先进的AI生成模型，实现了文生图、图生图、文生视频、图生视频等多种创意生成功能。
 
@@ -70,30 +68,22 @@
    
    > 1. **文生图、图生图**（共约2G）：
    >
-   >    /**checkpoints**/==v1-5-pruned-emaonly-fp16.safetensors==
-   >    下载路径（https://hf-mirror.com/Comfy-Org/stable-diffusion-v1-5-archive/resolve/main/v1-5-pruned-emaonly-fp16.safetensors）
+   >    /**checkpoints**/[v1-5-pruned-emaonly-fp16.safetensors](https://hf-mirror.com/Comfy-Org/stable-diffusion-v1-5-archive/resolve/main/v1-5-pruned-emaonly-fp16.safetensors)
    >
    > 
    >
    > 2. **图生视频**（共约21G）：
-   >    - /**text_encoders**/==t5xxl_fp16.safetensors==（9.2G）
-   >      下载路径（https://hf-mirror.com/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors）
-   >    - **/diffusion_models** / ==wan2.2_ti2v_5B_fp16.safetensors==（9.3G）
-   >      下载路径（https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors）
-   >    - /**vae**/==wan2.2_vae.safetensors==（1.3G）
-   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors）
-   >    - **/clip_vision** / ==clip_vision_h.safetensors==（1.2G）
-   >      下载路径（https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors?download=true）
+   >    - /**text_encoders**/[t5xxl_fp16.safetensors](https://hf-mirror.com/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)（9.2G）
+   >    - **/diffusion_models** / [wan2.2_ti2v_5B_fp16.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors)（9.3G）
+   >    - /**vae**/[wan2.2_vae.safetensors](https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors)（1.3G）
+   >    - **/clip_vision** / [clip_vision_h.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors?download=true)（1.2G）
    >
    > 
    >
    > 3. **文生视频**（共约20G）：
-   >    - /**text_encoders**/==t5xxl_fp16.safetensors==（9.2G）	
-   >      下载路径（https://hf-mirror.com/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors）
-   >    - /**vae**/==wan2.2_vae.safetensors==（1.3G）	
-   >      下载路径（https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors）
-   >    - **/diffusion_models** / ==wan2.2_ti2v_5B_fp16.safetensors==（9.3G）
-   >      下载路径（https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors）
+   >    - /**text_encoders**/[t5xxl_fp16.safetensors](https://hf-mirror.com/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)（9.2G）
+   >    - /**vae**/[wan2.2_vae.safetensors](https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors)（1.3G）
+   >    - **/diffusion_models** / [wan2.2_ti2v_5B_fp16.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors)（9.3G）
    
    
 
