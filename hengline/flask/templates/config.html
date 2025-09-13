@@ -136,7 +136,7 @@
         
         .param-content {
             visibility: hidden;
-            width: 300px;
+            width: 400px;
             background-color: #2c3e50;
             color: white;
             text-align: left;
@@ -151,6 +151,7 @@
             transition: opacity 0.3s;
             font-size: 12px;
             line-height: 1.4;
+            white-space: pre-line;
         }
         
         .param-content::after {
@@ -261,7 +262,7 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 30-50</small>
                     </div>
                     <div class="form-group">
-                        <label for="tti_cfg">CFG Scale <span style="color: red;">*</span></label>
+                        <label for="tti_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="tti_cfg" name="settings[text_to_image][cfg]" 
                                value="{{ settings.text_to_image.cfg }}" min="1" max="100" step="0.5">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
@@ -323,7 +324,7 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 30-50</small>
                     </div>
                     <div class="form-group">
-                        <label for="iti_cfg">CFG Scale <span style="color: red;">*</span></label>
+                        <label for="iti_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="iti_cfg" name="settings[image_to_image][cfg]" 
                                value="{{ settings.image_to_image.cfg }}" min="1" max="100" step="0.5">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
@@ -397,7 +398,7 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 30-50</small>
                     </div>
                      <div class="form-group">
-                        <label for="ttv_cfg">CFG Scale <span style="color: red;">*</span></label>
+                        <label for="ttv_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="ttv_cfg" name="settings[text_to_video][cfg]"
                                value="{{ settings.text_to_video.cfg }}" min="1" max="100" step="0.5">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
@@ -482,7 +483,7 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">生成过程中的迭代次数，值越高质量越好但速度越慢，建议值: 30-50</small>
                     </div>
                     <div class="form-group">
-                        <label for="itv_cfg">CFG Scale <span style="color: red;">*</span></label>
+                        <label for="itv_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="itv_cfg" name="settings[image_to_video][cfg]"
                                value="{{ settings.image_to_video.cfg }}" min="1" max="100" step="0.5">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
@@ -597,6 +598,70 @@
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.style.backgroundColor = "#4a6fa5";
             evt.currentTarget.style.color = "white";
+        }
+        
+        // 参数说明功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载参数说明配置文件
+            fetch('/configs/node_notes.json')
+                .then(response => response.json())
+                .then(paramExplanations => {
+                    // 存储参数说明数据
+                    window.paramExplanations = paramExplanations;
+                    
+                    // 为所有参数标签添加说明标签
+                    addParamTooltips();
+                })
+                .catch(error => {
+                    console.error('加载参数说明配置文件失败:', error);
+                });
+        });
+        
+        // 为参数标签添加说明标签
+        function addParamTooltips() {
+            // 查找所有的参数标签
+            const paramLabels = document.querySelectorAll('.form-group label');
+            
+            paramLabels.forEach(label => {
+                // 获取参数ID
+                const forAttr = label.getAttribute('for');
+                if (!forAttr) return;
+                
+                // 确定参数类型和名称
+                let paramType = 'common';
+                let paramName = forAttr;
+                
+                // 根据ID前缀判断参数所属类型
+                if (forAttr.startsWith('tti_') || forAttr.startsWith('iti_')) {
+                    paramType = 'to_image';
+                    paramName = forAttr.substring(4);
+                } else if (forAttr.startsWith('ttv_') || forAttr.startsWith('itv_')) {
+                    paramType = 'to_video';
+                    paramName = forAttr.substring(4);
+                } else if (['comfyui_api_url', 'nickname', 'email'].includes(forAttr)) {
+                    paramType = 'system';
+                    paramName = forAttr;
+                }
+                
+                // 获取参数说明
+                let explanation = '';
+                if (window.paramExplanations && window.paramExplanations[paramType] && window.paramExplanations[paramType][paramName]) {
+                    explanation = window.paramExplanations[paramType][paramName];
+                } else if (window.paramExplanations && window.paramExplanations.common && window.paramExplanations.common[paramName]) {
+                    explanation = window.paramExplanations.common[paramName];
+                }
+                
+                // 如果有说明，添加标签
+                if (explanation) {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'param-tooltip';
+                    tooltip.innerHTML = `
+                        <div class="param-icon">?</div>
+                        <div class="param-content">${explanation}</div>
+                    `;
+                    label.appendChild(tooltip);
+                }
+            });
         }
     </script>
 </body>

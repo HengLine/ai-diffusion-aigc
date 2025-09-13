@@ -30,7 +30,7 @@ def configure():
         # 获取表单数据
         email = request.form.get('email', '').strip()
         nickname = request.form.get('nickname', '').strip()
-        organization = request.form.get('organization', '').strip()
+        # organization = request.form.get('organization', '').strip()
         comfyui_api_url = request.form.get('comfyui_api_url', '').strip()
 
         # 验证必填字段
@@ -304,7 +304,7 @@ def api_config():
             user_config = get_user_config()
             user_config['email'] = data.get('email', '').strip()
             user_config['nickname'] = data.get('nickname', '').strip()
-            user_config['organization'] = data.get('organization', '').strip()
+            # user_config['organization'] = data.get('organization', '').strip()
 
             # 保存ComfyUI配置
             from hengline.utils.config_utils import get_comfyui_config

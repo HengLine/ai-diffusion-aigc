@@ -127,6 +127,12 @@ def serve_output(filename):
     """提供输出文件的路由"""
     return send_from_directory(OUTPUT_FOLDER, filename)
 
+@app.route('/configs/<filename>')
+def serve_config_file(filename):
+    """提供配置文件的路由"""
+    CONFIGS_FOLDER = os.path.join(project_root, 'configs')
+    return send_from_directory(CONFIGS_FOLDER, filename)
+
 
 def handle_shutdown(signum, frame):
     """处理终止信号的回调函数"""
