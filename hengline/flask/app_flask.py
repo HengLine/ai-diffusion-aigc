@@ -186,27 +186,35 @@ def shutdown():
     return 'Server shutting down...'
 
 
+def run_flask_app():
+    """\在独立函数中运行Flask应用，便于信号处理"""
+    try:
+        # 启动Flask应用 - 在Windows上强制禁用reloader
+        app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+    except KeyboardInterrupt:
+        info("Flask应用被用户中断")
+        handle_shutdown(None, None)
+
+
 if __name__ == '__main__':
     # 注册信号处理函数
-    if sys.platform != 'win32':  # Windows系统不支持SIGTERM和SIGINT
+    if sys.platform != 'win32':  # Linux/Mac系统
         signal.signal(signal.SIGTERM, handle_shutdown)
         signal.signal(signal.SIGINT, handle_shutdown)
-    else:
-        # Windows系统的信号处理
-        try:
-            # 尝试使用win32api注册信号处理（如果安装了pywin32）
-            import win32api
+        info("已设置Linux/Mac平台信号处理器")
+    else:  # Windows系统的信号处理
+        # 对于Windows平台，采用更简单直接的方式处理SIGINT信号
+        # 完全避免使用可能导致问题的SetConsoleCtrlHandler
+        def windows_sigint_handler(signum, frame):
+            info("Windows平台接收到中断信号，准备关闭应用...")
+            # 立即调用shutdown函数
+            handle_shutdown(signum, frame)
+            # 抛出KeyboardInterrupt异常以终止主循环
+            raise KeyboardInterrupt("Windows平台强制中断应用")
 
-
-            def win_handler(event):
-                handle_shutdown(None, None)
-                return True
-
-
-            win32api.SetConsoleCtrlHandler(win_handler, True)
-        except ImportError:
-            # 如果没有安装pywin32，使用简单的信号处理方式
-            signal.signal(signal.SIGINT, handle_shutdown)
+        # 设置信号处理器
+        signal.signal(signal.SIGINT, windows_sigint_handler)
+        info("已设置Windows平台信号处理器")
 
     # 异步启动任务监听器，处理历史未完成任务
     startup_task_thread = threading.Thread(target=startup_task_listener.start, name="StartupTaskListenerThread")
@@ -216,5 +224,10 @@ if __name__ == '__main__':
     # 启动任务监控器
     # task_monitor.start()
 
-    # 启动Flask应用 - 开启debug模式以便获取详细错误信息
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # 在主进程中运行Flask应用，确保信号可以正确捕获
+    try:
+        run_flask_app()
+    except KeyboardInterrupt:
+        info("主进程捕获到KeyboardInterrupt异常")
+        # 确保所有资源都被正确释放
+        sys.exit(0)

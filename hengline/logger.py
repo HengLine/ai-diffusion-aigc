@@ -10,37 +10,11 @@ import datetime
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 
-# 带颜色的日志格式化器
-class ColorFormatter(logging.Formatter):
-    """为不同日志级别添加不同颜色的格式化器"""
-    # ANSI 颜色代码
-    COLORS = {
-        logging.DEBUG: '\033[94m',      # 蓝色
-        logging.INFO: '\033[92m',       # 绿色
-        logging.WARNING: '\033[93m',    # 黄色
-        logging.ERROR: '\033[91m',      # 红色
-        logging.CRITICAL: '\033[95m',   # 紫色
-    }
-    RESET = '\033[0m'  # 重置颜色
+# 导入自定义的控制台颜色处理模块
+from hengline.utils.console_colors import colored_log_formatter_factory, init_console_colors, IS_WINDOWS, HAS_COLORAMA
 
-    def format(self, record):
-        # 保存原始的格式化字符串
-        original_formatter = self._fmt
-        
-        # 根据日志级别添加颜色
-        if record.levelno in self.COLORS:
-            # 添加颜色前缀和后缀
-            colored_levelname = f"{self.COLORS[record.levelno]}{record.levelname}{self.RESET}"
-            # 替换格式化字符串中的levelname为带颜色的levelname
-            self._fmt = original_formatter.replace('%(levelname)s', colored_levelname)
-        
-        # 格式化日志记录
-        formatted_message = super().format(record)
-        
-        # 恢复原始的格式化字符串
-        self._fmt = original_formatter
-        
-        return formatted_message
+# 初始化控制台颜色支持
+init_console_colors()
 
 class DailyRotatingFileHandler(RotatingFileHandler):
     """按天和文件大小旋转的日志处理器"""
@@ -119,6 +93,15 @@ class Logger:
         # 默认日志级别设为DEBUG
         self.logger.setLevel(logging.DEBUG)
         
+        # 在Windows平台上，如果没有colorama库，记录一条警告
+        if IS_WINDOWS and not HAS_COLORAMA:
+            # 使用基本的print函数输出警告，因为日志系统尚未完全初始化
+            print("警告: 在Windows平台上运行，但未安装colorama库，可能无法显示彩色日志。建议安装: pip install colorama")
+        
+        # 清除已有的处理器，避免重复添加
+        if self.logger.handlers:
+            self.logger.handlers.clear()
+        
         try:
             # 延迟导入以避免循环依赖
             from hengline.utils.config_utils import get_settings_config
@@ -154,12 +137,16 @@ class Logger:
         
         # 控制台处理器
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(formatter)
         console_handler.setLevel(logging.DEBUG)  # 默认使用DEBUG级别
+        
+        # 使用带颜色的格式化器
+        console_formatter = colored_log_formatter_factory('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(console_formatter)
+        
         self.logger.addHandler(console_handler)
         
         try:
-            # 再次尝试获取配置以设置处理器级别
+            # 获取配置以设置处理器级别
             from hengline.utils.config_utils import get_settings_config
             settings_config = get_settings_config()
             logging_config = settings_config.get('logging', {})
@@ -180,9 +167,6 @@ class Logger:
             console_level_str = logging_config.get('console_level', log_level_str).upper()
             console_level = level_map.get(console_level_str, log_level)
             console_handler.setLevel(console_level)
-
-            # 使用带颜色的格式化器
-            console_handler.setFormatter(ColorFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
             
         except ImportError:
             # 如果导入失败，保持默认的DEBUG级别
