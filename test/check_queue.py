@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from hengline.logger import info, warning, error
+from hengline.logger import info, debug, error
 
 # 检查任务队列状态
 info("检查任务队列状态...")

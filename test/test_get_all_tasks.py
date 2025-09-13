@@ -10,7 +10,7 @@ from hengline.logger import debug, info, warning, error
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from hengline.utils.task_queue_utils import TaskQueueManager, Task
+from hengline.core.task_queue import TaskQueueManager, Task
 
 # 创建任务队列管理器
 task_manager = TaskQueueManager(1)

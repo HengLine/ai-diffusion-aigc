@@ -126,9 +126,38 @@ class ComfyUIRunner:
             elif "negative_prompt" in params:
                 inputs["text"] = params["negative_prompt"]
         
+        # 特殊处理图像到视频节点 (WanImageToVideo)
+        elif class_type == "WanImageToVideo":
+            # 确保宽度、高度和批量大小参数能够正确更新
+            if "width" in params:
+                inputs["width"] = params["width"]
+            if "height" in params:
+                inputs["height"] = params["height"]
+            if "batch_size" in params:
+                inputs["batch_size"] = params["batch_size"]
+        
+        # 特殊处理图像缩放节点 (ImageScaleToTotalPixels) - 用于图生图
+        # elif class_type == "ImageScaleToTotalPixels":
+        #     # 确保宽度、高度参数能够正确更新
+        #     if "width" in params and "height" in params:
+        #         # 计算总像素数 (width * height) 并转换为百万像素 (除以1,000,000)
+        #         total_pixels = params["width"] * params["height"]
+        #         megapixels = total_pixels / 1000000
+        #         if "megapixels" in inputs:
+        #             inputs["megapixels"] = megapixels
+        elif class_type == "WanImageToVideo":
+            # 确保宽度、高度和批量大小参数能够正确更新
+            if "width" in params:
+                inputs["width"] = params["width"]
+            if "height" in params:
+                inputs["height"] = params["height"]
+            if "batch_size" in params:
+                inputs["batch_size"] = params["batch_size"]
+            
         # 对于其他节点类型，动态更新所有匹配的参数
         for param_name, param_value in params.items():
             # 跳过特殊处理过的参数
+            # if param_name in ["prompt", "negative_prompt", "width", "height", "batch_size"]:
             if param_name in ["prompt", "negative_prompt"]:
                 continue
             
@@ -147,7 +176,7 @@ class ComfyUIRunner:
         """运行工作流并保存结果"""
         try:
             info(f"运行工作流...")
-            debug(f"--------原工作流: {workflow}")
+            debug(f"--------工作流数据: {workflow}")
 
             # 确保ComfyUI服务器正在运行
             server_running = self._check_server_running()
@@ -185,7 +214,7 @@ class ComfyUIRunner:
                 error("转换后的工作流为空")
                 return False
 
-            debug("准备发送工作流到ComfyUI API. comfyui_workflow: %s", comfyui_workflow)
+            debug(f"准备发送工作流到ComfyUI API. comfyui_workflow: {comfyui_workflow}")
             # 发送工作流到ComfyUI API
             prompt_data = {
                 "prompt": comfyui_workflow,

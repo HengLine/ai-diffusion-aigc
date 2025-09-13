@@ -125,6 +125,10 @@ class EmailSender:
             error("收件人邮箱地址不能为空")
             return False
 
+        if not all([self.smtp_server, self.username, self.password, self.from_email]):
+            error("SMTP配置不完整，缺少发件人信息，无法发送邮件")
+            return False
+
         if not subject:
             error("邮件主题不能为空")
             return False

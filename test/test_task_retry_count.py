@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 # 将项目根目录添加到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from hengline.utils.task_queue_utils import TaskQueueManager, Task
+from hengline.core.task_queue import TaskQueueManager, Task
 from hengline.logger import debug, info, warning, error
 
 # 添加全局调试函数

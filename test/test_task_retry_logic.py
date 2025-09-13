@@ -4,7 +4,7 @@ import os
 import sys
 # 添加项目根目录到Python路径中
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from hengline.utils.task_queue_utils import TaskQueueManager, Task
+from hengline.core.task_queue import TaskQueueManager, Task
 from datetime import datetime
 
 class TestTaskRetryLogic(unittest.TestCase):

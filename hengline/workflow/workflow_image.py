@@ -179,8 +179,14 @@ class WorkflowImageManager(WorkflowManager):
                 result = {'success': False, 'message': f'无效的图片路径: {image_path}'}
                 return result
 
+            # 创建params的副本，并移除image_path参数以避免覆盖已设置的图片节点值
+            params_without_image = params.copy()
+            if 'image_path' in params_without_image:
+                del params_without_image['image_path']
+                debug("已从参数中移除image_path以避免覆盖已设置的图片节点值")
+            
             # 更新其他工作流参数
-            updated_workflow = self.runner.update_workflow_params(updated_workflow, params)
+            updated_workflow = self.runner.update_workflow_params(updated_workflow, params_without_image)
             if updated_workflow is None:
                 error("更新工作流参数失败")
                 result = {'success': False, 'message': '更新工作流参数失败'}

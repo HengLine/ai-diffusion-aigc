@@ -11,9 +11,9 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # 导入自定义日志模块
-from hengline.utils.logger import info, error
+from hengline.logger import info, error
 # 导入工作流运行器
-from hengline.run_workflow import ComfyUIRunner
+from hengline.workflow.run_workflow import ComfyUIRunner
 
 
 def verify_comfyui_runner_initialization():

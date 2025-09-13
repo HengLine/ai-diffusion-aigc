@@ -13,7 +13,7 @@ from hengline.logger import debug, info, warning, error
 # 将项目根目录添加到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from hengline.utils.task_queue_utils import task_queue_manager
+from hengline.core.task_queue import task_queue_manager
 
 if __name__ == '__main__':
     info("=== 测试 get_queue_status 方法 ===")

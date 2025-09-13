@@ -1,8 +1,11 @@
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 # 全局变量，标记是否已加载.env文件
 _is_env_loaded = False
+
 
 def load_env_file(env_file_path=None):
     """
@@ -12,22 +15,23 @@ def load_env_file(env_file_path=None):
         env_file_path: .env文件的路径，如果为None则使用当前目录下的.env文件
     """
     global _is_env_loaded
-    
+
     if _is_env_loaded:
         return
-    
+
     # 默认使用项目根目录下的.env文件
     if env_file_path is None:
         # 计算.env文件的路径：从当前文件向上三层目录
-        current_dir = os.path.dirname(__file__)
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+        # current_dir = os.path.dirname(__file__)
+        # project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        project_root = get_root_by_currentfile()
         env_file_path = os.path.join(project_root, '.env')
-    
+
     # 尝试加载.env文件
     if os.path.exists(env_file_path):
         load_dotenv(env_file_path)
         _is_env_loaded = True
-    
+
 
 def get_env_var(name, default=None):
     """
@@ -43,5 +47,19 @@ def get_env_var(name, default=None):
     # 确保.env文件已加载
     if not _is_env_loaded:
         load_env_file()
-    
+
     return os.environ.get(name, default)
+
+
+def get_root_by_currentfile():
+    """通过当前文件路径回溯查找项目根目录"""
+    current_path = Path(__file__).absolute()  # 获取当前文件的绝对路径
+    while True:
+        # 检测根目录标记（可自行修改条件）
+        if (current_path / 'requirements.txt').exists() \
+                or (current_path / '.git').is_dir():
+            return current_path
+        # 到达系统根目录时终止
+        if current_path == current_path.parent:
+            return current_path  # 返回最终有效路径
+        current_path = current_path.parent  # 向上一级目录
