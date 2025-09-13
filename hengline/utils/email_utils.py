@@ -71,6 +71,9 @@ class EmailSender:
             bool: 连接是否成功
         """
         try:
+            if self.server:
+                return True
+
             # 创建SMTP连接
             if self.smtp_port == 465:
                 self.server = smtplib.SMTP_SSL(self.smtp_server, self.smtp_port, timeout=30)
@@ -126,11 +129,10 @@ class EmailSender:
             error("邮件主题不能为空")
             return False
 
-        # 如果未连接，则尝试连接
-        if not self.server:
-            if not self.connect():
-                error("无法连接到SMTP服务器，无法发送邮件")
-                return False
+        # 确保连接已建立
+        if not self.connect():
+            error("无法连接到SMTP服务器，邮件发送失败")
+            return False
 
         try:
             # 创建邮件对象
@@ -151,7 +153,8 @@ class EmailSender:
                 msg.attach(MIMEText(message, 'plain', 'utf-8'))
 
             # 发送邮件
-            # self.server.send_message(msg)
+            sender = self.from_email
+            receiver = [to_email]
             self.server.sendmail(sender, receiver, msg.as_string())
             info(f"成功发送邮件到: {to_email}, 主题: {subject}")
             return True

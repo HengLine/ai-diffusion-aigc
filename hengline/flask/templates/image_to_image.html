@@ -440,21 +440,6 @@
                 <h3>模型参数设置</h3>
                 <div class="parameter-content">
                 <div class="slider-container">
-                    <label for="denoiseSlider">去噪强度（Denoise）</label>
-                    <div class="slider-input-group">
-                        <input type="range" id="denoiseSlider" class="slider" min="0" max="1" step="0.05" value="{{ default_params.denoise or 0.6 }}">
-                        <input type="number" id="denoise" name="denoise" min="0" max="1" step="0.05" value="{{ default_params.denoise or 0.6 }}" class="slider-value">
-                    </div>
-                    <p class="parameter-description">值越低保留原图特征越多，值越高变化越大，建议值：0.4-0.7</p>
-                    <div class="parameter-description">
-                        <li>0.1 ~ 0.3：极轻微修改，几乎保留原图结构、色彩、构图。照片修复、细节锐化、轻微调色、去除小噪点</li>
-                        <li>0.4 ~ 0.6 推荐起点（黄金区间）：有明显风格转变，但仍保留主体结构。风格迁移（如油画、动漫风）、调整光影、换背景但保留人物</li>
-                        <li>0.7 ~ 0.85：强烈重构，主体可能被重新绘制，创意空间大。想彻底改变氛围（如白天→夜晚）、艺术再创作、大幅风格转换</li>
-                        <li>0.85 ~ 1.0：几乎完全重绘，相当于“用原图当提示”进行文生图。仅保留轮廓/颜色分布，内容基本由 prompt 决定（慎用）</li>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
                     <label for="stepsSlider">生成步数</label>
                     <div class="slider-input-group">
                         <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}">
@@ -475,6 +460,20 @@
                         <li>4 ~ 7推荐范围（平衡点）：提示有明显影响，同时保留自然细节和多样性。大多数通用场景，如人物、风景、插画等</li>
                         <li>8 ~ 12：强烈遵循提示，细节更贴合文字，但可能出现过度锐化、不自然或伪影。需要精确控制构图、文字、物体位置的场景</li>
                         <li>13 ~ 20+：极强引导，极易产生“过拟合”：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <label for="denoiseSlider">降噪强度（Denoise）</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="denoiseSlider" class="slider" min="0" max="1" step="0.05" value="{{ default_params.denoise or 0.6 }}">
+                        <input type="number" id="denoise" name="denoise" min="0" max="1" step="0.05" value="{{ default_params.denoise or 0.6 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">值越低保留原图特征越多，值越高变化越大，建议值：0.4-0.7</p>
+                    <div class="parameter-description">
+                        <li>0.1 ~ 0.3：极轻微修改，几乎保留原图结构、色彩、构图。照片修复、细节锐化、轻微调色、去除小噪点</li>
+                        <li>0.4 ~ 0.6 推荐起点（黄金区间）：有明显风格转变，但仍保留主体结构。风格迁移（如油画、动漫风）、调整光影、换背景但保留人物</li>
+                        <li>0.7 ~ 0.85：强烈重构，主体可能被重新绘制，创意空间大。想彻底改变氛围（如白天→夜晚）、艺术再创作、大幅风格转换</li>
+                        <li>0.85 ~ 1.0：几乎完全重绘，相当于“用原图当提示”进行文生图。仅保留轮廓/颜色分布，内容基本由 prompt 决定（慎用）</li>
                     </div>
                 </div>
                 </div>

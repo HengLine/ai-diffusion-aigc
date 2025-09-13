@@ -18,7 +18,7 @@ from typing import Dict, Any
 
 import requests
 
-from hengline.utils.config_utils import get_settings_config
+from hengline.utils.config_utils import get_task_config, get_comfyui_config
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -36,10 +36,10 @@ class StartupTaskListener:
         """初始化启动任务监听器"""
         self.lock = Lock()
         self.processed_tasks_count = 0
-        settings_config = get_settings_config()
-        self.max_retry_count = settings_config.get('task', {}).get('max_retry_count', 3)  # 最大重试次数
-        self.max_runtime_hours = settings_config.get('task', {}).get('max_runtime_hours', 2)  # 最大运行时间（小时）
-        self.comfyui_api_url = settings_config.get('comfyui', {}).get('api_url', 'http://127.0.0.1:8188')
+        task_config = get_task_config()
+        self.max_retry_count = task_config.get('max_retry_count', 3)  # 最大重试次数
+        self.max_runtime_hours = task_config.get('max_runtime_hours', 2)  # 最大运行时间（小时）
+        self.comfyui_api_url = get_comfyui_config().get('api_url', 'http://127.0.0.1:8188')
 
     def start(self):
         """启动监听器，处理历史任务"""

@@ -83,15 +83,25 @@ def api_text_to_image():
         # 记录任务信息
         debug(f"[{request_id}] 开始处理文生图任务 - prompt: {prompt[:50]}...")
 
+        # 获取请求参数，如果不存在则使用默认值
+        negative_prompt = data.get('negative_prompt', '')
+        width = data.get('width', 1024)
+        height = data.get('height', 512)
+        steps = data.get('steps', 20)
+        cfg = data.get('cfg', 7.5)
+        batch_size = data.get('batch_size', 5)
+        denoise = data.get('denoise', 0.75)
+
         # 执行文生图任务，设置任务ID
         result = workflow_image_manager.process_text_to_image(
-            prompt,
-            data.get('negative_prompt', ''),
-            width=data.get('width'),
-            height=data.get('height'),
-            steps=data.get('steps'),
-            cfg=data.get('cfg'),
-            batch_size=data.get('batch_size')
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            width=width,
+            height=height,
+            steps=steps,
+            cfg=cfg,
+            batch_size=batch_size,
+            denoise=denoise
         )
 
         if result:

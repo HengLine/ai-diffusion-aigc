@@ -45,7 +45,8 @@
     },
     "task": {
       "max_retry_count": 3,
-      "max_runtime_hours": 2
+      "max_runtime_hours": 2,
+      "workflow_timeout_seconds": 3600
     },
     "logging": {
       "level": "WARNING",

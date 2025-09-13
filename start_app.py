@@ -25,7 +25,7 @@ PROJECT_ROOT = "."
 sys.path.append(PROJECT_ROOT)
 
 # 导入自定义日志模块
-from hengline.logger import info, error
+from hengline.logger import info, error, debug
 
 # 设置编码为UTF-8以确保中文显示正常
 sys.stdout.reconfigure(encoding='utf-8')
@@ -51,7 +51,7 @@ class StreamlitApp(AppBaseEnv):
 
             return result is not None
         except KeyboardInterrupt:
-            info("应用已被用户中断。")
+            debug("应用已被用户中断。")
             return True
         except ModuleNotFoundError:
             error("缺少依赖模块，请检查requirements.txt")

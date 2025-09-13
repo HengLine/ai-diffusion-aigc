@@ -19,33 +19,31 @@ def _async_send_failure_email(task_id: str, task_type: str, task_msg: str, max_r
 def _send_failure_email(task_id: str, task_type: str, task_msg: str, max_execution_count: int):
     """异步发送任务失败邮件通知"""
     try:
-        # 创建事件循环并运行协程
-        loop = asyncio.get_running_loop()
+        # 创建新的事件循环并运行协程
+        loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         result = loop.run_until_complete(email_sender.send_user_email(
             subject=f"任务 {task_id} 执行失败",
             message=f"您提交的{task_type}任务已重试（{max_execution_count}次），但是由于：{task_msg}，请检查后再次提交任务"
         ))
         loop.close()
-
-        # if not result:
-        #     error(f"邮件发送失败，返回结果: {result}")
-
     except Exception as e:
         error(f"发送任务失败，邮件通知失败: {str(e)}")
 
-    def _async_send_success_email(self, task_id: str, task_type: str, start_time: float, end_time: float):
-        """异步发送任务成功邮件通知"""
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(
-                email_sender.send_user_email(
-                    subject=f"任务 {task_id} 执行成功",
-                    message=f"您提交的{task_type}任务已成功完成！\n\n任务类型: {task_type}\n开始时间: {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}\n结束时间: {datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')}\n耗时: {end_time - start_time:.1f}秒"
-                )
-            )
-            loop.close()
 
-        except Exception as e:
-            error(f"发送任务成功邮件通知失败: {str(e)}")
+def _async_send_success_email(task_id: str, task_type: str, start_time: float, end_time: float):
+    """异步发送任务成功邮件通知"""
+    try:
+        # 创建新的事件循环并运行协程
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(email_sender.send_user_email(
+            subject=f"任务 {task_id} 执行成功",
+            message=f"您提交的{task_type}任务已成功完成！\n\n任务类型: {task_type}\n开始时间: {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}\n结束时间: {datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')}\n耗时: {end_time - start_time:.1f}秒"
+        ))
+        loop.close()
+    except Exception as e:
+        error(f"发送任务成功邮件通知失败: {str(e)}")
+        loop.close()
+    except Exception as e:
+        error(f"发送任务成功邮件通知失败: {str(e)}")

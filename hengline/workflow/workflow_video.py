@@ -14,6 +14,8 @@ from hengline.logger import error, warning, debug
 from hengline.utils.config_utils import get_effective_config
 # 导入配置工具
 from hengline.workflow.workflow_core import WorkflowManager
+# 导入ComfyUI API封装类
+from hengline.workflow.workflow_comfyui import comfyui_api
 
 
 class WorkflowVideoManager(WorkflowManager):
@@ -39,10 +41,24 @@ class WorkflowVideoManager(WorkflowManager):
                 warning(f"工作流文件不存在: {workflow_path}")
                 return {'success': False, 'message': f'工作流文件不存在: {workflow_path}'}
 
-            # 加载和更新工作流
+            # 加载工作流
             workflow = self.runner.load_workflow(workflow_path)
 
-            updated_workflow = self.runner.update_workflow_params(workflow, params)
+            # 上传图片到ComfyUI服务器并更新工作流
+            image_path = params.get('image_path', '')
+            if image_path and os.path.exists(image_path):
+                # 使用comfyui_api上传图片并将文件名填充到工作流中
+                updated_workflow = comfyui_api.upload_and_fill_image(image_path, workflow)
+                if not updated_workflow:
+                    error("图片上传失败，无法继续处理图生视频任务")
+                    return {'success': False, 'message': '图片上传失败'}
+            else:
+                # 如果没有图片路径或图片文件不存在，返回错误
+                error(f"无效的图片路径: {image_path}")
+                return {'success': False, 'message': f'无效的图片路径: {image_path}'}
+
+            # 更新其他工作流参数
+            updated_workflow = self.runner.update_workflow_params(updated_workflow, params)
 
             # 检查ComfyUI服务器是否可用
             if not self.runner._check_server_running():

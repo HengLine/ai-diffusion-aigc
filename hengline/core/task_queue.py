@@ -17,7 +17,7 @@ from typing import Dict, Any, Callable, Tuple, Optional, List
 # 导入邮件发送模块
 from hengline.core.task_email import _async_send_failure_email
 from hengline.logger import error, debug, warning, info
-from hengline.utils.config_utils import max_concurrent_tasks
+from hengline.utils.config_utils import max_concurrent_tasks, get_task_config
 
 
 class Task:
@@ -256,6 +256,7 @@ class TaskQueueManager:
 
     def _process_tasks(self):
         """处理队列中的任务 - 任务级锁优化版本"""
+        workflow_timeout_seconds = get_task_config().get('workflow_timeout_seconds', 1800)
         while self.running:
             try:
                 # 检查是否可以启动新任务
@@ -304,7 +305,7 @@ class TaskQueueManager:
                             # 启动任务线程
                             task_thread = threading.Thread(
                                 target=self._execute_task,
-                                args=(task,)
+                                args=(task, workflow_timeout_seconds)
                             )
                             task_thread.daemon = True
                             task_thread.start()
@@ -318,13 +319,13 @@ class TaskQueueManager:
                 error(f"任务处理循环错误: {str(e)}")
                 time.sleep(0.1)
 
-    def _execute_task(self, task: Task):
+    def _execute_task(self, task: Task, timeout: int = 1800):
         """执行单个任务 - 任务级锁优化版本"""
         task_lock = self._get_task_lock(task.task_id)
 
         try:
             # 使用单独的方法执行任务回调，避免长时间阻塞主处理流程
-            result = self._execute_callback_with_timeout(task)
+            result = self._execute_callback_with_timeout(task, timeout)
 
             # 使用任务级锁更新任务状态
             with task_lock:
@@ -333,9 +334,8 @@ class TaskQueueManager:
                     # 从配置中获取最大重试次数（默认为3）
                     max_retry_count = 3
                     try:
-                        from hengline.utils.config_utils import get_settings_config
-                        settings_config = get_settings_config()
-                        max_retry_count = settings_config.get('task', {}).get('max_retry_count', 3)
+                        from hengline.utils.config_utils import get_task_config
+                        max_retry_count = get_task_config().get('max_retry_count', 3)
                     except:
                         pass
 
@@ -510,9 +510,10 @@ class TaskQueueManager:
 
         # 计算队列位置
         position = 1
+        task_default_time_min = 1  # 默认等待时间，单位秒
 
         # 计算预计等待时间（基于平均执行时间）
-        avg_duration = 0
+        avg_duration = task_default_time_min * 60
         if task_type and task_type in self.average_task_durations:
             avg_duration = self.average_task_durations[task_type] / 60  # 转换为分钟
         else:
@@ -522,7 +523,7 @@ class TaskQueueManager:
                 avg_duration = sum(avg_durations) / len(avg_durations) / 60  # 转换为分钟
 
         # 计算预计等待时间
-        estimated_time = queued_count * avg_duration if avg_duration > 0 else 20
+        estimated_time = queued_count * avg_duration
 
         # 计算进度
         progress = 0
@@ -538,7 +539,7 @@ class TaskQueueManager:
             "in_queue": queued_count,
             "running_tasks": running_count,
             "position": position,
-            "estimated_time": round(estimated_time, 1),
+            "estimated_time": task_default_time_min if estimated_time < task_default_time_min else round(estimated_time, 1),
             "progress": progress,
             "running_tasks_count": running_count,  # 保留原始字段以保持兼容性
             "queued_tasks_count": queued_count,  # 保留原始字段以保持兼容性

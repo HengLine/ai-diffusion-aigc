@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 
 # 导入邮件发送模块
-from hengline.core.task_email import _async_send_failure_email
+from hengline.core.task_email import _async_send_failure_email, _async_send_success_email
 # 导入任务队列管理器
 from hengline.core.task_queue import task_queue_manager
 # 导入自定义日志模块
@@ -41,7 +41,8 @@ class TaskMonitor:
         self.instance_id = str(uuid.uuid4())[:8]  # 生成一个简短的实例ID
         self.process_id = os.getpid()  # 获取当前进程ID
         self._task_check_lock = threading.Lock()  # 添加线程锁以防止并发执行
-
+        
+    
     def start(self):
         """启动任务监控器"""
         if self.running:
@@ -301,7 +302,7 @@ class TaskMonitor:
 
                             # 异步发送完成邮件通知
                             threading.Thread(
-                                target=self._async_send_success_email,
+                                target=_async_send_success_email,
                                 args=(task_id, task.task_type, task.start_time, task.end_time),
                                 daemon=True
                             ).start()

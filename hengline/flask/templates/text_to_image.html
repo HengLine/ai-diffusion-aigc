@@ -397,6 +397,23 @@
                         <li>13 ~ 20+：极强引导，极易产生“过拟合”：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
                     </div>
                 </div>
+                
+                <div class="slider-container">
+                    <label for="denoise">降噪强度（Denoise）</label>
+                    <div class="slider-input-group">
+                        <input type="range" class="slider" id="denoiseSlider" min="0" max="1" step="0.05" value="{{ default_params.denoise or 0.75 }}">
+                        <input type="number" class="slider-value" id="denoise" name="denoise" min="0" max="1" step="0.05" value="{{ default_params.denoise or 0.75 }}">
+                    </div>
+                    <div class="parameter-description">
+                        控制生成图像的随机性，值越低越接近初始状态，建议值：0.5-1.0
+                    </div>
+                    <div class="parameter-description">
+                        <li>0-0.2：极低去噪，保留大部分初始特征，仅轻微优化细节。微调现有图像细节、修复轻微瑕疵时</li>
+                        <li>0.3-0.5：中等去噪，保持基本结构，同时引入新变化。风格迁移、保持构图同时改变风格时</li>
+                        <li>0.6-0.8推荐范围：平衡保留和创新，既有初始特征影响，又有足够的创作自由度。大多数创意生成场景</li>
+                        <li>0.9-1.0：高去噪，几乎完全重新生成，仅保留最基本的语义信息。从零开始的创意生成，希望获得全新图像时</li>
+                    </div>
+                </div>
                 </div>
             </div>
             
@@ -499,6 +516,7 @@
             setupSliderSync('heightSlider', 'height');
             setupSliderSync('stepsSlider', 'steps');
             setupSliderSync('cfgSlider', 'cfg');
+            setupSliderSync('denoiseSlider', 'denoise');
             setupSliderSync('numImagesSlider', 'batch_size');
             
             // 设置参数折叠功能
@@ -564,6 +582,7 @@
                     const steps = document.getElementById('steps').value;
                     const cfgScale = document.getElementById('cfg').value;
                     const numImages = document.getElementById('batch_size').value;
+                    const denoise = document.getElementById('denoise').value;
                     
                     // 准备JSON数据 - 注意：文生图不需要strength参数
                     const jsonData = {
@@ -573,7 +592,8 @@
                         height: parseInt(height),
                         steps: parseInt(steps),
                         cfg: parseFloat(cfgScale),
-                        batch_size: parseInt(numImages)
+                        batch_size: parseInt(numImages),
+                        denoise: parseFloat(denoise)
                     };
                     
                     // 禁用按钮防止重复点击

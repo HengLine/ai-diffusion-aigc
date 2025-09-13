@@ -269,7 +269,7 @@ class AppBaseEnv:
             error(f"[错误] 应用启动失败: {e}")
             return False
         except KeyboardInterrupt:
-            info("[信息] 应用已被用户中断。")
+            debug("[信息] 应用已被用户中断。")
             return True
         except Exception as e:
             error(f"[错误] 发生未预期的错误: {e}")

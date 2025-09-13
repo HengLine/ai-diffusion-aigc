@@ -279,6 +279,12 @@
                                value="{{ settings.text_to_image.seed }}" min="-1">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成过程的随机性，使用相同种子可复现相同结果，建议值: -1 (随机)</small>
                     </div>
+                    <div class="form-group">
+                        <label for="tti_denoise">降噪强度</label>
+                        <input type="number" id="tti_denoise" name="settings[text_to_image][denoise]" 
+                               value="{{ settings.text_to_image.denoise }}" min="0" max="1" step="0.05">
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成图像的随机性，值越低越接近初始状态，建议值: 0.5-0.7</small>
+                    </div>
 
                 </div>
                 

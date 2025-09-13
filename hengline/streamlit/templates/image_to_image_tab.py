@@ -75,7 +75,7 @@ class ImageToImageTab:
                 denoise_value = self.interface.default_params.get('denoise', 0.7)
                 # 显式转换为float类型
                 denoise_value = float(denoise_value)
-                denoise = st.slider("去噪强度 (控制与原图的相似度，值越高越偏离原图，会导致生成内容完全脱离原图特征)", min_value=0.1, max_value=1.0,
+                denoise = st.slider("降噪强度 (控制与原图的相似度，值越高越偏离原图，会导致生成内容完全脱离原图特征)", min_value=0.1, max_value=1.0,
                                                value=denoise_value, step=0.05)
             with row3_col2:
                 batch_size = st.slider("生成数量 (一次生成的图像数量，值过高会增加总生成时间)", min_value=1, max_value=20,

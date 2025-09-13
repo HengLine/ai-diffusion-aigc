@@ -327,6 +327,12 @@ def api_config():
                         validation_errors.append('文生图：请填写所有必填字段（宽度、高度、步数、CFG值）！')
 
                     text_to_image_params = get_task_settings('text_to_image')
+                    # 确保denoise参数正确转换为浮点数
+                    if 'denoise' in text_to_image:
+                        try:
+                            text_to_image['denoise'] = float(text_to_image['denoise'])
+                        except ValueError:
+                            validation_errors.append('文生图：降噪强度必须是数值！')
                     text_to_image_params.update(text_to_image)
 
                 # 验证并更新图生图参数

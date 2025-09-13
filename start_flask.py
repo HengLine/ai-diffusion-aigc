@@ -12,6 +12,7 @@ Flask应用启动脚本（优化版）
 
 步骤严格按顺序执行，只有上一步成功才执行下一步
 """
+from doctest import debug
 import os
 import subprocess
 import sys
@@ -51,7 +52,7 @@ class FlaskApp(AppBaseEnv):
             error(f"[错误] Flask应用启动失败: {e}")
             return False
         except KeyboardInterrupt:
-            info("[信息] 应用已被用户中断。")
+            debug("[信息] 应用已被用户中断。")
             return True
         except Exception as e:
             error(f"[错误] 发生未预期的错误: {e}")
