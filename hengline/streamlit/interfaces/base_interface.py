@@ -44,8 +44,11 @@ class BaseInterface:
     def run_workflow(self, workflow: Dict[str, Any], output_filename: str) -> bool:
         """运行工作流"""
         try:
-            debug(f"运行工作流，输出文件名: {output_filename}")
-            return self.runner.run_workflow(workflow, output_filename)
+            # 获取完整的输出路径
+            output_path = self.get_output_path(output_filename)
+            debug(f"运行工作流，输出路径: {output_path}")
+            # 传递完整路径给runner
+            return self.runner.run_workflow(workflow, output_path)
         except Exception as e:
             error(f"运行工作流失败: {str(e)}")
             return False
@@ -55,6 +58,37 @@ class BaseInterface:
         output_folder = get_paths_config().get("output_folder", "outputs")
         output_dir = os.path.join(self.project_root, output_folder)
         return os.path.join(output_dir, output_filename)
+        
+    def get_batch_output_paths(self, output_filename: str, batch_size: int) -> list:
+        """获取批量输出文件路径列表"""
+        if batch_size <= 1:
+            return [self.get_output_path(output_filename)]
+        
+        output_folder = get_paths_config().get("output_folder", "outputs")
+        output_dir = os.path.join(self.project_root, output_folder)
+        base_name, ext = os.path.splitext(output_filename)
+        
+        output_paths = []
+        for i in range(batch_size):
+            if i == 0:
+                # 第一个文件保持原文件名
+                output_paths.append(os.path.join(output_dir, output_filename))
+            else:
+                # 后续文件添加索引
+                output_paths.append(os.path.join(output_dir, f"{base_name}_{i}{ext}"))
+        
+        # 检查文件是否存在，过滤掉不存在的文件
+        existing_paths = []
+        for path in output_paths:
+            if os.path.exists(path):
+                existing_paths.append(path)
+            else:
+                # 尝试检查是否有其他格式的文件（例如有时索引可能从1开始）
+                alternative_path = os.path.join(output_dir, f"{base_name}_{i+1}{ext}")
+                if os.path.exists(alternative_path):
+                    existing_paths.append(alternative_path)
+        
+        return existing_paths
     
     def get_temp_image_path(self, uploaded_file) -> Optional[str]:
         """保存上传的图像文件并返回临时路径"""

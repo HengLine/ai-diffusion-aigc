@@ -10,6 +10,38 @@ import datetime
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 
+# 带颜色的日志格式化器
+class ColorFormatter(logging.Formatter):
+    """为不同日志级别添加不同颜色的格式化器"""
+    # ANSI 颜色代码
+    COLORS = {
+        logging.DEBUG: '\033[94m',      # 蓝色
+        logging.INFO: '\033[92m',       # 绿色
+        logging.WARNING: '\033[93m',    # 黄色
+        logging.ERROR: '\033[91m',      # 红色
+        logging.CRITICAL: '\033[95m',   # 紫色
+    }
+    RESET = '\033[0m'  # 重置颜色
+
+    def format(self, record):
+        # 保存原始的格式化字符串
+        original_formatter = self._fmt
+        
+        # 根据日志级别添加颜色
+        if record.levelno in self.COLORS:
+            # 添加颜色前缀和后缀
+            colored_levelname = f"{self.COLORS[record.levelno]}{record.levelname}{self.RESET}"
+            # 替换格式化字符串中的levelname为带颜色的levelname
+            self._fmt = original_formatter.replace('%(levelname)s', colored_levelname)
+        
+        # 格式化日志记录
+        formatted_message = super().format(record)
+        
+        # 恢复原始的格式化字符串
+        self._fmt = original_formatter
+        
+        return formatted_message
+
 class DailyRotatingFileHandler(RotatingFileHandler):
     """按天和文件大小旋转的日志处理器"""
     def __init__(self, base_dir: str, base_filename: str, max_bytes: int = 10*1024*1024, backup_count: int = 30):
@@ -148,6 +180,9 @@ class Logger:
             console_level_str = logging_config.get('console_level', log_level_str).upper()
             console_level = level_map.get(console_level_str, log_level)
             console_handler.setLevel(console_level)
+
+            # 使用带颜色的格式化器
+            console_handler.setFormatter(ColorFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
             
         except ImportError:
             # 如果导入失败，保持默认的DEBUG级别

@@ -20,8 +20,9 @@ def test_effective_config_filling():
     """测试从get_effective_config()获取的值是否都能正确填充到工作流JSON中"""
     info("开始测试有效配置填充功能...")
     
-    # 初始化工作流运行器
-    runner = ComfyUIRunner(output_dir="./outputs")
+    # 初始化工作流运行器 - 使用项目根目录下的outputs
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    runner = ComfyUIRunner(output_dir=os.path.join(project_root, "outputs"))
     
     # 测试所有任务类型
     task_types = ["text_to_image", "image_to_image", "image_to_video", "text_to_video"]

@@ -217,7 +217,18 @@ class ComfyUIRunner:
                 return False
 
             # 获取工作流结果
-            output_path = os.path.join(self.output_dir, output_filename)
+            # 检查output_filename是否已经是完整路径
+            if os.path.isabs(output_filename):
+                # 如果是完整路径，直接使用
+                output_path = output_filename
+            else:
+                # 否则使用output_dir构建路径
+                output_path = os.path.join(self.output_dir, output_filename)
+            
+            # 确保输出目录存在
+            output_dir = os.path.dirname(output_path)
+            os.makedirs(output_dir, exist_ok=True)
+            
             success = self._get_workflow_outputs(prompt_id, output_path)
 
             if success:
@@ -242,8 +253,9 @@ class ComfyUIRunner:
         """等待工作流完成并返回状态"""
         debug("等待工作流处理完成...")
 
-        # 设置最大等待时间为300秒（5分钟）
-        max_wait_time = 300
+        # 设置最大等待时间为1800秒（30分钟），增加处理复杂任务的时间
+        # 可以根据需要调整这个值
+        max_wait_time = 1800
         start_time = time.time()
         # 连续失败计数
         consecutive_failures = 0
@@ -552,8 +564,9 @@ def main():
     # 从配置文件中获取输出目录配置
     output_folder = config.get("paths", {}).get("output_folder", "outputs")
 
-    # 初始化工作流运行器
-    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
+    # 初始化工作流运行器 - 设置输出目录到项目根目录
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    output_dir = os.path.join(project_root, output_folder)
     runner = ComfyUIRunner(output_dir, args.api_url)
 
     try:

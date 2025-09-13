@@ -14,7 +14,7 @@ import time
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 
 # 添加项目根目录到Python路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # 导入工作流运行器
 # 导入自定义日志模块

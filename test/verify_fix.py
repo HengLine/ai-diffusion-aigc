@@ -22,8 +22,9 @@ def verify_comfyui_runner_initialization():
         # 导入配置工具
         from hengline.utils.config_utils import get_comfyui_api_url
         
-        # 获取正确的参数
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
+        # 获取正确的参数 - 使用项目根目录下的outputs
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        output_dir = os.path.join(project_root, "outputs")
         api_url = get_comfyui_api_url()
         
         info(f"准备初始化ComfyUIRunner...")

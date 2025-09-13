@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional
 from hengline.workflow.run_workflow import ComfyUIRunner
 from hengline.logger import debug, error
 from .base_interface import BaseInterface
+from typing import Dict, Any
 
 class ImageToImageInterface(BaseInterface):
     def __init__(self, runner: ComfyUIRunner):
@@ -9,12 +10,13 @@ class ImageToImageInterface(BaseInterface):
     
     def generate_variant(self, uploaded_file, prompt: str, negative_prompt: str, 
                         width: int, height: int, steps: int, cfg: float, 
-                        denoise: float, output_filename: str) -> Dict[str, Any]:
+                        denoise: float, output_filename: str, batch_size: int = 1) -> Dict[str, Any]:
         """生成图生图变体"""
         result = {
             'success': False,
             'message': '',
-            'output_path': ''
+            'output_path': '',
+            'output_paths': []  # 添加用于存储批量输出路径的字段
         }
         
         try:
@@ -48,7 +50,8 @@ class ImageToImageInterface(BaseInterface):
                 "height": height,
                 "steps": steps,
                 "cfg": cfg,
-                "denoise": denoise
+                "denoise": denoise,
+                "batch_size": batch_size
             }
             
             updated_workflow = self.update_workflow_params(workflow, params)
@@ -64,11 +67,13 @@ class ImageToImageInterface(BaseInterface):
             
             # 获取输出路径
             output_path = self.get_output_path(output_filename)
+            output_paths = self.get_batch_output_paths(output_filename, batch_size)
             
             # 更新结果
             result['success'] = True
-            result['message'] = f"变体生成成功，结果保存至: {output_path}"
-            result['output_path'] = output_path
+            result['message'] = f"变体生成成功，共生成 {len(output_paths)} 个变体"
+            result['output_path'] = output_path  # 保持向后兼容
+            result['output_paths'] = output_paths  # 添加批量输出路径
             
         except Exception as e:
             import traceback

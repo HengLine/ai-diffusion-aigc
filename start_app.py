@@ -18,7 +18,8 @@ import sys
 from app_env import AppBaseEnv
 
 # 获取当前脚本所在目录（项目根目录）
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+# PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = "."
 
 # 添加项目根目录到Python路径
 sys.path.append(PROJECT_ROOT)

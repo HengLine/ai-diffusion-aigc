@@ -34,7 +34,7 @@ class AIGCWebApp:
         """初始化Web应用"""
         # 设置页面配置
         st.set_page_config(
-            page_title="AIGC AI生成内容演示",
+            page_title="AIGC 生成内容演示平台",
             page_icon="🎨",
             layout="wide"
         )
@@ -43,7 +43,18 @@ class AIGCWebApp:
         if "runner" not in st.session_state:
             # 使用配置工具获取输出目录配置
             output_folder = get_paths_config().get("output_folder", "outputs")
-            output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
+            
+            # 获取当前文件绝对路径
+            current_file = os.path.abspath(__file__)
+            debug(f"当前文件路径: {current_file}")
+            
+            # 计算项目根目录（确保正确指向e:/Projects/blogs/ai-diffusion-aigc）
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+            debug(f"计算的项目根目录: {project_root}")
+            
+            # 设置输出目录到项目根目录
+            output_dir = os.path.join(project_root, output_folder)
+            debug(f"最终输出目录: {output_dir}")
             
             # 获取ComfyUI API URL配置
             api_url = get_comfyui_api_url()
@@ -51,6 +62,10 @@ class AIGCWebApp:
             
             # 创建并保存ComfyUIRunner实例
             st.session_state.runner = ComfyUIRunner(output_dir, api_url)
+            
+            # 验证输出目录是否存在，如果不存在则创建
+            os.makedirs(output_dir, exist_ok=True)
+            debug(f"已确保输出目录存在: {output_dir}")
         else:
             # 更新现有runner的API URL
             current_api_url = get_comfyui_api_url()
@@ -86,13 +101,17 @@ class AIGCWebApp:
                 else:
                     st.info("API URL没有变化")
             
-            st.info("注意：配置更改会自动保存到config.json文件中，并在所有会话中生效。")
+            st.info("注意：配置更改会自动保存到本地配置文件，并在所有会话中生效。")
     
     def run(self) -> None:
         """运行Web应用"""
         # 页面标题
-        st.title("🎨 AIGC AI生成内容演示")
-        
+        st.title("🎨 AIGC 生成内容演示平台")
+        st.html("""
+        本应用基于ComfyUI，支持文生图、图生图、图生视频、文生视频等功能。</br>
+        <font color="red">注意：本应用仅支持单次提交，不记录历史任务，不支持任务管理。页面刷新后任务数据会丢失。</font>
+        """)
+
         # 配置ComfyUI
         self._configure_comfyui()
         

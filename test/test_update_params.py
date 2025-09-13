@@ -18,7 +18,9 @@ def test_update_workflow_params():
     info("开始测试工作流参数更新功能...")
     
     # 初始化工作流运行器
-    runner = ComfyUIRunner(output_dir="./outputs")
+    # 使用项目根目录下的outputs
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    runner = ComfyUIRunner(output_dir=os.path.join(project_root, "outputs"))
     
     # 测试用的工作流数据
     test_workflow = {

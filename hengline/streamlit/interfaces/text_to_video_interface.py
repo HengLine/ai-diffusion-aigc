@@ -2,19 +2,21 @@ from typing import Dict, Any, Optional
 from hengline.workflow.run_workflow import ComfyUIRunner
 from hengline.logger import debug, error
 from .base_interface import BaseInterface
+from typing import Dict, Any
 
 class TextToVideoInterface(BaseInterface):
     def __init__(self, runner: ComfyUIRunner):
         super().__init__(runner, 'text_to_video')
     
-    def generate_video(self, prompt: str, negative_prompt: str, 
-                      width: int, height: int, frames: int, 
-                      output_filename: str) -> Dict[str, Any]:
+    def generate_video(self, prompt: str, negative_prompt: str, width: int, height: int,
+                      steps: int, cfg: float, length: int, output_filename: str,
+                      batch_size: int = 1) -> Dict[str, Any]:
         """生成文生视频"""
         result = {
             'success': False,
             'message': '',
-            'output_path': ''
+            'output_path': '',
+            'output_paths': []  # 添加用于存储批量输出路径的字段
         }
         
         try:
@@ -35,7 +37,10 @@ class TextToVideoInterface(BaseInterface):
                 "negative_prompt": negative_prompt,
                 "width": width,
                 "height": height,
-                "frames": frames
+                "steps": steps,
+                "cfg": cfg,
+                "length": length,
+                "batch_size": batch_size
             }
             
             updated_workflow = self.update_workflow_params(workflow, params)
@@ -51,11 +56,13 @@ class TextToVideoInterface(BaseInterface):
             
             # 获取输出路径
             output_path = self.get_output_path(output_filename)
+            output_paths = self.get_batch_output_paths(output_filename, batch_size)
             
             # 更新结果
             result['success'] = True
-            result['message'] = f"视频生成成功，结果保存至: {output_path}"
-            result['output_path'] = output_path
+            result['message'] = f"视频生成成功，共生成 {len(output_paths)} 个视频"
+            result['output_path'] = output_path  # 保持向后兼容
+            result['output_paths'] = output_paths  # 添加批量输出路径
             
         except Exception as e:
             import traceback

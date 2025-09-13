@@ -20,7 +20,8 @@ from app_env import AppBaseEnv
 from hengline.logger import info, error
 
 # 获取当前脚本所在目录（项目根目录）
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+# PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = "."
 
 # 设置编码为UTF-8以确保中文显示正常
 sys.stdout.reconfigure(encoding='utf-8')
