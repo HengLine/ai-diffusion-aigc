@@ -143,9 +143,9 @@ def configure():
             request.form.get('settings[image_to_image][batch_size]', image_to_image_params.get('batch_size', 1)))
         image_to_image_params['seed'] = int(
             request.form.get('settings[image_to_image][seed]', image_to_image_params.get('seed', -1)))
-        image_to_image_params['denoising_strength'] = float(
-            request.form.get('settings[image_to_image][denoising_strength]',
-                             image_to_image_params.get('denoising_strength', 0.7)))
+        image_to_image_params['denoise'] = float(
+            request.form.get('settings[image_to_image][denoise]',
+                             image_to_image_params.get('denoise', 0.7)))
         image_to_image_params['prompt'] = request.form.get('settings[image_to_image][prompt]',
                                                            image_to_image_params.get('prompt', ''))
         image_to_image_params['negative_prompt'] = request.form.get('settings[image_to_image][negative_prompt]',

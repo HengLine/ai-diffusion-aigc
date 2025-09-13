@@ -33,7 +33,7 @@ function setFormValues(values) {
     }
     
     // 设置其他通用字段
-    const commonFields = ['width', 'height', 'steps', 'cfg_scale', 'strength', 'video_length', 'motion_amount', 'fps', 'consistency_scale'];
+    const commonFields = ['width', 'height', 'steps', 'cfg', 'denoise', 'length', 'motion_amount', 'fps', 'consistency_scale'];
     commonFields.forEach(field => {
         if (values[field] !== undefined && document.getElementById(field)) {
             document.getElementById(field).value = values[field];

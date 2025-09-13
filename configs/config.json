@@ -1,56 +1,57 @@
 {
-    "flask": {
-        "secret_key": "your-secret-key-here",
-        "debug": false,
-        "allowed_extensions": [
-            "png",
-            "jpg",
-            "jpeg",
-            "gif"
-        ]
+  "flask": {
+    "secret_key": "your-secret-key-here",
+    "debug": false,
+    "allowed_extensions": [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif"
+    ]
+  },
+  "workflows": {
+    "text_to_image": "workflows/text_to_image.json",
+    "image_to_image": "workflows/image_to_image.json",
+    "image_to_video": "workflows/text_to_video.json",
+    "text_to_video": "workflows/text_to_video.json"
+  },
+  "paths": {
+    "temp_folder": "uploads",
+    "output_folder": "outputs",
+    "workflows_dir": "workflows"
+  },
+  "settings": {
+    "user": {
+      "email": "haeng2030@gmail.com",
+      "nickname": "haeng",
+      "organization": "HengLine"
     },
-    "workflows": {
-        "text_to_image": "workflows/text_to_image.json",
-        "image_to_image": "workflows/image_to_image.json",
-        "image_to_video": "workflows/text_to_video.json",
-        "text_to_video": "workflows/text_to_video.json"
+    "email": {
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "username": "",
+      "password": "",
+      "from_email": "",
+      "from_name": "HengLine AIGC 创意平台"
     },
-    "paths": {
-        "temp_folder": "uploads",
-        "output_folder": "outputs",
-        "workflows_dir": "workflows"
+    "comfyui": {
+      "api_url": "http://127.0.0.1:8188",
+      "auto_start_server": false
     },
-    "settings": {
-        "user": {
-            "email": "haeng2015@foxmail.com",
-            "nickname": "haeng",
-            "organization": "HengLine"
-        },
-        "email": {
-            "smtp_server": "smtp.gmail.com",
-            "smtp_port": 587,
-            "username": "HengLine",
-            "from_email": "haeng2030@gmail.com",
-            "from_name": "AIGC 创意平台"
-        },
-        "comfyui": {
-            "api_url": "http://127.0.0.1:8188",
-            "auto_start_server": false
-        },
-        "common": {
-            "max_concurrent_tasks": 2,
-            "cache_enabled": true,
-            "cache_size": 1024
-        },
-        "task": {
-            "max_retry_count": 3,
-            "max_runtime_hours": 2
-        },
-        "logging": {
-            "level": "WARNING",
-            "console_level": "DEBUG",
-            "file_level": "INFO",
-            "disable_unnecessary_logs": true
-        }
+    "common": {
+      "max_concurrent_tasks": 2,
+      "cache_enabled": true,
+      "cache_size": 1024
+    },
+    "task": {
+      "max_retry_count": 3,
+      "max_runtime_hours": 2
+    },
+    "logging": {
+      "level": "WARNING",
+      "console_level": "DEBUG",
+      "file_level": "INFO",
+      "disable_unnecessary_logs": true
     }
+  }
 }

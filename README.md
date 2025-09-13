@@ -11,7 +11,6 @@
 - **文生视频**：通过文本描述生成高质量视频
 - **图生视频**：将静态图像转换为动态视频
 - **特定场景应用**：
-  - 科幻视频生成
   - 更多场景持续开发中...
 
 ### 技术架构
@@ -26,10 +25,11 @@
 
 ```
 ├── hengline/        # 核心代码目录
-│   ├── app_streamlit.py  # Streamlit应用入口
+│   ├── core/        # 核心队列处理
 │   ├── flask/       # Flask应用相关代码
 │   ├── streamlit/   # Streamlit界面组件
 │   └── utils/       # 工具函数库
+│   └── workflow/    # 工作流处理
 ├── workflows/       # ComfyUI工作流配置文件
 ├── configs/         # 系统配置文件
 ├── imgs/            # 效果图和示例图片
@@ -37,6 +37,8 @@
 ├── start_flask.py   # Flask应用启动脚本
 └── requirements.txt # 项目依赖文件
 ```
+
+
 
 ## 2. 安装步骤
 
@@ -65,7 +67,7 @@
    ```
 
 3. 下载所需的模型文件（如SD、Wan等），并放置在ComfyUI/models 的相应目录中：
-   
+
    > 1. **文生图、图生图**（共约2G）：
    >
    >    /**checkpoints**/[v1-5-pruned-emaonly-fp16.safetensors](https://hf-mirror.com/Comfy-Org/stable-diffusion-v1-5-archive/resolve/main/v1-5-pruned-emaonly-fp16.safetensors)
@@ -84,7 +86,19 @@
    >    - /**text_encoders**/[t5xxl_fp16.safetensors](https://hf-mirror.com/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)（9.2G）
    >    - /**vae**/[wan2.2_vae.safetensors](https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors)（1.3G）
    >    - **/diffusion_models** / [wan2.2_ti2v_5B_fp16.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors)（9.3G）
+
+4. 启动 ComfyUI 
+
+   ```python
+   python main.py
    
+   # 以CPU 模式启动
+   python main.py --cpu
+   
+   # 压缩模型启动
+   python main.py --cpu  --use-split-cross-attention --disable-smart-memory --windows-standalone-build
+   ```
+
    
 
 #### 步骤2：安装本项目
@@ -96,14 +110,16 @@
    ```
 
 2. 使用提供的启动脚本自动完成安装：
-   - 对于Streamlit界面：运行`start_app.py`
-   - 对于Flask界面：运行`start_flask.py`
+   - 对于Streamlit界面：运行`python start_app.py`
+   - 对于Flask界面：运行`python start_flask.py`
 
-   启动脚本将自动：
-   - 检查Python环境
-   - 创建/激活虚拟环境（./venv）
-   - 安装项目依赖
-   - 启动相应的Web服务
+   > 启动脚本将自动：
+   > - 检查Python环境
+   > - 创建/激活虚拟环境（./venv）
+   > - 安装项目依赖
+   > - 启动相应的Web服务
+   
+   
 
 ## 3. 使用说明
 
@@ -111,12 +127,14 @@
 
 1. 修改配置文件：
    打开`configs/config.json`文件，根据您的环境修改以下配置：
-   - `comfyui.api_url`：设置为您的ComfyUI URL
+   - `comfyui.api_url`：设置为您的ComfyUI URL（可在界面修改）
    - `user`部分：设置用户接收的邮箱
    - `settings`部分：根据需要调整生成参数
 
 2. 工作流配置：
    项目包含多个预设的工作流文件，存放在`workflows/`目录中，您可以根据需要修改或创建新的工作流。
+
+
 
 ### 启动应用
 

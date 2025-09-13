@@ -440,9 +440,9 @@
                 <h3>图像转换参数</h3>
                 <div class="parameter-content">
                 <div class="slider-container">
-                    <label for="strengthSlider">转换强度 (0-1)</label>
+                    <label for="denoiseSlider">转换强度 (0-1)</label>
                     <div class="slider-input-group">
-                        <input type="range" id="strengthSlider" class="slider" min="0" max="1" step="0.1" value="{{ default_params.denoise or 0.6 }}">
+                        <input type="range" id="denoiseSlider" class="slider" min="0" max="1" step="0.1" value="{{ default_params.denoise or 0.6 }}">
                         <input type="number" id="denoise" name="denoise" min="0" max="1" step="0.1" value="{{ default_params.denoise or 0.6 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">值越低保留原图特征越多，值越高变化越大</p>
@@ -458,9 +458,9 @@
                 </div>
                 
                 <div class="slider-container">
-                    <label for="cfgScaleSlider">CFG Scale</label>
+                    <label for="cfgSlider">CFG Scale</label>
                     <div class="slider-input-group">
-                        <input type="range" id="cfgScaleSlider" class="slider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="range" id="cfgSlider" class="slider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
                         <input type="number" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">值越高，越严格遵循提示词</p>
@@ -556,11 +556,11 @@
                 }
                 
                 // 设置所有滑块的同步
-                setupSliderSync('strengthSlider', 'strength');
-                setupSliderSync('stepsSlider', 'steps');
-                setupSliderSync('cfgScaleSlider', 'cfg');
-                setupSliderSync('widthSlider', 'width');
-                setupSliderSync('heightSlider', 'height');
+                  setupSliderSync('denoiseSlider', 'denoise');
+                  setupSliderSync('stepsSlider', 'steps');
+                  setupSliderSync('cfgSlider', 'cfg');
+                  setupSliderSync('widthSlider', 'width');
+                  setupSliderSync('heightSlider', 'height');
                 
                 // 设置参数折叠功能
                 setupParameterFolding();

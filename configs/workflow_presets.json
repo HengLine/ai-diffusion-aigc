@@ -22,7 +22,7 @@
       "prompt": "The sunrise over the sea of clouds reflects on the mountain peaks",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
       "seed": -1,
-      "denoising_strength": 0.75
+      "denoise": 0.75
     },
     "setting": {}
   },
