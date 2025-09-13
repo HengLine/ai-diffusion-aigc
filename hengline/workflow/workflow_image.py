@@ -6,6 +6,7 @@
 import os
 import time
 import uuid
+import random
 
 from hengline.core.task_queue import task_queue_manager
 from hengline.logger import error, warning, debug
@@ -79,16 +80,17 @@ class WorkflowImageManager(WorkflowManager):
         # 确保prompt和negative_prompt被正确设置
         preset_config['prompt'] = prompt
         preset_config['negative_prompt'] = negative_prompt
+        seed = preset_config.get('seed', -1)
 
         # 准备任务参数，直接使用有效配置
         task_params = {
             'prompt': preset_config.get('prompt', ''),
             'negative_prompt': preset_config.get('negative_prompt', ''),
-            'width': preset_config.get('width', 512),
-            'height': preset_config.get('height', 512),
+            'width': preset_config.get('width', 1024),
+            'height': preset_config.get('height', 768),
             'steps': preset_config.get('steps', 20),
-            'cfg': preset_config.get('cfg', 7.0),
-            'seed': preset_config.get('seed', -1),
+            'cfg': preset_config.get('cfg', 9.5),
+            'seed': random.randint(0, 2**50 - 1) if seed < 0 else seed,
             'batch_size': preset_config.get('batch_size', 1)
         }
 
@@ -187,17 +189,18 @@ class WorkflowImageManager(WorkflowManager):
         preset_config['negative_prompt'] = negative_prompt
 
         # 从有效配置中提取参数
+        seed = preset_config.get('seed',  -1)
         # 准备任务参数
         task_params = {
             'image_path': image_path,
             'prompt': prompt,
             'negative_prompt': negative_prompt,
-            'width': preset_config.get('width', 512),
-            'height': preset_config.get('height', 512),
+            'width': preset_config.get('width', 1024),
+            'height': preset_config.get('height', 768),
             'steps': preset_config.get('steps', 20),
             'cfg': preset_config.get('cfg', 7.0),
             'denoise': preset_config.get('denoise', 0.75),
-            'seed': preset_config.get('seed', -1),
+            'seed': random.randint(0, 2**50 - 1) if seed < 0 else seed,
             'batch_size': preset_config.get('batch_size', 1)
         }
 

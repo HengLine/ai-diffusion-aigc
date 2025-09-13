@@ -6,6 +6,7 @@
 import os
 import time
 import uuid
+import random
 
 from hengline.core.task_queue import task_queue_manager
 from hengline.logger import error, warning, debug
@@ -72,22 +73,23 @@ class WorkflowVideoManager(WorkflowManager):
         preset_config['image_path'] = image_path
         preset_config['prompt'] = prompt
         preset_config['negative_prompt'] = negative_prompt
+        seed = preset_config.get('seed', -1)
 
         # 准备任务参数
         task_params = {
             'image_path': preset_config.get('image_path', ''),
             'prompt': preset_config.get('prompt', ''),
             'negative_prompt': preset_config.get('negative_prompt', ''),
-            'width': preset_config.get('width', 512),
+            'width': preset_config.get('width', 768),
             'height': preset_config.get('height', 512),
-            'length': preset_config.get('length', 121),
+            'length': preset_config.get('length', 8),
             'steps': preset_config.get('steps', 20),
-            'cfg': preset_config.get('cfg', 7.0),
-            'seed': preset_config.get('seed', -1),
+            'cfg': preset_config.get('cfg', 6.0),
+            'seed': random.randint(0, 2**50 - 1) if seed < 0 else seed,
             'batch_size': preset_config.get('batch_size', 1),
-            'shift': preset_config.get('shift', 1),
-            'fps': preset_config.get('fps', 1),
-            "denoise": preset_config.get('denoise', 1)
+            'shift': preset_config.get('shift', 8),
+            'fps': preset_config.get('fps', 16),
+            "denoise": preset_config.get('denoise', 0.6)
         }
 
         # 任务回调函数
@@ -179,21 +181,22 @@ class WorkflowVideoManager(WorkflowManager):
         # 确保关键参数被正确设置
         preset_config['prompt'] = prompt
         preset_config['negative_prompt'] = negative_prompt
+        seed = preset_config.get('seed', -1)
 
         # 准备任务参数
         task_params = {
             'prompt': preset_config.get('prompt', ''),
             'negative_prompt': preset_config.get('negative_prompt', ''),
-            'width': preset_config.get('width', 512),
+            'width': preset_config.get('width', 768),
             'height': preset_config.get('height', 512),
-            'length': preset_config.get('length', 121),
+            'length': preset_config.get('length', 8),
             'steps': preset_config.get('steps', 20),
-            'cfg': preset_config.get('cfg', 7.0),
-            'seed': preset_config.get('seed', -1),
+            'cfg': preset_config.get('cfg', 8.5),
+            'seed': random.randint(0, 2**50 - 1) if seed < 0 else seed,
             'batch_size': preset_config.get('batch_size', 1),
-            'shift': preset_config.get('shift', 1),
-            'fps': preset_config.get('fps', 1),
-            "denoise": preset_config.get('denoise', 1)
+            'shift': preset_config.get('shift', 8),
+            'fps': preset_config.get('fps', 16),
+            "denoise": preset_config.get('denoise', 0.6)
         }
 
         # 任务回调函数

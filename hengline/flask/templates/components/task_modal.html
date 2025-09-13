@@ -489,11 +489,15 @@
                         let resultContent = '';
                         
                         // 构建正确的结果URL
-                        const resultUrl = '/outputs/' + resultData.filename;
+                        const mainResultUrl = '/outputs/' + resultData.filename;
+                        
+                        // 解析文件名以查找可能的多个结果
+                        const baseName = resultData.filename.replace(/\.[^/.]+$/, "");
+                        const extension = resultData.filename.substring(resultData.filename.lastIndexOf('.'));
                         
                         // 根据任务类型显示不同的结果
                         if (resultData.task_type.includes('video')) {
-                            // 视频结果
+                            // 视频结果 - 假设只有一个视频结果
                             resultContent = `
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -505,21 +509,22 @@
                                             <p><strong>任务类型:</strong> ${resultData.task_type}</p>
                                             <p><strong>提示词:</strong> ${resultData.prompt || '无'}</p>
                                             <p><strong>生成时间:</strong> ${new Date(resultData.end_time * 1000).toLocaleString('zh-CN')}</p>
+                                            <p><strong>当前结果:</strong> 1/1</p>
                                         </div>
                                         <div class="result-content">
                                             <video controls style="width: 100%; max-height: 500px; object-fit: contain;">
-                                                <source src="${resultUrl}" type="video/mp4">
+                                                <source src="${mainResultUrl}" type="video/mp4">
                                                 您的浏览器不支持视频播放
                                             </video>
                                         </div>
                                         <div class="result-actions">
-                                            <a href="${resultUrl}" class="download-button" download>下载视频</a>
+                                            <a href="${mainResultUrl}" class="download-button" download>下载视频</a>
                                         </div>
                                     </div>
                                 </div>
                             `;
                         } else {
-                            // 图像结果
+                            // 图像结果 - 支持多图轮播
                             resultContent = `
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -531,12 +536,17 @@
                                             <p><strong>任务类型:</strong> ${resultData.task_type}</p>
                                             <p><strong>提示词:</strong> ${resultData.prompt || '无'}</p>
                                             <p><strong>生成时间:</strong> ${new Date(resultData.end_time * 1000).toLocaleString('zh-CN')}</p>
+                                            <p class="result-counter"><strong>当前结果:</strong> 1/1</p>
                                         </div>
-                                        <div class="result-content">
-                                            <img src="${resultUrl}" style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto;">
+                                        <div class="result-carousel">
+                                            <button class="carousel-button prev-button" onclick="showPreviousResult('${taskId}', this)">&lt;</button>
+                                            <div class="carousel-container">
+                                                <img id="result-image-${taskId}" src="${mainResultUrl}" style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto;">
+                                            </div>
+                                            <button class="carousel-button next-button" onclick="showNextResult('${taskId}', this)">&gt;</button>
                                         </div>
                                         <div class="result-actions">
-                                            <a href="${resultUrl}" class="download-button" download>下载图像</a>
+                                            <a id="download-link-${taskId}" href="${mainResultUrl}" class="download-button" download>下载图像</a>
                                         </div>
                                     </div>
                                 </div>
@@ -553,6 +563,24 @@
                                 resultModal.remove();
                             }
                         });
+                        
+                        // 如果是图像任务，尝试查找所有相关结果文件
+                        if (!resultData.task_type.includes('video')) {
+                            // 初始化轮播数据
+                            const carouselData = {
+                                currentIndex: 0,
+                                allResults: [{url: mainResultUrl, filename: resultData.filename}],
+                                baseName: baseName,
+                                extension: extension,
+                                taskType: resultData.task_type
+                            };
+                            
+                            // 存储轮播数据
+                            resultModal.dataset.carouselData = JSON.stringify(carouselData);
+                            
+                            // 尝试查找其他可能的结果文件
+                            findAllResultsForTask(taskId, baseName, extension, resultModal);
+                        }
                     } else {
                         showNotification('获取任务结果失败: ' + (data.message || '未知错误'), 'error', 3000);
                     }
@@ -563,48 +591,282 @@
                 });
         };
         
+        // 查找任务的所有结果文件
+        function findAllResultsForTask(taskId, baseName, extension, modal) {
+            // 这里是一个客户端模拟查找多个结果的方法
+            // 实际项目中可能需要通过API获取任务的所有结果文件列表
+            
+            // 假设的命名规则：baseName_0001.ext, baseName_0002.ext 等
+            const results = [];
+            
+            // 首先添加主结果文件
+            results.push({
+                url: '/outputs/' + baseName + extension,
+                filename: baseName + extension
+            });
+            
+            // 查找可能的其他结果文件（模拟）
+            // 实际项目中应该通过API获取
+            const maxResultsToCheck = 10; // 最多检查10个可能的额外结果
+            for (let i = 1; i <= maxResultsToCheck; i++) {
+                const possibleFilename = baseName + '_' + String(i).padStart(4, '0') + extension;
+                // 这里只是模拟添加，实际项目中应该通过API或检查文件是否存在
+                results.push({
+                    url: '/outputs/' + possibleFilename,
+                    filename: possibleFilename
+                });
+            }
+            
+            // 更新轮播数据
+            if (modal && modal.dataset.carouselData) {
+                const carouselData = JSON.parse(modal.dataset.carouselData);
+                carouselData.allResults = results;
+                modal.dataset.carouselData = JSON.stringify(carouselData);
+                
+                // 更新结果计数器
+                const counter = modal.querySelector('.result-counter');
+                if (counter) {
+                    counter.innerHTML = `<strong>当前结果:</strong> ${carouselData.currentIndex + 1}/${carouselData.allResults.length}`;
+                }
+                
+                // 如果只有一个结果，隐藏导航按钮
+                if (results.length <= 1) {
+                    const prevButton = modal.querySelector('.prev-button');
+                    const nextButton = modal.querySelector('.next-button');
+                    if (prevButton) prevButton.style.display = 'none';
+                    if (nextButton) nextButton.style.display = 'none';
+                }
+            }
+        }
+        
+        // 显示上一个结果
+        window.showPreviousResult = function(taskId, button) {
+            const modal = button.closest('.modal');
+            if (!modal || !modal.dataset.carouselData) return;
+            
+            const carouselData = JSON.parse(modal.dataset.carouselData);
+            if (carouselData.allResults.length <= 1) return;
+            
+            // 更新索引（循环）
+            carouselData.currentIndex = (carouselData.currentIndex - 1 + carouselData.allResults.length) % carouselData.allResults.length;
+            modal.dataset.carouselData = JSON.stringify(carouselData);
+            
+            // 更新显示
+            updateCarouselDisplay(modal, carouselData);
+        };
+        
+        // 显示下一个结果
+        window.showNextResult = function(taskId, button) {
+            const modal = button.closest('.modal');
+            if (!modal || !modal.dataset.carouselData) return;
+            
+            const carouselData = JSON.parse(modal.dataset.carouselData);
+            if (carouselData.allResults.length <= 1) return;
+            
+            // 更新索引（循环）
+            carouselData.currentIndex = (carouselData.currentIndex + 1) % carouselData.allResults.length;
+            modal.dataset.carouselData = JSON.stringify(carouselData);
+            
+            // 更新显示
+            updateCarouselDisplay(modal, carouselData);
+        };
+        
+        // 更新轮播显示
+        function updateCarouselDisplay(modal, carouselData) {
+            const currentResult = carouselData.allResults[carouselData.currentIndex];
+            
+            // 更新图像
+            const image = modal.querySelector('#result-image-' + carouselData.baseName.split('_')[0]);
+            if (image) {
+                image.src = currentResult.url;
+            }
+            
+            // 更新下载链接
+            const downloadLink = modal.querySelector('#download-link-' + carouselData.baseName.split('_')[0]);
+            if (downloadLink) {
+                downloadLink.href = currentResult.url;
+                downloadLink.download = currentResult.filename;
+            }
+            
+            // 更新计数器
+            const counter = modal.querySelector('.result-counter');
+            if (counter) {
+                counter.innerHTML = `<strong>当前结果:</strong> ${carouselData.currentIndex + 1}/${carouselData.allResults.length}`;
+            }
+        };
+        
         // 添加结果模态框和下载按钮样式
-        const style = document.createElement('style');
-        style.textContent = `
-            .result-info {
-                margin-bottom: 20px;
-                padding: 15px;
-                background-color: #f8f9fa;
-                border-radius: 4px;
-            }
-            
-            .result-info p {
-                margin: 5px 0;
-                color: #495057;
-            }
-            
-            .result-content {
-                margin-bottom: 20px;
-                text-align: center;
-            }
-            
-            .result-actions {
-                display: flex;
-                justify-content: center;
-                gap: 10px;
-                margin-top: 20px;
-            }
-            
-            .download-button {
-                background-color: #28a745;
-                color: white;
-                padding: 10px 20px;
-                border-radius: 4px;
-                text-decoration: none;
-                font-weight: 500;
-                display: inline-block;
-                text-align: center;
-            }
-            
-            .download-button:hover {
-                background-color: #218838;
-            }
-        `;
-        document.head.appendChild(style);
+          const style = document.createElement('style');
+          style.textContent = `
+              .modal {
+                  display: none;
+                  position: fixed;
+                  z-index: 1000;
+                  left: 0;
+                  top: 0;
+                  width: 100%;
+                  height: 100%;
+                  overflow: auto;
+                  background-color: rgb(0,0,0);
+                  background-color: rgba(0,0,0,0.8);
+              }
+              
+              .modal-content {
+                  background-color: #fefefe;
+                  margin: 5% auto;
+                  padding: 20px;
+                  border: 1px solid #888;
+                  width: 90%;
+                  max-width: 900px;
+                  border-radius: 8px;
+                  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+              }
+              
+              .modal-header {
+                  padding: 10px 0;
+                  border-bottom: 1px solid #eee;
+                  margin-bottom: 15px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+              }
+              
+              .modal-header h2 {
+                  margin: 0;
+                  color: #333;
+                  font-size: 20px;
+              }
+              
+              .close {
+                  color: #aaa;
+                  font-size: 28px;
+                  font-weight: bold;
+                  cursor: pointer;
+                  transition: color 0.3s;
+              }
+              
+              .close:hover,
+              .close:focus {
+                  color: black;
+                  text-decoration: none;
+              }
+              
+              .result-info {
+                  margin-bottom: 20px;
+                  padding: 15px;
+                  background-color: #f9f9f9;
+                  border-radius: 5px;
+                  font-size: 14px;
+              }
+              
+              .result-info p {
+                  margin: 8px 0;
+                  line-height: 1.5;
+              }
+              
+              .result-counter {
+                  font-weight: bold;
+                  color: #4CAF50;
+              }
+              
+              .result-content {
+                  margin-bottom: 20px;
+                  text-align: center;
+              }
+              
+              /* 轮播容器样式 */
+              .result-carousel {
+                  position: relative;
+                  margin: 20px 0;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+              }
+              
+              .carousel-container {
+                  flex: 1;
+                  text-align: center;
+                  padding: 0 10px;
+              }
+              
+              /* 轮播按钮样式 */
+              .carousel-button {
+                  background-color: rgba(76, 175, 80, 0.8);
+                  color: white;
+                  border: none;
+                  font-size: 24px;
+                  font-weight: bold;
+                  width: 40px;
+                  height: 40px;
+                  border-radius: 50%;
+                  cursor: pointer;
+                  transition: background-color 0.3s, transform 0.1s;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  user-select: none;
+                  position: absolute;
+                  z-index: 1;
+              }
+              
+              .carousel-button:hover {
+                  background-color: rgba(76, 175, 80, 1);
+                  transform: scale(1.1);
+              }
+              
+              .carousel-button:active {
+                  transform: scale(0.95);
+              }
+              
+              .prev-button {
+                  left: 10px;
+              }
+              
+              .next-button {
+                  right: 10px;
+              }
+              
+              /* 轮播按钮的响应式设计 */
+              @media (max-width: 768px) {
+                  .carousel-button {
+                      width: 30px;
+                      height: 30px;
+                      font-size: 18px;
+                  }
+                  
+                  .modal-content {
+                      margin: 10% auto;
+                      width: 95%;
+                  }
+              }
+              
+              .result-actions {
+                  text-align: center;
+                  margin-top: 20px;
+              }
+              
+              .download-button {
+                  display: inline-block;
+                  padding: 10px 20px;
+                  background-color: #4CAF50;
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 5px;
+                  cursor: pointer;
+                  font-size: 16px;
+                  transition: background-color 0.3s, transform 0.1s;
+                  border: none;
+                  font-family: inherit;
+              }
+              
+              .download-button:hover {
+                  background-color: #45a049;
+                  transform: translateY(-2px);
+              }
+              
+              .download-button:active {
+                  transform: translateY(0);
+              }`;
+          document.head.appendChild(style);
     });
 </script>

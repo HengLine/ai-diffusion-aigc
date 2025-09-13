@@ -29,7 +29,7 @@
   "image_to_video": {
     "default": {
       "width": 768,
-      "height": 576,
+      "height": 512,
       "length": 8,
       "batch_size": 1,
       "steps": 30,
@@ -46,7 +46,7 @@
   "text_to_video": {
     "default": {
       "width": 768,
-      "height": 576,
+      "height": 512,
       "length": 8,
       "steps": 30,
       "fps": 16,

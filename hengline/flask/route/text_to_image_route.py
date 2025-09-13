@@ -90,7 +90,8 @@ def api_text_to_image():
             width=data.get('width'),
             height=data.get('height'),
             steps=data.get('steps'),
-            cfg=data.get('cfg')
+            cfg=data.get('cfg'),
+            batch_size=data.get('batch_size')
         )
 
         if result:

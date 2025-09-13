@@ -499,7 +499,7 @@
             setupSliderSync('heightSlider', 'height');
             setupSliderSync('stepsSlider', 'steps');
             setupSliderSync('cfgSlider', 'cfg');
-            setupSliderSync('numImagesSlider', 'num_images');
+            setupSliderSync('numImagesSlider', 'batch_size');
             
             // 设置参数折叠功能
             setupParameterFolding();
@@ -563,7 +563,7 @@
                     const height = document.getElementById('height').value;
                     const steps = document.getElementById('steps').value;
                     const cfgScale = document.getElementById('cfg').value;
-                    const numImages = document.getElementById('num_images').value;
+                    const numImages = document.getElementById('batch_size').value;
                     
                     // 准备JSON数据 - 注意：文生图不需要strength参数
                     const jsonData = {
@@ -573,7 +573,7 @@
                         height: parseInt(height),
                         steps: parseInt(steps),
                         cfg: parseFloat(cfgScale),
-                        num_images: parseInt(numImages)
+                        batch_size: parseInt(numImages)
                     };
                     
                     // 禁用按钮防止重复点击

@@ -476,10 +476,10 @@
                 </div>
                 
                 <div class="slider-container">
-                    <label for="numVideosSlider">生成数量</label>
+                    <label for="batchSizeSlider">生成数量</label>
                     <div class="slider-input-group">
-                        <input type="range" id="numVideosSlider" class="slider" min="1" max="5" step="1" value="{{ default_params.num_videos or 1 }}">
-                        <input type="number" id="num_videos" name="num_videos" min="1" max="5" step="1" value="{{ default_params.num_videos or 1 }}" class="slider-value">
+                        <input type="range" id="batchSizeSlider" class="slider" min="1" max="5" step="1" value="{{ default_params.batch_size or 1 }}">
+                        <input type="number" id="batch_size" name="batch_size" min="1" max="5" step="1" value="{{ default_params.batch_size or 1 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">生成的视频数量，最多5个，建议值：1</p>
                 </div>
@@ -563,7 +563,7 @@
             setupSliderSync('widthSlider', 'width');
             setupSliderSync('heightSlider', 'height');
             setupSliderSync('lengthSlider', 'length');
-            setupSliderSync('numVideosSlider', 'num_videos');
+            setupSliderSync('batchSizeSlider', 'batch_size');
             
             // 设置参数折叠功能
             setupParameterFolding();
@@ -593,7 +593,7 @@
                     steps: document.getElementById('steps').value,
                     cfg: document.getElementById('cfg').value,
                     denoise: document.getElementById('denoise').value,
-                    num_videos: document.getElementById('num_videos').value
+                    batch_size: document.getElementById('batch_size').value
                 };
                 
                 // 显示加载状态
