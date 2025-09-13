@@ -201,14 +201,16 @@ def configure():
         image_to_video_params['negative_prompt'] = request.form.get('settings[image_to_video][negative_prompt]',
                                                                     image_to_video_params.get('negative_prompt', ''))
 
+        # 使用config_utils中的函数获取正确的配置路径
+        from hengline.utils.config_utils import _get_config_path
+        config_path = _get_config_path()
+        config_dir = os.path.dirname(config_path)
+        
         # 确保配置目录存在
-        config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-                                  'configs')
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
 
         # 保存配置到文件
-        config_path = os.path.join(config_dir, 'config.json')
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(current_config, f, ensure_ascii=False, indent=2)
 

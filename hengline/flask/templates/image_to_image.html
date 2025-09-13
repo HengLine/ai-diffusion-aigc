@@ -437,15 +437,21 @@
             
             <!-- 模型参数设置 -->
             <div class="parameter-group collapsed">
-                <h3>图像转换参数</h3>
+                <h3>模型参数设置</h3>
                 <div class="parameter-content">
                 <div class="slider-container">
-                    <label for="denoiseSlider">转换强度 (0-1)</label>
+                    <label for="denoiseSlider">去噪强度（Denoise）</label>
                     <div class="slider-input-group">
-                        <input type="range" id="denoiseSlider" class="slider" min="0" max="1" step="0.1" value="{{ default_params.denoise or 0.6 }}">
-                        <input type="number" id="denoise" name="denoise" min="0" max="1" step="0.1" value="{{ default_params.denoise or 0.6 }}" class="slider-value">
+                        <input type="range" id="denoiseSlider" class="slider" min="0" max="1" step="0.05" value="{{ default_params.denoise or 0.6 }}">
+                        <input type="number" id="denoise" name="denoise" min="0" max="1" step="0.05" value="{{ default_params.denoise or 0.6 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">值越低保留原图特征越多，值越高变化越大</p>
+                    <p class="parameter-description">值越低保留原图特征越多，值越高变化越大，建议值：0.4-0.7</p>
+                    <div class="parameter-description">
+                        <li>0.1 ~ 0.3：极轻微修改，几乎保留原图结构、色彩、构图。照片修复、细节锐化、轻微调色、去除小噪点</li>
+                        <li>0.4 ~ 0.6 推荐起点（黄金区间）：有明显风格转变，但仍保留主体结构。风格迁移（如油画、动漫风）、调整光影、换背景但保留人物</li>
+                        <li>0.7 ~ 0.85：强烈重构，主体可能被重新绘制，创意空间大。想彻底改变氛围（如白天→夜晚）、艺术再创作、大幅风格转换</li>
+                        <li>0.85 ~ 1.0：几乎完全重绘，相当于“用原图当提示”进行文生图。仅保留轮廓/颜色分布，内容基本由 prompt 决定（慎用）</li>
+                    </div>
                 </div>
                 
                 <div class="slider-container">
@@ -454,22 +460,28 @@
                         <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}">
                         <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">步数越多，细节越丰富，但生成时间越长</p>
+                    <p class="parameter-description">步数越多，细节越丰富，但生成时间越长，建议值：20-40</p>
                 </div>
                 
                 <div class="slider-container">
-                    <label for="cfgSlider">CFG Scale</label>
+                    <label for="cfgSlider">提示引导强度（CFG Scale）</label>
                     <div class="slider-input-group">
                         <input type="range" id="cfgSlider" class="slider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
                         <input type="number" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">值越高，越严格遵循提示词</p>
+                    <p class="parameter-description">值越高，越严格遵循提示词，建议值：4.0-12.0</p>
+                    <div class="parameter-description">
+                        <li>1-3：非常弱的提示引导，图像更“自由”，可能偏离提示，但风格更自然、有创意。实验性创作、抽象艺术、想获得意外效果时</li>
+                        <li>4 ~ 7推荐范围（平衡点）：提示有明显影响，同时保留自然细节和多样性。大多数通用场景，如人物、风景、插画等</li>
+                        <li>8 ~ 12：强烈遵循提示，细节更贴合文字，但可能出现过度锐化、不自然或伪影。需要精确控制构图、文字、物体位置的场景</li>
+                        <li>13 ~ 20+：极强引导，极易产生“过拟合”：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
+                    </div>
                 </div>
                 </div>
             </div>
             
             <div class="parameter-group collapsed">
-                <h3>输出尺寸设置</h3>
+                <h3>图像生成设置</h3>
                 <div class="parameter-content">
                 <div class="slider-container">
                     <label for="widthSlider">输出宽度 (像素)</label>
@@ -487,6 +499,15 @@
                         <input type="number" id="height" name="height" min="128" max="2048" step="16" value="{{ default_params.height or 512 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">建议值：512, 768, 1024</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="numImagesSlider">生成数量</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="numImagesSlider" class="slider" min="1" max="10" step="1" value="{{ default_params.batch_size or 1 }}">
+                        <input type="number" id="batch_size" name="batch_size" min="1" max="10" step="1" value="{{ default_params.batch_size or 1 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">一次生成的图像数量，最多10张，建议值：1-5</p>
                 </div>
             </div>
             </div>
@@ -561,6 +582,7 @@
                   setupSliderSync('cfgSlider', 'cfg');
                   setupSliderSync('widthSlider', 'width');
                   setupSliderSync('heightSlider', 'height');
+                  setupSliderSync('numImagesSlider', 'num_images');
                 
                 // 设置参数折叠功能
                 setupParameterFolding();

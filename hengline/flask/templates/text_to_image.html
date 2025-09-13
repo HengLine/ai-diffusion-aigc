@@ -377,45 +377,62 @@
                         <input type="number" class="slider-value" id="steps" name="steps" min="5" max="100" value="{{ default_params.steps or 30 }}">
                     </div>
                     <div class="parameter-description">
-                        步数越多，细节越丰富，但生成时间越长
+                        步数越多，细节越丰富，但生成时间越长，建议值：20-40
                     </div>
                 </div>
                 
                 <div class="slider-container">
-                    <label for="cfg">CFG Scale</label>
+                    <label for="cfg">提示引导强度（CFG Scale）</label>
                     <div class="slider-input-group">
                         <input type="range" class="slider" id="cfgSlider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
                         <input type="number" class="slider-value" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
                     </div>
                     <div class="parameter-description">
-                        值越高，越严格遵循提示词
+                        值越高，越严格遵循提示词，建议值：4.0-12.0
+                    </div>
+                    <div class="parameter-description">
+                        <li>1-3：非常弱的提示引导，图像更“自由”，可能偏离提示，但风格更自然、有创意。实验性创作、抽象艺术、想获得意外效果时</li>
+                        <li>4 ~ 7推荐范围（平衡点）：提示有明显影响，同时保留自然细节和多样性。大多数通用场景，如人物、风景、插画等</li>
+                        <li>8 ~ 12：强烈遵循提示，细节更贴合文字，但可能出现过度锐化、不自然或伪影。需要精确控制构图、文字、物体位置的场景</li>
+                        <li>13 ~ 20+：极强引导，极易产生“过拟合”：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
                     </div>
                 </div>
                 </div>
             </div>
             
             <div class="parameter-group collapsed">
-                <h3>输出尺寸设置</h3>
+                <h3>图像生成设置</h3>
                 <div class="parameter-content">
                 <div class="slider-container">
-                    <label for="width">图像宽度</label>
+                    <label for="width">图像宽度（像素）</label>
                     <div class="slider-input-group">
                         <input type="range" class="slider" id="widthSlider" min="256" max="1024" step="64" value="{{ default_params.width or 512 }}">
                         <input type="number" class="slider-value" id="width" name="width" min="256" max="1024" step="64" value="{{ default_params.width or 512 }}">
                     </div>
                     <div class="parameter-description">
-                        生成图像的宽度，推荐值：256-1024
+                        生成图像的宽度，推荐值：512-1024
                     </div>
                 </div>
                 
                 <div class="slider-container">
-                    <label for="height">图像高度</label>
+                    <label for="height">图像高度（像素）</label>
                     <div class="slider-input-group">
                         <input type="range" class="slider" id="heightSlider" min="256" max="1024" step="64" value="{{ default_params.height or 512 }}">
                         <input type="number" class="slider-value" id="height" name="height" min="256" max="1024" step="64" value="{{ default_params.height or 512 }}">
                     </div>
                     <div class="parameter-description">
-                        生成图像的高度，推荐值：256-1024
+                        生成图像的高度，推荐值：512-1024
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="batch_size">生成数量</label>
+                    <div class="slider-input-group">
+                        <input type="range" class="slider" id="numImagesSlider" min="1" max="10" step="1" value="{{ default_params.batch_size or 1 }}">
+                        <input type="number" class="slider-value" id="batch_size" name="batch_size" min="1" max="10" step="1" value="{{ default_params.batch_size or 1 }}">
+                    </div>
+                    <div class="parameter-description">
+                        一次生成的图像数量，最多10张，建议值：1-5
                     </div>
                 </div>
                 </div>
@@ -482,6 +499,7 @@
             setupSliderSync('heightSlider', 'height');
             setupSliderSync('stepsSlider', 'steps');
             setupSliderSync('cfgSlider', 'cfg');
+            setupSliderSync('numImagesSlider', 'num_images');
             
             // 设置参数折叠功能
             setupParameterFolding();
@@ -545,6 +563,7 @@
                     const height = document.getElementById('height').value;
                     const steps = document.getElementById('steps').value;
                     const cfgScale = document.getElementById('cfg').value;
+                    const numImages = document.getElementById('num_images').value;
                     
                     // 准备JSON数据 - 注意：文生图不需要strength参数
                     const jsonData = {
@@ -553,7 +572,8 @@
                         width: parseInt(width),
                         height: parseInt(height),
                         steps: parseInt(steps),
-                        cfg: parseFloat(cfgScale)
+                        cfg: parseFloat(cfgScale),
+                        num_images: parseInt(numImages)
                     };
                     
                     // 禁用按钮防止重复点击

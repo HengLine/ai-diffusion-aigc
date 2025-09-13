@@ -409,16 +409,37 @@
                         <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}">
                         <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">步数越多，细节越丰富，但生成时间越长</p>
+                    <p class="parameter-description">步数越多，细节越丰富，但生成时间越长，建议值：20-40</p>
                 </div>
                 
                 <div class="slider-container">
-                    <label for="cfgSlider">CFG Scale</label>
+                    <label for="cfgSlider">提示引导强度（CFG Scale）</label>
                     <div class="slider-input-group">
                         <input type="range" id="cfgSlider" class="slider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
                         <input type="number" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">值越高，越严格遵循提示词</p>
+                    <p class="parameter-description">值越高，越严格遵循提示词，建议值：5.0-10.0</p>
+                    <div class="parameter-description">
+                        <li>1 ~ 4：弱引导，画面自然流畅，但可能忽略提示词。实验性抽象动画、氛围感长镜头。可能完全不按你写的 prompt 走</li>
+                        <li>5 ~ 7：黄金区间：平衡提示控制与运动流畅性。大多数通用视频：人物行走、风景变换、物体移动。最佳平衡点，推荐作为起点</li>
+                        <li>8 ~ 10：强力遵循提示，细节更精准。需要精确动作（如“猫跳过椅子”）、文字/标志出现。易出现帧间抖动、闪烁、不连贯，尤其在复杂动作中</li>
+                        <li>11+：极端引导。极少数需求：如“文字逐字浮现”、“特定物品精确出现”。极易导致视频卡顿、鬼影、伪影、时空错乱</li>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="denoiseSlider">去噪强度</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="denoiseSlider" class="slider" min="0.1" max="1.0" step="0.05" value="{{ default_params.denoise or 0.7 }}">
+                        <input type="number" id="denoise" name="denoise" min="0.1" max="1.0" step="0.05" value="{{ default_params.denoise or 0.7 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">控制视频生成过程中的去噪强度，值越低保留原始特征越多，值越高变化越大，建议值：0.4-0.7</p>
+                    <div class="parameter-description">
+                        <li>0.1 ~ 0.3：几乎保留原图结构，仅添加微小运动。图像转小幅动画（如飘动的旗帜、流动的水）。动作太弱，像“静态图+轻微晃动”</li>
+                        <li>0.4 ~ 0.6：黄金区间！ 有自然运动，仍保持主体稳定。人物走路、汽车行驶、云层飘动、日常场景动画。推荐起点，兼容性最好</li>
+                        <li>0.7 ~ 0.85：强烈重构，大幅改变构图与运动方式。创意转换（如“城堡变成机器人”）、风格化动画。可能出现肢体扭曲、物体消失/重生、帧跳变</li>
+                        <li>0.9 ~ 1.0：完全重绘，原图仅作颜色/布局参考。实验性艺术视频、抽象视觉。极不稳定，常见“幻觉运动”或断帧，不建议使用</li>
+                    </div>
                 </div>
                 </div>
             </div>
@@ -428,30 +449,39 @@
                 <h3>视频生成设置</h3>
                 <div class="parameter-content">
                 <div class="slider-container">
-                    <label for="widthSlider">视频宽度</label>
+                    <label for="widthSlider">视频宽度（像素）</label>
                     <div class="slider-input-group">
                         <input type="range" id="widthSlider" class="slider" min="256" max="1024" step="64" value="{{ default_params.width or 512 }}">
                         <input type="number" id="width" name="width" min="256" max="1024" step="64" value="{{ default_params.width or 512 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">视频宽度像素值</p>
+                    <p class="parameter-description">视频宽度像素值，建议值：512, 768, 1024</p>
                 </div>
                 
                 <div class="slider-container">
-                    <label for="heightSlider">视频高度</label>
+                    <label for="heightSlider">视频高度（像素）</label>
                     <div class="slider-input-group">
                         <input type="range" id="heightSlider" class="slider" min="256" max="1024" step="64" value="{{ default_params.height or 384 }}">
                         <input type="number" id="height" name="height" min="256" max="1024" step="64" value="{{ default_params.height or 384 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">视频高度像素值</p>
+                    <p class="parameter-description">视频高度像素值，建议值：384, 576, 768</p>
                 </div>
                 
                 <div class="slider-container">
-                    <label for="lengthSlider">视频时长</label>
+                    <label for="lengthSlider">视频时长（秒）</label>
                     <div class="slider-input-group">
                         <input type="range" id="lengthSlider" class="slider" min="2" max="30" step="1" value="{{ default_params.length or 5 }}">
                         <input type="number" id="length" name="length" min="2" max="30" step="1" value="{{ default_params.length or 5 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">视频时长(秒)</p>
+                    <p class="parameter-description">视频时长(秒)，建议值：5-15</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="numVideosSlider">生成数量</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="numVideosSlider" class="slider" min="1" max="5" step="1" value="{{ default_params.num_videos or 1 }}">
+                        <input type="number" id="num_videos" name="num_videos" min="1" max="5" step="1" value="{{ default_params.num_videos or 1 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">生成的视频数量，最多5个，建议值：1</p>
                 </div>
                 </div>
             </div>
@@ -529,9 +559,11 @@
             // 设置所有滑块的同步
             setupSliderSync('stepsSlider', 'steps');
             setupSliderSync('cfgSlider', 'cfg');
+            setupSliderSync('denoiseSlider', 'denoise');
             setupSliderSync('widthSlider', 'width');
             setupSliderSync('heightSlider', 'height');
             setupSliderSync('lengthSlider', 'length');
+            setupSliderSync('numVideosSlider', 'num_videos');
             
             // 设置参数折叠功能
             setupParameterFolding();
@@ -559,7 +591,9 @@
                     width: document.getElementById('width').value,
                     height: document.getElementById('height').value,
                     steps: document.getElementById('steps').value,
-                    cfg: document.getElementById('cfg').value
+                    cfg: document.getElementById('cfg').value,
+                    denoise: document.getElementById('denoise').value,
+                    num_videos: document.getElementById('num_videos').value
                 };
                 
                 // 显示加载状态
