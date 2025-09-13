@@ -9,7 +9,7 @@ class ImageToImageInterface(BaseInterface):
     
     def generate_variant(self, uploaded_file, prompt: str, negative_prompt: str, 
                         width: int, height: int, steps: int, cfg: float, 
-                        denoising_strength: float, output_filename: str) -> Dict[str, Any]:
+                        denoise: float, output_filename: str) -> Dict[str, Any]:
         """生成图生图变体"""
         result = {
             'success': False,
@@ -48,7 +48,7 @@ class ImageToImageInterface(BaseInterface):
                 "height": height,
                 "steps": steps,
                 "cfg": cfg,
-                "denoising_strength": denoising_strength
+                "denoise": denoise
             }
             
             updated_workflow = self.update_workflow_params(workflow, params)

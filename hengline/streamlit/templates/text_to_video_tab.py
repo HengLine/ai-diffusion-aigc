@@ -10,6 +10,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from hengline.logger import debug
 # 导入接口模块
 from hengline.streamlit.interfaces.text_to_video_interface import TextToVideoInterface
+# 导入配置工具
+from hengline.utils.config_utils import get_workflow_path
 
 class TextToVideoTab:
     def __init__(self, runner):
@@ -17,6 +19,8 @@ class TextToVideoTab:
         self.runner = runner
         # 创建接口实例
         self.interface = TextToVideoInterface(runner)
+        # 设置项目根目录
+        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
     def render(self):
         """渲染文生视频标签页"""
@@ -84,67 +88,3 @@ class TextToVideoTab:
                     st.error(result['message'])
             except Exception as e:
                 st.error(f"处理请求时发生错误: {str(e)}")
-        
-        # 处理表单提交
-        if submit_button:
-            # 验证输入
-            if not prompt:
-                st.error("请输入提示词！")
-                return
-            
-            # 显示加载状态
-            with st.spinner("正在生成视频，请稍候..."):
-                try:
-                    # 加载工作流
-                    workflow_file = get_workflow_path('text_to_video')
-                    workflow_path = os.path.join(self.project_root, workflow_file)
-                    
-                    # 检查工作流文件是否存在
-                    if not os.path.exists(workflow_path):
-                        # 如果文生视频工作流不存在，使用图生视频工作流代替
-                        workflow_file = get_workflow_path('image_to_video')
-                        workflow_path = os.path.join(self.project_root, workflow_file)
-                        
-                        if not os.path.exists(workflow_path):
-                            st.error(f"工作流文件不存在: {workflow_path}")
-                            return
-                    
-                    workflow = self.runner.load_workflow(workflow_path)
-                    
-                    # 更新工作流参数
-                    workflow = self.runner.update_workflow_params(
-                        workflow, 
-                        {
-                            "prompt": prompt,
-                            "width": width,
-                            "height": height,
-                            "video_length": video_length,
-                            "steps": steps,
-                            "cfg_scale": cfg_scale,
-                            "motion_bucket_id": motion_amount,
-                            "fps": fps,
-                            "noise_aug_strength": noise_amount
-                        }
-                    )
-                    
-                    # 运行工作流
-                    output_filename = f"text_to_video_{int(time.time())}.mp4"
-                    success = self.runner.run_workflow(
-                        workflow, 
-                        output_filename=output_filename
-                    )
-                    
-                    # 显示结果
-                    if success:
-                        result_path = os.path.join(self.runner.output_dir, output_filename)
-                        st.success("视频生成成功！")
-                        st.video(result_path)
-                    else:
-                        st.error("视频生成失败")
-                except Exception as e:
-                    import traceback
-                    error_type = type(e).__name__
-                    error_message = str(e)
-                    error_traceback = traceback.format_exc()
-                    error(f"文生视频生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
-                    st.error(f"生成失败: 类型={error_type}, 消息={error_message}\n请查看控制台日志获取详细堆栈信息")

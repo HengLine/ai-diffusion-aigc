@@ -119,11 +119,11 @@ def test_effective_config_filling():
                 node_type = node_data.get("class_type", "Unknown")
                 
                 # 特殊处理参数名称映射
-                if param_name == "cfg_scale" and "cfg" in node_data["inputs"]:
+                if param_name == "cfg" and "cfg" in node_data["inputs"]:
                     if node_data["inputs"]["cfg"] == expected_value:
                         found_and_updated = True
                         updated_node_info.append(f"节点{node_id}({node_type}): cfg")
-                elif param_name == "denoising_strength" and "denoise" in node_data["inputs"]:
+                elif param_name == "denoise" and "denoise" in node_data["inputs"]:
                     if node_data["inputs"]["denoise"] == expected_value:
                         found_and_updated = True
                         updated_node_info.append(f"节点{node_id}({node_type}): denoise")
@@ -175,8 +175,8 @@ def test_effective_config_filling():
                 missing_in_workflow = [param for param in effective_config.keys() 
                                       if param not in all_input_keys 
                                       and param not in ["prompt", "negative_prompt"]
-                                      and not (param == "cfg_scale" and "cfg" in all_input_keys)
-                                      and not (param == "denoising_strength" and "denoise" in all_input_keys)
+                                      and not (param == "cfg" and "cfg" in all_input_keys)
+                                      and not (param == "denoise" and "denoise" in all_input_keys)
                                       and not (param == "image_path" and "image" in all_input_keys)]
                 
                 if missing_in_workflow:

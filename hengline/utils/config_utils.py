@@ -39,15 +39,15 @@ def load_config():
                 'output_folder': 'outputs',
                 'workflows_dir': 'workflows'
             },
-            'comfyui': {
-                'api_url': 'http://127.0.0.1:8188',
-                'auto_start_server': False
-            },
             'settings': {
                 'common': {
                     'max_concurrent_tasks': 2,
                     'cache_enabled': True,
                     'cache_size': 1024
+                },
+                'comfyui': {
+                    'api_url': 'http://127.0.0.1:8188',
+                    'auto_start_server': False
                 }
             }
         }
@@ -135,10 +135,49 @@ def get_comfyui_config():
         'auto_start_server': False
     })
 
-
 def get_comfyui_api_url():
     """获取ComfyUI的API URL"""
     return get_comfyui_config().get('api_url', 'http://127.0.0.1:8188')
+
+def save_comfyui_config(api_url=None, auto_start_server=None):
+    """保存ComfyUI相关配置
+    
+    Args:
+        api_url (str, optional): ComfyUI API URL
+        auto_start_server (bool, optional): 是否自动启动服务器
+        
+    Returns:
+        bool: 保存是否成功
+    """
+    try:
+        config_path = _get_config_path()
+        config = load_config()
+        
+        # 确保settings节点存在
+        if 'settings' not in config:
+            config['settings'] = {}
+        
+        # 确保comfyui节点存在
+        if 'comfyui' not in config['settings']:
+            config['settings']['comfyui'] = {}
+        
+        # 更新配置
+        if api_url is not None:
+            config['settings']['comfyui']['api_url'] = api_url
+        if auto_start_server is not None:
+            config['settings']['comfyui']['auto_start_server'] = auto_start_server
+        
+        # 写回文件
+        with open(config_path, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        # 重新加载配置
+        reload_config()
+        debug(f"成功保存ComfyUI配置: {config['settings']['comfyui']}")
+        return True
+    except Exception as e:
+        error(f"保存ComfyUI配置失败: {str(e)}")
+        return False
 
 
 def get_user_configs():
@@ -193,9 +232,27 @@ def get_common_settings():
 
 
 def get_task_settings(task_type, default=None):
-    """获取指定任务类型的设置"""
+    """获取指定任务类型的默认设置
+    
+    Args:
+        task_type (str): 任务类型
+        default (dict, optional): 默认返回值
+        
+    Returns:
+        dict: 任务的默认设置
+    """
+    # 从工作流预设中获取默认参数，而不是从settings配置中获取
     if default is None:
         default = {}
+    
+    # 优先从工作流预设的default节点获取参数
+    preset_default = get_workflow_preset(task_type, 'default')
+    
+    # 如果预设中有值，返回预设值；否则返回默认值
+    if preset_default:
+        return preset_default
+    
+    # 作为后备，仍然从settings配置中尝试获取
     return get_settings_config().get(task_type, default)
 
 
@@ -250,7 +307,7 @@ def load_workflow_presets():
                     'prompt': '',
                     'negative_prompt': '',
                     'seed': -1,
-                    'denoising_strength': 0.75
+                    'denoise': 0.75
                 },
                 'setting': {}
             },

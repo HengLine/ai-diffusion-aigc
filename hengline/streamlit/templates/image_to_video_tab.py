@@ -2,14 +2,17 @@ import os
 import sys
 import streamlit as st
 import os
+import time
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # 导入自定义日志模块
-from hengline.logger import debug
+from hengline.logger import debug, error
 # 导入接口模块
 from hengline.streamlit.interfaces.image_to_video_interface import ImageToVideoInterface
+# 导入配置工具
+from hengline.utils.config_utils import get_workflow_path, get_paths_config
 
 class ImageToVideoTab:
     def __init__(self, runner):
@@ -17,6 +20,8 @@ class ImageToVideoTab:
         self.runner = runner
         # 创建接口实例
         self.interface = ImageToVideoInterface(runner)
+        # 设置项目根目录
+        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
     def render(self):
         """渲染图生视频标签页"""
@@ -65,69 +70,30 @@ class ImageToVideoTab:
         
         # 处理表单提交
         if submit_button:
-            # 验证输入
-            if not uploaded_file:
-                st.error("请上传图像！")
-                return
-            if not prompt:
-                st.error("请输入提示词！")
-                return
-            
-            # 显示加载状态
-            with st.spinner("正在生成视频，请稍候..."):
-                try:
-                    # 保存上传的文件到临时目录
-                    temp_dir = os.path.join(self.project_root, get_paths_config()['temp_folder'])
-                    os.makedirs(temp_dir, exist_ok=True)
-                    temp_path = os.path.join(temp_dir, uploaded_file.name)
-                    
-                    with open(temp_path, "wb") as f:
-                        f.write(uploaded_file.getbuffer())
-                    
-                    # 加载工作流
-                    workflow_file = get_workflow_path('image_to_video')
-                    workflow_path = os.path.join(self.project_root, workflow_file)
-                    workflow = self.runner.load_workflow(workflow_path)
-                    
-                    # 更新工作流参数
-                    workflow = self.runner.update_workflow_params(
-                        workflow, 
-                        {
-                            "prompt": prompt,
-                            "image_path": temp_path,
-                            "width": width,
-                            "height": height,
-                            "video_length": video_length,
-                            "steps": steps,
-                            "cfg_scale": cfg_scale,
-                            "motion_amount": motion_amount,
-                            "fps": fps,
-                            "consistency_scale": consistency_scale
-                        }
-                    )
-                    
-                    # 运行工作流
-                    output_filename = f"image_to_video_{int(time.time())}.mp4"
-                    success = self.runner.run_workflow(
-                        workflow, 
+            try:
+                with st.spinner("正在生成视频..."):
+                    # 调用接口方法
+                    result = self.interface.generate_video(
+                        image_file=uploaded_file,
+                        prompt=prompt,
+                        negative_prompt=negative_prompt,
+                        width=width,
+                        height=height,
+                        frames=frames,
+                        fps=fps,
                         output_filename=output_filename
                     )
+                
+                if result['success']:
+                    st.success(result['message'])
                     
-                    # 显示结果
-                    if success:
-                        result_path = os.path.join(self.runner.output_dir, output_filename)
-                        st.success("视频生成成功！")
-                        st.video(result_path)
-                    else:
-                        st.error("视频生成失败")
-                except Exception as e:
-                    import traceback
-                    error_type = type(e).__name__
-                    error_message = str(e)
-                    error_traceback = traceback.format_exc()
-                    error(f"图生视频生成异常: 类型={error_type}, 消息={error_message}\n堆栈跟踪:\n{error_traceback}")
-                    st.error(f"生成失败: 类型={error_type}, 消息={error_message}\n请查看控制台日志获取详细堆栈信息")
-                finally:
-                    # 清理临时文件
-                    if os.path.exists(temp_path):
-                        os.remove(temp_path)
+                    # 显示生成的视频
+                    if result['output_path'].lower().endswith('.mp4'):
+                        try:
+                            st.video(result['output_path'])
+                        except Exception as e:
+                            st.info(f"无法显示结果视频: {str(e)}")
+                else:
+                    st.error(result['message'])
+            except Exception as e:
+                st.error(f"处理请求时发生错误: {str(e)}")

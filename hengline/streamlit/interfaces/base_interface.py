@@ -10,13 +10,17 @@ class BaseInterface:
         self.runner = runner
         self.task_type = task_type
         self.default_params = get_task_settings(task_type)
-        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        # 使用四次os.path.dirname()指向项目根目录，而不是hengline目录
+        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         
     def load_workflow(self) -> Optional[Dict[str, Any]]:
         """加载工作流文件"""
         try:
             workflow_file = get_workflow_path(self.task_type)
-            workflow_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), workflow_file)
+            # 标准化路径分隔符，确保在Windows系统上正确处理
+            normalized_workflow_file = workflow_file.replace('/', os.path.sep)
+            # 使用类中已定义的project_root属性构建正确的路径
+            workflow_path = os.path.join(self.project_root, normalized_workflow_file)
             
             if not os.path.exists(workflow_path):
                 error(f"工作流文件不存在: {workflow_path}")
@@ -49,7 +53,7 @@ class BaseInterface:
     def get_output_path(self, output_filename: str) -> str:
         """获取输出文件路径"""
         output_folder = get_paths_config().get("output_folder", "outputs")
-        output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), output_folder)
+        output_dir = os.path.join(self.project_root, output_folder)
         return os.path.join(output_dir, output_filename)
     
     def get_temp_image_path(self, uploaded_file) -> Optional[str]:
@@ -59,7 +63,7 @@ class BaseInterface:
                 return None
             
             temp_folder = get_paths_config().get("temp_folder", "temp")
-            temp_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), temp_folder)
+            temp_dir = os.path.join(self.project_root, temp_folder)
             os.makedirs(temp_dir, exist_ok=True)
             
             temp_image_path = os.path.join(temp_dir, uploaded_file.name)

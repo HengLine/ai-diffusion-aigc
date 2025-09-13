@@ -55,8 +55,8 @@ class ImageToImageTab:
                                  value=self.interface.default_params.get('steps', 20))
                 cfg = st.slider("CFG Scale", min_value=1.0, max_value=15.0,
                                value=float(self.interface.default_params.get('cfg', 7.0)), step=0.5)
-                denoising_strength = st.slider("去噪强度", min_value=0.1, max_value=1.0,
-                                             value=float(self.interface.default_params.get('denoising_strength', 0.7)), step=0.05)
+                denoise = st.slider("去噪强度", min_value=0.1, max_value=1.0,
+                                             value=float(self.interface.default_params.get('denoise', 0.7)), step=0.05)
             
             # 提交按钮
             submit_button = st.form_submit_button("生成变体")
@@ -78,7 +78,7 @@ class ImageToImageTab:
                         height=height,
                         steps=steps,
                         cfg=cfg,
-                        denoising_strength=denoising_strength,
+                        denoise=denoise,
                         output_filename=output_filename
                     )
                     
