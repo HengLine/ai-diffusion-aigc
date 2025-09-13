@@ -1,27 +1,22 @@
 import os
 import sys
 import streamlit as st
-import time
-from hengline.workflow.run_workflow import ComfyUIRunner
+import os
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # 导入自定义日志模块
-from hengline.logger import info, error, debug
-# 导入配置工具
-from hengline.utils.config_utils import get_task_settings, get_workflow_path, get_paths_config
+from hengline.logger import debug
+# 导入接口模块
+from hengline.streamlit.interfaces.image_to_video_interface import ImageToVideoInterface
 
 class ImageToVideoTab:
-    def __init__(self, runner: ComfyUIRunner):
+    def __init__(self, runner):
         """初始化图生视频标签页"""
         self.runner = runner
-        
-        # 从配置获取默认参数
-        self.default_params = get_task_settings('image_to_video')
-        
-        # 获取项目根目录
-        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        # 创建接口实例
+        self.interface = ImageToVideoInterface(runner)
         
     def render(self):
         """渲染图生视频标签页"""
@@ -30,40 +25,46 @@ class ImageToVideoTab:
         
         # 创建表单
         with st.form("image_to_video_form"):
+            # 获取默认配置
+            with st.expander("默认配置", expanded=False):
+                st.write("当前使用的默认配置参数")
+                st.json(self.interface.default_params)
+            
             # 图像上传
             uploaded_file = st.file_uploader("上传图像", type=["jpg", "jpeg", "png", "webp"])
             
             # 输入区域
-            prompt = st.text_area("提示词 (Prompt)", value=self.default_params.get('prompt', ''),
-                                placeholder="描述你想要生成的视频内容...")
+            prompt = st.text_area("提示词 (Prompt)", value=self.interface.default_params.get('prompt', ''),
+                                placeholder="描述你想要生成的视频内容...", height=150)
+            negative_prompt = st.text_area("负面提示词 (Negative Prompt)",
+                                         value=self.interface.default_params.get('negative_prompt', ''),
+                                         placeholder="描述你不想要在视频中出现的内容...", height=100)
             
             # 参数设置
             col1, col2 = st.columns(2)
             with col1:
-                width = st.slider("宽度 (像素)", min_value=256, max_value=1024, 
-                                 value=self.default_params.get('width', 512), step=64)
-                height = st.slider("高度 (像素)", min_value=256, max_value=768, 
-                                  value=self.default_params.get('height', 384), step=64)
-                video_length = st.slider("视频长度 (帧数)", min_value=8, max_value=60, 
-                                       value=self.default_params.get('video_length', 16), step=4)
-                steps = st.slider("生成步数", min_value=1, max_value=50, 
-                                 value=self.default_params.get('steps', 20), step=1)
-
+                width = st.slider("宽度 (像素)", min_value=256, max_value=1024,
+                                 value=self.interface.default_params.get('width', 512), step=64)
+                height = st.slider("高度 (像素)", min_value=256, max_value=768,
+                                  value=self.interface.default_params.get('height', 384), step=64)
+                frames = st.slider("帧数", min_value=4, max_value=32,
+                                 value=self.interface.default_params.get('frames', 16), step=1)
+                output_filename = st.text_input("输出文件名",
+                                              value=self.interface.default_params.get('output_filename', 'image_to_video.mp4'))
+            
             with col2:
-                fps = st.slider("帧率 (FPS)", min_value=8, max_value=30, 
-                              value=self.default_params.get('fps', 16))
-                cfg_scale = st.slider("CFG Scale", min_value=0.1, max_value=20.0, 
-                                    value=float(self.default_params.get('cfg', 1.0)), step=0.1)
-                motion_amount = st.slider("运动强度", min_value=0.1, max_value=2.0, 
-                                        value=float(self.default_params.get('motion_amount', 0.5)), step=0.1)
-                consistency_scale = st.slider("一致性调整", min_value=0.1, max_value=2.0, 
-                                          value=float(self.default_params.get('consistency_scale', 1.0)), step=0.1)
+                fps = st.slider("帧率", min_value=4, max_value=30,
+                              value=self.interface.default_params.get('fps', 8), step=1)
             
             # 提交按钮
-            generate_button = st.form_submit_button("✨ 生成视频")
+            submit_button = st.form_submit_button("生成视频")
+        
+        # 显示上传的图像
+        if uploaded_file is not None:
+            st.image(uploaded_file, caption="上传的图像", use_container_width=True)
         
         # 处理表单提交
-        if generate_button:
+        if submit_button:
             # 验证输入
             if not uploaded_file:
                 st.error("请上传图像！")
