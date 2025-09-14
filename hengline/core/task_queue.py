@@ -66,13 +66,13 @@ class TaskQueueManager:
         self.max_concurrent_tasks = max_concurrent_tasks
         self.task_queue = queue.PriorityQueue()  # 优先队列，按时间戳排序
         self.running_tasks = {}  # 当前运行中的任务 {task_id: Task}
-        # self.lock = threading.Lock()  # 用于线程同步的主锁
-        self.task_history = {}  # 任务历史记录 {task_id: Task}
+        self.lock = threading.Lock()  # 用于线程同步的主锁
+        self.task_history: Dict[str, Task] = {}  # 任务历史记录 {task_id: Task}
         self.average_task_durations = {
-            "text_to_image": 60.0,  # 默认平均文生图任务时长（秒）
-            "image_to_image": 70.0,  # 默认平均图生图任务时长（秒）
-            "text_to_video": 300.0,  # 默认平均文生视频任务时长（秒）
-            "image_to_video": 320.0  # 默认平均图生视频任务时长（秒）
+            "text_to_image": 100.0,  # 默认平均文生图任务时长（秒）
+            "image_to_image": 120.0,  # 默认平均图生图任务时长（秒）
+            "text_to_video": 500.0,  # 默认平均文生视频任务时长（秒）
+            "image_to_video": 600.0  # 默认平均图生视频任务时长（秒）
         }
         self.task_locks = {}  # 任务级别的锁 {task_id: threading.Lock}
         self.task_locks_lock = threading.Lock()  # 用于保护task_locks字典的锁
@@ -531,10 +531,10 @@ class TaskQueueManager:
 
         # 计算队列位置
         position = 1
-        task_default_time_min = 1  # 默认等待时间，单位秒
+        task_default_time = self.average_task_durations[task_type]  # 默认等待时间，单位秒
 
         # 计算预计等待时间（基于平均执行时间）
-        avg_duration = task_default_time_min * 60
+        avg_duration = task_default_time
         if task_type and task_type in self.average_task_durations:
             avg_duration = self.average_task_durations[task_type] / 60  # 转换为分钟
         else:
@@ -560,7 +560,7 @@ class TaskQueueManager:
             "in_queue": queued_count,
             "running_tasks": running_count,
             "position": position,
-            "estimated_time": task_default_time_min if estimated_time < task_default_time_min else round(estimated_time, 1),
+            "estimated_time": round(task_default_time / 60, 1) if estimated_time < 1 else round(estimated_time, 1),
             "progress": progress,
             "running_tasks_count": running_count,  # 保留原始字段以保持兼容性
             "queued_tasks_count": queued_count,  # 保留原始字段以保持兼容性

@@ -46,7 +46,6 @@
       "task_cache_enabled": true,
       "task_cache_size": 1024,
       "task_max_retry": 3,
-      "task_max_runtime_hours": 2,
       "task_timeout_seconds": 7200,
       "task_view_timeout_seconds": 180,
       "task_view_max_retries": 3

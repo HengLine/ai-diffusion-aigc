@@ -8,13 +8,13 @@ import argparse
 import json
 import os
 import sys
-import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import requests
 
 from hengline.logger import debug, info, error, warning
 from hengline.workflow.workflow_comfyui import comfyui_api
+from hengline.workflow.workflow_status_checker import workflow_status_checker
 
 # 添加scripts目录到Python路径
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -166,18 +166,18 @@ class ComfyUIRunner:
             elif param_name in inputs:
                 inputs[param_name] = param_value
 
-    def run_workflow(self, workflow: Dict[str, Any], output_filename: str) -> bool:
-        """运行工作流并保存结果"""
+    def run_workflow(self, workflow: Dict[str, Any], output_filename: str) -> json:
+        """运行工作流并保存结果（同步版本，保持向后兼容）"""
         try:
             info(f"运行工作流...")
             debug(f"--------工作流数据: {workflow}")
 
             # 确保ComfyUI服务器正在运行
-            server_running = self._check_server_running()
+            server_running = comfyui_api.check_server_running()
             if not server_running:
                 debug("ComfyUI服务器未运行，请手动启动后再试...")
 
-                if not self._check_server_running():
+                if not comfyui_api.check_server_running():
                     error("无法连接到ComfyUI服务器，请确保服务器已启动")
                     return False
 
@@ -249,7 +249,7 @@ class ComfyUIRunner:
                 error("解析API响应JSON失败")
                 return {"success": False, "message": "解析API响应JSON失败"}
 
-            # 等待工作流完成
+            # 等待工作流完成 - 使用新的异步检查但保持同步接口
             workflow_completed = comfyui_api.wait_for_workflow_completion(prompt_id)
             if not workflow_completed:
                 error(f"工作流执行失败: 等待工作流完成超时或连接失败")
@@ -299,13 +299,172 @@ class ComfyUIRunner:
                 debug(f"异常详情: {traceback.format_exc()}")
                 return {"success": False, "message": f"工作流运行失败: {str(e)}"}
 
-    def _check_server_running(self) -> bool:
-        """检查ComfyUI服务器是否正在运行"""
+
+
+    def async_run_workflow(self, workflow: Dict[str, Any], output_filename: str, 
+                          on_completion: Optional[callable] = None, 
+                          on_error: Optional[callable] = None) -> str:
+        """
+        异步运行工作流并在完成后通过回调函数处理结果
+        
+        Args:
+            workflow: 工作流数据
+            output_filename: 输出文件名
+            on_completion: 工作流成功完成时的回调函数，接收(output_paths)作为参数
+            on_error: 工作流执行失败时的回调函数，接收(error_message)作为参数
+            
+        Returns:
+            str: 任务ID，可以用于取消状态检查
+        """
         try:
-            response = requests.get(f"{self.api_url}/system_stats", timeout=3)
-            return response.status_code == 200
-        except:
-            return False
+            info(f"异步运行工作流...")
+            debug(f"--------工作流数据: {workflow}")
+
+            # 确保ComfyUI服务器正在运行
+            server_running = comfyui_api.check_server_running()
+            if not server_running:
+                debug("ComfyUI服务器未运行，请手动启动后再试...")
+
+                if not comfyui_api.check_server_running():
+                    error_msg = "无法连接到ComfyUI服务器，请确保服务器已启动"
+                    error(error_msg)
+                    if on_error:
+                        on_error(error_msg)
+                    return ""
+
+            # 统一使用requests库，避免混乱
+            debug("ComfyUI服务器连接成功")
+
+            # 将工作流转换为ComfyUI API期望的格式
+            comfyui_workflow = {}
+
+            if "nodes" in workflow:
+                # 转换格式：将nodes数组转换为以节点ID为键的字典
+                for node in workflow["nodes"]:
+                    # 确保节点有class_type属性
+                    if "type" in node and "class_type" not in node:
+                        node["class_type"] = node["type"]
+                        debug(f"为节点 {node.get('id', 'unknown')} 添加了class_type属性")
+
+                    # 获取节点ID并确保它是字符串类型
+                    node_id = str(node["id"])  # 确保节点ID是字符串
+                    comfyui_workflow[node_id] = node
+            else:
+                # 已经是正确的格式，直接使用
+                comfyui_workflow = workflow
+
+            # 确保comfyui_workflow是有效的
+            if not comfyui_workflow:
+                error_msg = "转换后的工作流为空"
+                error(error_msg)
+                if on_error:
+                    on_error(error_msg)
+                return ""
+
+            info(f"准备发送工作流到ComfyUI API. comfyui_workflow: {comfyui_workflow}")
+            # 发送工作流到ComfyUI API
+            prompt_data = {
+                "prompt": comfyui_workflow,
+                "client_id": f"hengline-aigc"
+            }
+
+            # 发送POST请求运行工作流
+            info(f"正在向 {self.api_url}/prompt 发送请求...")
+            
+            try:
+                response = requests.post(f"{self.api_url}/prompt", json=prompt_data, timeout=30)
+            except requests.exceptions.Timeout:
+                error_msg = "向ComfyUI API发送请求超时"
+                error(error_msg)
+                if on_error:
+                    on_error(error_msg)
+                return ""
+            except requests.exceptions.ConnectionError:
+                error_msg = "无法连接到ComfyUI API"
+                error(error_msg)
+                if on_error:
+                    on_error(error_msg)
+                return ""
+
+            if response.status_code != 200:
+                error_msg = f"API请求失败: {response.status_code}, {response.text}"
+                error(error_msg)
+                if on_error:
+                    on_error(error_msg)
+                return ""
+
+            # 获取prompt_id
+            try:
+                response_json = response.json()
+                # 确保response_json是字典类型
+                if not isinstance(response_json, dict):
+                    error_msg = f"API响应不是字典类型，而是: {type(response_json)}"
+                    error(error_msg)
+                    if on_error:
+                        on_error(error_msg)
+                    return ""
+
+                prompt_id = response_json.get("prompt_id")
+                if not prompt_id:
+                    error_msg = f"无法获取prompt_id，响应内容: {response_json}"
+                    error(error_msg)
+                    if on_error:
+                        on_error(error_msg)
+                    return ""
+
+                debug(f"工作流已提交，prompt_id: {prompt_id}")
+            except ValueError:
+                error_msg = "解析API响应JSON失败"
+                error(error_msg)
+                if on_error:
+                    on_error(error_msg)
+                return ""
+
+            # 设置完整的输出路径
+            if os.path.isabs(output_filename):
+                output_path = output_filename
+            else:
+                output_path = os.path.join(self.output_dir, output_filename)
+
+            # 定义工作流完成后的处理函数
+            def handle_workflow_completion(completed: bool, message: str = None):
+                if completed:
+                    # 获取工作流结果
+                    success, saved_file_paths = self._get_workflow_outputs(prompt_id, output_path)
+                    if success:
+                        debug(f"工作流运行完成，结果保存至: {saved_file_paths}")
+                        if on_completion:
+                            on_completion(saved_file_paths)
+                    else:
+                        error_msg = "无法获取工作流结果"
+                        error(error_msg)
+                        if on_error:
+                            on_error(error_msg)
+                else:
+                    error_msg = message or "工作流执行失败"
+                    error(error_msg)
+                    if on_error:
+                        on_error(error_msg)
+
+            # 使用workflow_status_checker进行异步状态检查
+            task_id = workflow_status_checker.check_workflow_status_async(
+                prompt_id=prompt_id,
+                on_completion=handle_workflow_completion,
+                api_url=self.api_url
+            )
+
+            debug(f"已注册工作流状态检查，任务ID: {task_id}")
+            return task_id
+
+        except Exception as e:
+            error_msg = f"工作流运行失败: {str(e)}"
+            error(error_msg)
+            # 添加堆栈跟踪以帮助调试
+            import traceback
+            debug(f"异常详情: {traceback.format_exc()}")
+            if on_error:
+                on_error(error_msg)
+            return ""
 
 
     @staticmethod

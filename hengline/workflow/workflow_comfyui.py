@@ -7,12 +7,14 @@
 import json
 import os
 import time
-from typing import Dict, Any, Optional
+import threading
+from typing import Dict, Any, Optional, Callable
 
 import requests
 
 from hengline.logger import debug, error, warning
 from hengline.utils.config_utils import get_task_config
+from hengline.workflow.workflow_status_checker import workflow_status_checker
 
 class ComfyUIApi:
     """ComfyUI API接口类，统一管理所有与ComfyUI的交互功能"""
@@ -95,7 +97,8 @@ class ComfyUIApi:
 
         return None
 
-    def fill_image_in_workflow(self, workflow: Dict[str, Any], image_filename: str, node_id: Optional[str] = None) -> \
+    @staticmethod
+    def fill_image_in_workflow(workflow: Dict[str, Any], image_filename: str, node_id: Optional[str] = None) -> \
     Dict[str, Any]:
         """
         将上传的图片文件名填充到工作流中的图片节点
@@ -248,61 +251,83 @@ class ComfyUIApi:
             error(f"提交工作流失败: {str(e)}")
             return None
 
+    def check_server_running(self) -> bool:
+        """检查ComfyUI服务器是否正在运行"""
+        try:
+            response = requests.get(f"{self.api_url}/system_stats", timeout=3)
+            return response.status_code == 200
+        except:
+            return False
+
 
     def wait_for_workflow_completion(self, prompt_id: str) -> bool:
-        """等待工作流完成并返回状态"""
+        """等待工作流完成并返回状态 - 同步版本（向后兼容）
+        
+        这个方法会阻塞当前线程，直到工作流完成或超时
+        """
         debug("等待工作流处理完成...")
-
-        # 设置最大等待时间为1800秒（30分钟），增加处理复杂任务的时间
-        # 可以根据需要调整这个值
+        
+        # 使用事件同步等待异步检查结果
+        completion_event = threading.Event()
+        result = [False]  # 使用列表作为可变对象来存储结果
+        
+        def on_complete(prompt_id, success):
+            result[0] = success
+            completion_event.set()
+        
+        def on_timeout(prompt_id):
+            result[0] = False
+            completion_event.set()
+        
+        # 调用异步方法进行状态检查
+        task_id = self.async_wait_for_workflow_completion(prompt_id, on_complete, on_timeout)
+        
+        # 等待工作流完成或超时
         max_wait_time = get_task_config().get('task_timeout_seconds', 1800)
-        start_time = time.time()
-        # 连续失败计数
-        consecutive_failures = 0
-        max_consecutive_failures = 10
-
-        while True:
-            # 检查是否超时
-            elapsed_time = time.time() - start_time
-            if elapsed_time > max_wait_time:
-                error(f"等待工作流完成超时，已等待{max_wait_time}秒")
-                return False
-
-            try:
-                response = requests.get(f"{self.api_url}/history/{prompt_id}", timeout=5)
-                if response.status_code == 200:
-                    history = response.json()
-                    # 确保history是字典类型
-                    if not isinstance(history, dict):
-                        debug(f"历史记录不是字典类型，而是: {type(history)}")
-                        time.sleep(10)
-                        continue
-
-                    if prompt_id in history:
-                        prompt_data = history[prompt_id]
-                        # 确保prompt_data是字典类型
-                        if not isinstance(prompt_data, dict):
-                            debug(f"prompt_data不是字典类型，而是: {type(prompt_data)}")
-                            time.sleep(10)
-                            continue
-
-                        # 检查工作流是否完成
-                        if "outputs" in prompt_data:
-                            debug("工作流处理完成")
-                            return True
-                time.sleep(10)  # 每秒检查一次
-                # 重置连续失败计数
-                consecutive_failures = 0
-            except Exception as e:
-                consecutive_failures += 1
-                error(f"检查工作流状态时出错（第{consecutive_failures}次）: {str(e)}")
-
-                # 如果连续失败次数过多，视为连接超时失败
-                if consecutive_failures >= max_consecutive_failures:
-                    error(f"连续{max_consecutive_failures}次检查工作流状态失败，认为连接超时")
-                    return False
-
-                time.sleep(20)  # 失败时等待更长时间再重试
+        completion_event.wait(max_wait_time)
+        
+        if not completion_event.is_set():
+            # 超时，取消检查
+            workflow_status_checker.cancel_check(task_id)
+            error(f"等待工作流完成超时，已等待{max_wait_time}秒")
+            return False
+        
+        return result[0]
+        
+    def async_wait_for_workflow_completion(self, prompt_id: str, 
+                                         on_complete: Callable[[str, bool], None],
+                                         on_timeout: Optional[Callable[[str], None]] = None) -> str:
+        """异步等待工作流完成
+        
+        这个方法不会阻塞当前线程，而是通过回调函数通知工作流完成状态
+        
+        Args:
+            prompt_id: 工作流的prompt_id
+            on_complete: 工作流完成时的回调函数，参数为(prompt_id, success)
+            on_timeout: 工作流超时时的回调函数，参数为(prompt_id)
+        
+        Returns:
+            str: 任务ID，可以用于后续取消检查
+        """
+        debug(f"启动异步工作流状态检查，prompt_id: {prompt_id}")
+        
+        # 如果没有提供超时回调，使用完成回调并标记为失败
+        if not on_timeout:
+            def default_on_timeout(prompt_id):
+                on_complete(prompt_id, False)
+            
+            on_timeout = default_on_timeout
+        
+        # 调用工作流状态检查器
+        task_id = workflow_status_checker.check_workflow_status_async(
+            prompt_id=prompt_id,
+            api_url=self.api_url,
+            on_complete=on_complete,
+            on_timeout=on_timeout,
+            check_interval=5  # 初始检查间隔为5秒
+        )
+        
+        return task_id
 
 
     def get_workflow_outputs(self, prompt_id: str, output_path: str) -> tuple[bool, list[str]]:

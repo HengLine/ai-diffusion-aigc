@@ -179,12 +179,14 @@ def get_settings_config():
     return get_config_section('settings', {})
 
 
+# 任务相关配置
 def get_task_config():
     """获取任务相关配置"""
-    return get_config_section('workflow', {
+    # 正确的配置路径应该是'settings.task'
+    settings = get_config_section('settings', {})
+    return settings.get('task', {
         'task_max_concurrent': 2,
         'task_max_retry': 3,
-        'task_max_runtime_hours': 2,
         'task_timeout_seconds': 3600,
         'task_view_timeout_seconds': 60,
         'task_view_max_retries': 3

@@ -187,7 +187,7 @@ class WorkflowImageManager(WorkflowManager):
             output_paths = []
             for i in range(int(params.get('batch_size', 1))):
                 # 检查ComfyUI服务器是否可用
-                if not self.runner._check_server_running():
+                if not comfyui_api.check_server_running():
                     warning("ComfyUI服务器连接异常")
                     result = {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
                     return result

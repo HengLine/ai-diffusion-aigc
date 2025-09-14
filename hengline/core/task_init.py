@@ -16,17 +16,17 @@ from datetime import datetime
 from threading import Lock
 from typing import Dict, Any
 
-import requests
-
 from hengline.utils.config_utils import get_task_config, get_comfyui_config
 
 # 添加项目根目录到Python路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from hengline.logger import error, warning, debug
+from hengline.logger import error, warning, debug, info
 from hengline.core.task_queue import task_queue_manager
 # 导入邮件发送模块
 from hengline.core.task_email import _async_send_failure_email
+# 导入工作流状态检查器
+from hengline.workflow.workflow_status_checker import workflow_status_checker
 
 
 class StartupTaskListener:
@@ -37,15 +37,15 @@ class StartupTaskListener:
         self.lock = Lock()
         self.processed_tasks_count = 0
         task_config = get_task_config()
-        self.max_retry_count = task_config.get('task_max_retry', 3)  # 最大重试次数
-        self.max_runtime_hours = task_config.get('task_max_runtime_hours', 2)  # 最大运行时间（小时）
+        self.task_max_retry = task_config.get('task_max_retry', 3)  # 最大重试次数
+        self.task_timeout_seconds = task_config.get('task_timeout_seconds', 7200)  # 最大运行时间（秒）
         self.comfyui_api_url = get_comfyui_config().get('api_url', 'http://127.0.0.1:8188')
 
     def start(self):
         """启动监听器，处理历史任务"""
-        debug("=" * 50)
-        debug("          启动历史任务监听器          ")
-        debug("=" * 50)
+        info("=" * 50)
+        info("          启动历史任务监听器          ")
+        info("=" * 50)
 
         try:
             # 获取今天的日期
@@ -66,31 +66,41 @@ class StartupTaskListener:
         Args:
             today_date: 今天的日期，格式为'YYYY-MM-DD'
         """
-        # with self.lock:
-        # 获取所有任务历史记录
-        all_tasks = task_queue_manager.get_all_tasks(today_date)
-        debug(f"总任务历史记录数: {len(all_tasks)}")
+        # 直接从task_history中获取任务对象，而不依赖get_all_tasks方法返回的状态
+        with task_queue_manager.lock:
+            debug(f"总任务历史记录数: {len(task_queue_manager.task_history)}")
 
-        # 筛选今天未完成且重试未超过3次的任务
-        pending_tasks = []
+            # 筛选今天未完成且重试未超过最大重试次数的任务
+            pending_tasks = []
 
-        for task_info in all_tasks:
-            # 检查是否为今天的任务
-            # task_date = datetime.fromtimestamp(task_info['timestamp']).strftime('%Y-%m-%d')
-            # if task_date != today_date:
-            #     continue
+            for task_id, task in task_queue_manager.task_history.items():
+                # 检查是否为今天的任务
+                task_date = datetime.fromtimestamp(task.timestamp).strftime('%Y-%m-%d')
+                if task_date != today_date:
+                    continue
 
-            # 检查是否未完成（状态为queued、failed或running）
-            if task_info['status'] not in ['failed', 'running']:
-                continue
+                # 检查是否未完成（状态为queued、failed或running）
+                if task.status not in ['queued', 'failed', 'running']:
+                    continue
 
-            # 检查重试次数是否未超过3次
-            execution_count = task_info.get('execution_count', 1)
-            if execution_count > self.max_retry_count:
-                warning(f"任务 {task_info['task_id']} 重试次数已超过{self.max_retry_count}次，跳过处理")
-                continue
+                # 检查重试次数是否未超过最大重试次数
+                if task.execution_count > self.task_max_retry:
+                    warning(f"任务 {task_id} 重试次数已超过{self.task_max_retry}次，跳过处理")
+                    continue
 
-            pending_tasks.append(task_info)
+                # 构建任务信息字典
+                task_info = {
+                    'task_id': task.task_id,
+                    'task_type': task.task_type,
+                    'status': task.status,
+                    'timestamp': task.timestamp,
+                    'execution_count': task.execution_count,
+                    'params': task.params
+                }
+                if task.start_time:
+                    task_info['start_time'] = task.start_time
+
+                pending_tasks.append(task_info)
 
             debug(f"符合条件的待处理任务数: {len(pending_tasks)}")
 
@@ -121,7 +131,7 @@ class StartupTaskListener:
                 self._requeue_task(task_id, task_type, "排队中的任务重新加入队列")
             elif status == 'failed':
                 # 失败的任务，根据重试次数决定是否重新加入队列
-                if execution_count <= self.max_retry_count:
+                if execution_count <= self.task_max_retry:
                     self._requeue_task(task_id, task_type, f"失败任务重新加入队列，当前重试次数: {execution_count}")
                 else:
                     warning(f"任务 {task_id} 重试次数已达上限，不再重新加入队列")
@@ -129,15 +139,15 @@ class StartupTaskListener:
                     self._mark_task_as_final_failure(task_id, task_type, execution_count)
                     return
             elif status == 'running':
-                # 运行中的任务，调用ComfyUI API查询状态
-                self._handle_running_task(task_id, task_info)
+                # 运行中的任务，加入异步结果检查
+                self._handle_running_task_with_async_check(task_id, task_info)
 
             self.processed_tasks_count += 1
         except Exception as e:
             error(f"处理任务 {task_info.get('task_id', '未知')} 时发生异常: {str(e)}")
 
-    def _handle_running_task(self, task_id: str, task_info: Dict[str, Any]):
-        """处理运行中的任务
+    def _handle_running_task_with_async_check(self, task_id: str, task_info: Dict[str, Any]):
+        """处理运行中的任务，加入异步结果检查
         
         Args:
             task_id: 任务ID
@@ -145,7 +155,7 @@ class StartupTaskListener:
         """
         try:
             # 从任务历史中获取完整的任务对象
-            with task_queue_manager.lock:
+            with task_queue_manager._get_task_lock(task_id):
                 task = task_queue_manager.task_history.get(task_id)
                 if not task:
                     error(f"未找到任务 {task_id} 的完整信息")
@@ -160,93 +170,131 @@ class StartupTaskListener:
                 # 计算任务已运行时间
                 current_time = time.time()
                 runtime_seconds = current_time - task.start_time
-                runtime_hours = runtime_seconds / 3600
 
                 # 获取prompt_id用于查询ComfyUI状态
                 prompt_id = task.params.get('prompt_id')
 
-                # 如果超过最大运行时间或没有prompt_id，则重新加入队列
-                if runtime_hours > self.max_runtime_hours or not prompt_id:
-                    debug(f"任务 {task_id} 运行时间超过{self.max_runtime_hours}小时或没有prompt_id，重新加入队列")
-                    self._requeue_task(task_id, task.task_type, "运行时间过长或无prompt_id，重新加入队列")
+                # 如果超过最大运行时间，直接标记为失败
+                if runtime_seconds > self.task_timeout_seconds:
+                    debug(f"任务 {task_id} 运行时间超过{self.task_timeout_seconds} 秒，标记为失败")
+                    task.status = "failed"
+                    task.task_msg = f"任务运行时间超过{self.task_timeout_seconds} 秒上限"
+                    task.end_time = current_time
+                    
+                    # 从运行中任务列表移除
+                    if task_id in task_queue_manager.running_tasks:
+                        del task_queue_manager.running_tasks[task_id]
+                    
+                    # 保存任务历史
+                    task_queue_manager._save_task_history()
+                    
+                    # 发送失败邮件
+                    _async_send_failure_email(task_id, task.task_type, task.task_msg, task.execution_count)
                     return
 
-            # 调用ComfyUI API查询任务状态
-            self._query_comfyui_task_status(task_id, task.task_type, prompt_id)
+                # 如果没有prompt_id，则重新加入队列
+                if not prompt_id:
+                    debug(f"任务 {task_id} 没有prompt_id，重新加入队列")
+                    self._requeue_task(task_id, task.task_type, "运行中任务无prompt_id，重新加入队列")
+                    return
+
+                # 定义回调函数处理工作流完成或失败的情况
+                def on_complete(prompt_id, success):
+                    try:
+                        with task_queue_manager._get_task_lock(task_id):
+                            if task_id not in task_queue_manager.task_history:
+                                return
+                            
+                            task = task_queue_manager.task_history[task_id]
+                            
+                            if success:
+                                # 任务完成
+                                task.status = "completed"
+                                # 这里不设置end_time，因为实际完成时间应该由工作流完成时间决定
+                            else:
+                                # 任务失败，重新加入队列
+                                if task.execution_count <= self.task_max_retry:
+                                    warning(f"任务 {task_id} 在异步检查中失败，重新加入队列")
+                                    task.status = "queued"
+                                    task.task_msg = "ComfyUI 工作流连接失败，任务将在稍后重试"
+                                    task.end_time = None  # 清除结束时间
+                                    
+                                    # 将任务重新加入队列
+                                    task_queue_manager.task_queue.put(task)
+                                    task_queue_manager.task_type_counters[task.task_type] = task_queue_manager.task_type_counters.get(task.task_type, 0) + 1
+                                else:
+                                    # 超过重试次数，标记为最终失败
+                                    task.status = "failed"
+                                    task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次"
+                                    task.end_time = time.time()
+                                    
+                                    # 发送失败邮件
+                                    _async_send_failure_email(task_id, task.task_type, task.task_msg, task.execution_count)
+                            
+                            # 从运行中任务列表移除
+                            if task_id in task_queue_manager.running_tasks:
+                                del task_queue_manager.running_tasks[task_id]
+                            
+                            # 保存任务历史
+                            task_queue_manager._save_task_history()
+                    except Exception as e:
+                        error(f"处理工作流完成回调时出错: {str(e)}")
+                
+                # 定义超时回调函数
+                def on_timeout(prompt_id):
+                    try:
+                        with task_queue_manager._get_task_lock(task_id):
+                            if task_id not in task_queue_manager.task_history:
+                                return
+                            
+                            task = task_queue_manager.task_history[task_id]
+                            
+                            # 超时，标记为失败并重试
+                            if task.execution_count <= self.task_max_retry:
+                                warning(f"任务 {task_id} 异步检查超时，重新加入队列")
+                                task.status = "queued"
+                                task.task_msg = "ComfyUI 工作流检查超时，任务将在稍后重试"
+                                task.end_time = None  # 清除结束时间
+                                
+                                # 将任务重新加入队列
+                                task_queue_manager.task_queue.put(task)
+                                task_queue_manager.task_type_counters[task.task_type] = task_queue_manager.task_type_counters.get(task.task_type, 0) + 1
+                            else:
+                                # 超过重试次数，标记为最终失败
+                                task.status = "failed"
+                                task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次"
+                                task.end_time = time.time()
+                                
+                                # 发送失败邮件
+                                _async_send_failure_email(task_id, task.task_type, task.task_msg, task.execution_count)
+                            
+                            # 从运行中任务列表移除
+                            if task_id in task_queue_manager.running_tasks:
+                                del task_queue_manager.running_tasks[task_id]
+                            
+                            # 保存任务历史
+                            task_queue_manager._save_task_history()
+                    except Exception as e:
+                        error(f"处理工作流超时回调时出错: {str(e)}")
+                
+                # 计算剩余超时时间（基于最大运行时间）
+                remaining_time_seconds = max(0, (self.task_timeout_seconds) - runtime_seconds)
+                timeout_seconds = min(3600, remaining_time_seconds)  # 最大超时1小时
+                
+                # 加入异步结果检查
+                debug(f"将任务 {task_id} 加入异步结果检查")
+                workflow_status_checker.check_workflow_status_async(
+                    prompt_id=prompt_id,
+                    api_url=self.comfyui_api_url,
+                    on_complete=on_complete,
+                    on_timeout=on_timeout,
+                    timeout_seconds=timeout_seconds
+                )
         except Exception as e:
             error(f"处理运行中任务 {task_id} 时发生异常: {str(e)}")
             # 发生异常时，尝试将任务重新加入队列
             try:
                 self._requeue_task(task_id, task_info.get('task_type', 'unknown'), "查询状态异常，重新加入队列")
-            except:
-                pass
-
-    def _query_comfyui_task_status(self, task_id: str, task_type: str, prompt_id: str):
-        """查询ComfyUI任务状态
-        
-        Args:
-            task_id: 任务ID
-            task_type: 任务类型
-            prompt_id: ComfyUI的prompt_id
-        """
-        try:
-            # 使用ComfyUI API查询任务状态
-            response = requests.get(f"{self.comfyui_api_url}/history/{prompt_id}", timeout=10)
-
-            if response.status_code == 200:
-                history = response.json()
-
-                # 检查任务是否完成
-                if isinstance(history, dict) and prompt_id in history:
-                    prompt_data = history[prompt_id]
-
-                    if isinstance(prompt_data, dict) and "outputs" in prompt_data:
-                        # 任务已完成，更新任务状态并保存结果
-                        debug(f"任务 {task_id} 在ComfyUI中已完成，正在更新状态")
-                        with task_queue_manager.lock:
-                            task = task_queue_manager.task_history.get(task_id)
-                            if task:
-                                task.status = "completed"
-                                task.end_time = time.time()
-
-                                # 尝试从输出中提取文件名
-                                if "outputs" in prompt_data:
-                                    for node_id, node_output in prompt_data["outputs"].items():
-                                        if isinstance(node_output, dict):
-                                            # 处理图像输出
-                                            if "images" in node_output and isinstance(node_output["images"], list):
-                                                for image_info in node_output["images"]:
-                                                    if isinstance(image_info, dict) and "filename" in image_info:
-                                                        task.output_filename = image_info["filename"]
-                                                        break
-                                        if task.output_filename:
-                                            break
-
-                                # 从运行中任务列表移除
-                                if task_id in task_queue_manager.running_tasks:
-                                    del task_queue_manager.running_tasks[task_id]
-
-                                # 保存任务历史
-                                task_queue_manager._save_task_history()
-                        return
-                    else:
-                        # 任务尚未完成
-                        debug(f"任务 {task_id} 在ComfyUI中仍在处理中")
-                        # 不做任何操作，让任务继续在ComfyUI中运行
-                        return
-                else:
-                    debug(f"任务 {task_id} 在ComfyUI中未找到，可能已被清理")
-                    # 重新加入队列
-                    self._requeue_task(task_id, task_type, "ComfyUI中未找到任务，重新加入队列")
-            else:
-                warning(f"查询任务 {task_id} 状态失败，状态码: {response.status_code}")
-                # 查询失败，重新加入队列
-                self._requeue_task(task_id, task_type, f"查询ComfyUI状态失败，状态码: {response.status_code}")
-        except Exception as e:
-            error(f"查询ComfyUI API时出错: {str(e)}")
-            # 发生异常时，尝试将任务重新加入队列
-            try:
-                self._requeue_task(task_id, task_type, f"查询ComfyUI API异常: {str(e)}")
             except:
                 pass
 
@@ -280,6 +328,9 @@ class StartupTaskListener:
 
                 # 将任务重新加入队列
                 task_queue_manager.task_queue.put(task)
+                
+                # 更新任务类型计数器
+                task_queue_manager.task_type_counters[task_type] = task_queue_manager.task_type_counters.get(task_type, 0) + 1
 
                 debug(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
         except Exception as e:
@@ -308,7 +359,7 @@ class StartupTaskListener:
 
                 # 设置失败消息
                 failure_reason = task.task_msg if task.task_msg else "未知原因"
-                task.task_msg = f"任务执行失败，重试超过{self.max_retry_count}次，原因：{failure_reason}"
+                task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次，原因：{failure_reason}"
 
                 # 设置结束时间（如果还没有）
                 if not task.end_time:
@@ -320,7 +371,7 @@ class StartupTaskListener:
                 warning(f"任务 {task_id} ({task_type}) 已标记为最终失败，执行次数: {execution_count}")
 
                 # 异步发送邮件通知
-                _async_send_failure_email(task_id, task_type, task.task_msg, self.max_retry_count)
+                _async_send_failure_email(task_id, task_type, task.task_msg, self.task_max_retry)
 
         except Exception as e:
             error(f"将任务 {task_id} 标记为失败时发生异常: {str(e)}")
