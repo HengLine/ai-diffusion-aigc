@@ -722,7 +722,7 @@
             const width = document.getElementById('width').value;
             const height = document.getElementById('height').value;
             const videoLength = document.getElementById('length').value;
-            const numVideos = document.getElementById('num_videos').value;
+            const batchSize = document.getElementById('batch_size').value;
             const fileInput = document.getElementById('image');
             const file = fileInput.files[0];
             
@@ -748,7 +748,7 @@
             formData.append('width', width);
             formData.append('height', height);
             formData.append('length', videoLength);
-            formData.append('num_videos', numVideos);
+            formData.append('batch_size', batchSize);
             
             // 显示加载状态和进度信息
             showLoading(true);

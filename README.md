@@ -210,7 +210,6 @@
   "steps": 8,
   "cfg": 7.5,
   "denoise": 0.75,
-  "seed": 243631153978709,
   "batch_size": 3
 }
 ```
@@ -223,7 +222,7 @@
 
 原图
 
-<img src="./imgs/dog.jpg" alt="dog" style="zoom: 33%;" />
+<img src="./imgs/dog.jpg" alt="dog" style="zoom: 25%;" />
 
 参数：
 
@@ -236,7 +235,6 @@
   "steps": "10",
   "cfg": "6.5",
   "denoise": "0.55",
-  "seed": 625160091934563,
   "batch_size": "3"
 }
 ```
@@ -267,6 +265,10 @@
 ![text_video_time](./imgs/text_video_time.PNG)
 
 
+
+#### 图生视频效果
+
+暂未出结果
 
 
 

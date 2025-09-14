@@ -27,6 +27,7 @@
       "organization": "HengLine"
     },
     "email": {
+      "enabled": false,
       "smtp_server": "smtp.gmail.com",
       "smtp_port": 587,
       "username": "",

@@ -5,6 +5,7 @@
 """
 
 import smtplib
+from datetime import datetime
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -41,6 +42,9 @@ class EmailSender:
 
         # 然后从配置文件获取（非敏感信息）
         email_config = get_email_config()
+        if not get_email_config().get('enabled', False):
+            warning("邮件发送功能已禁用")
+            return
 
         if not self.smtp_server:
             self.smtp_server = email_config.get('smtp_server', 'smtp.gmail.com')
@@ -70,6 +74,10 @@ class EmailSender:
         Returns:
             bool: 连接是否成功
         """
+        if not get_email_config().get('enabled', False):
+            warning("邮件发送功能已禁用")
+            return False
+
         try:
             if self.server:
                 return True
@@ -190,6 +198,10 @@ class EmailSender:
         Returns:
             bool: 邮件是否发送成功
         """
+        # 然后从配置文件获取（非敏感信息）
+        if not get_email_config().get('enabled', False):
+            warning("邮件发送功能已禁用")
+            return False
 
         # 获取用户配置信息
         user_config = get_user_configs()

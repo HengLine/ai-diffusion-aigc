@@ -225,6 +225,7 @@ def get_email_config():
     # 正确的路径应该是从settings节点下获取email配置
     settings = get_config_section('settings', {})
     return settings.get('email', {
+        'enabled': False,
         'smtp_server': '',
         'smtp_port': 587,
         'username': '',
