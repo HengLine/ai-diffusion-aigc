@@ -12,13 +12,12 @@ Flask应用启动脚本（优化版）
 
 步骤严格按顺序执行，只有上一步成功才执行下一步
 """
-from doctest import debug
 import os
 import subprocess
 import sys
 
 from app_env import AppBaseEnv
-from hengline.logger import info, error
+from hengline.logger import debug, info, error
 
 # 获取当前脚本所在目录（项目根目录）
 # PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))

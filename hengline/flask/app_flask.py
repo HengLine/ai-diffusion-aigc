@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 # 导入工作流运行器
 # 导入自定义日志模块
-from hengline.logger import info
+from hengline.logger import debug, info
 # 导入配置工具模块
 from hengline.utils.config_utils import (
     get_flask_secret_key,
@@ -206,7 +206,7 @@ if __name__ == '__main__':
         # 对于Windows平台，采用更简单直接的方式处理SIGINT信号
         # 完全避免使用可能导致问题的SetConsoleCtrlHandler
         def windows_sigint_handler(signum, frame):
-            info("Windows平台接收到中断信号，准备关闭应用...")
+            debug("Windows平台接收到中断信号，准备关闭应用...")
             # 立即调用shutdown函数
             handle_shutdown(signum, frame)
             # 抛出KeyboardInterrupt异常以终止主循环
@@ -214,7 +214,7 @@ if __name__ == '__main__':
 
         # 设置信号处理器
         signal.signal(signal.SIGINT, windows_sigint_handler)
-        info("已设置Windows平台信号处理器")
+        debug("已设置Windows平台信号处理器")
 
     # 异步启动任务监听器，处理历史未完成任务
     startup_task_thread = threading.Thread(target=startup_task_listener.start, name="StartupTaskListenerThread")

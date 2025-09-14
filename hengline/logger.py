@@ -18,11 +18,12 @@ init_console_colors()
 
 class DailyRotatingFileHandler(RotatingFileHandler):
     """按天和文件大小旋转的日志处理器"""
-    def __init__(self, base_dir: str, base_filename: str, max_bytes: int = 10*1024*1024, backup_count: int = 30):
+    def __init__(self, base_dir: str, base_filename: str, max_bytes: int = 10*1024*1024, backup_count: int = 30, max_days: int = 15):
         self.base_dir = base_dir
         self.base_filename = base_filename
         self.max_bytes = max_bytes
         self.backup_count = backup_count
+        self.max_days = max_days  # 日志文件保留天数
         self.current_date = datetime.date.today()
         
         # 确保日志目录存在
@@ -32,6 +33,9 @@ class DailyRotatingFileHandler(RotatingFileHandler):
         self.current_log_file = self._get_log_filename()
         
         super().__init__(self.current_log_file, maxBytes=self.max_bytes, backupCount=self.backup_count, encoding='utf-8')
+        
+        # 清理过期日志文件
+        self._cleanup_old_logs()
     
     def _get_log_filename(self) -> str:
         """获取当前日期的日志文件名"""
@@ -75,6 +79,58 @@ class DailyRotatingFileHandler(RotatingFileHandler):
             self.stream = self._open()
         
         super().emit(record)
+        
+    def _cleanup_old_logs(self):
+        """清理过期的日志文件，删除超过max_days天的日志"""
+        try:
+            # 获取当前日期
+            today = datetime.date.today()
+            
+            # 计算过期日期
+            expiration_date = today - datetime.timedelta(days=self.max_days)
+            
+            # 遍历日志目录中的所有文件
+            if not os.path.exists(self.base_dir):
+                return
+            
+            for filename in os.listdir(self.base_dir):
+                file_path = os.path.join(self.base_dir, filename)
+                
+                # 只处理文件，不处理目录
+                if not os.path.isfile(file_path):
+                    continue
+                
+                # 检查文件名是否匹配日志文件格式
+                # 格式: {base_filename}_YYYY-MM-DD.log 或 {base_filename}_YYYY-MM-DD_{n}.log
+                try:
+                    # 尝试解析日期部分
+                    if filename.startswith(f"{self.base_filename}_") and filename.endswith(".log"):
+                        # 提取文件名中间部分（去掉前缀和后缀）
+                        middle_part = filename[len(f"{self.base_filename}_"):-4]  # -4 是去掉 ".log"
+                        
+                        # 尝试解析日期
+                        # 处理格式: YYYY-MM-DD
+                        if len(middle_part) == 10 and middle_part[4] == '-' and middle_part[7] == '-':
+                            log_date = datetime.datetime.strptime(middle_part, '%Y-%m-%d').date()
+                        # 处理格式: YYYY-MM-DD_{n}
+                        elif '_' in middle_part:
+                            date_part = middle_part.split('_')[0]
+                            if len(date_part) == 10 and date_part[4] == '-' and date_part[7] == '-':
+                                log_date = datetime.datetime.strptime(date_part, '%Y-%m-%d').date()
+                            else:
+                                continue  # 不符合日期格式，跳过
+                        else:
+                            continue  # 不符合日期格式，跳过
+                        
+                        # 检查是否过期
+                        if log_date < expiration_date:
+                            os.remove(file_path)
+                except Exception:
+                    # 如果解析失败，跳过该文件
+                    continue
+        except Exception as e:
+            # 如果清理过程中出错，记录错误但不中断程序
+            print(f"清理过期日志文件时出错: {str(e)}")
 
 class Logger:
     """自定义日志类"""
@@ -181,7 +237,7 @@ class Logger:
             project_root = os.path.dirname(os.path.dirname(current_file))
             log_dir = os.path.join(project_root, 'logs')
         
-        file_handler = DailyRotatingFileHandler(log_dir, name, max_bytes)
+        file_handler = DailyRotatingFileHandler(log_dir, name, max_bytes, backup_count=30, max_days=15)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.INFO)  # 默认使用INFO级别
         self.logger.addHandler(file_handler)
