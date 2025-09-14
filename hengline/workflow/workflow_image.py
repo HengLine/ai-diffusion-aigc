@@ -59,11 +59,12 @@ class WorkflowImageManager(WorkflowManager):
             success = self.runner.run_workflow(updated_workflow, output_filename)
 
             if success and success.get('success', False):
-                # output_path = os.path.join(self.output_dir, output_filename)
                 return {'success': True, 'message': '文生图任务处理成功',
                         'output_paths': success.get('output_paths', '')}
             else:
-                return {'success': False, 'message': '工作流运行失败'}
+                message = success.get('message', '工作流运行失败') if success else '工作流运行失败'
+                return {'success': False, 'message': message}
+
         except Exception as e:
             error(f"文生图任务执行失败: {str(e)}")
             return {'success': False, 'message': f'文生图任务执行失败: {str(e)}'}
@@ -214,6 +215,8 @@ class WorkflowImageManager(WorkflowManager):
                     time.sleep(0.5)  # 短暂延迟，避免请求过快
                 else:
                     error(f"工作流运行失败,无法生成图像 {output_filename}")
+                    message = success.get('message', '工作流运行失败') if success else '工作流运行失败'
+                    return {'success': False, 'message': message}
 
             if output_paths:
                 result = {'success': True, 'message': '图生图任务处理成功', 'output_paths': output_paths}

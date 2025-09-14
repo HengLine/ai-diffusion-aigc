@@ -187,19 +187,61 @@
 
 #### 图生图效果
 
-![图生图效果](/imgs/image-20250903232341349.png)
+<img src="/imgs/image-20250903232341349.png" alt="图生图效果" style="zoom:57%;" />
 
-### Flask界面效果图
 
-![image-20250911201329323](./imgs/image-20250911201329323.png)
+
+### Flask界面效果图（推荐）
+
+<img src="./imgs/image-20250911201329323.png" alt="image-20250911201329323" style="zoom:50%;" />
+
+我的任务
+
+<img src="./imgs/image-20250914135010400.png" alt="image-20250914135010400" style="zoom: 50%;" />
 
 #### 文生图效果
 
-![image-20250911201408406](./imgs/image-20250911201408406.png)
+```json
+{
+  "prompt": "a beautiful sunset over a mountain range",
+  "negative_prompt": "low quality, blurry, unrealistic, static, boring",
+  "width": 576,
+  "height": 384,
+  "steps": 8,
+  "cfg": 7.5,
+  "denoise": 0.75,
+  "seed": 243631153978709,
+  "batch_size": 3
+}
+```
+
+<img src="./imgs/image-20250914135035239.png" alt="image-20250914135035239" style="zoom:50%;" />
+
+
 
 #### 图生图效果
 
-![image-20250911201236613](./imgs/image-20250911201236613.png)
+原图
+
+<img src="./imgs/dog.jpg" alt="dog" style="zoom: 33%;" />
+
+参数：
+
+```json
+{
+  "prompt": "a dog",
+  "negative_prompt": "low quality, blurry",
+  "width": "624",
+  "height": "304",
+  "steps": "10",
+  "cfg": "6.5",
+  "denoise": "0.55",
+  "seed": 625160091934563,
+  "batch_size": "3"
+}
+```
+
+<img src="./imgs/image-20250914135103418.png" alt="image-20250914135103418" style="zoom:50%;" />
 
 
 

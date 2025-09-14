@@ -72,13 +72,14 @@ class WorkflowVideoManager(WorkflowManager):
                 return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
 
             # 运行工作流
-            success = self.runner.run_workflow(updated_workflow, output_filename)
+            result = self.runner.run_workflow(updated_workflow, output_filename)
 
-            if success:
-                output_path = os.path.join(self.output_dir, output_filename)
-                return {'success': True, 'message': '图生视频任务处理成功', 'output_path': output_path}
+            if result and result.get('success'):
+                # output_path = os.path.join(self.output_dir, output_filename)
+                return {'success': True, 'message': '图生视频任务处理成功', 'output_paths': result.get('output_paths', '')}
             else:
-                return {'success': False, 'message': '工作流运行失败'}
+                message = result.get('message', '工作流运行失败') if result else '工作流运行失败'
+                return {'success': False, 'message': message}
         except Exception as e:
             error(f"图生视频任务执行失败: {str(e)}")
             return {'success': False, 'message': f'图生视频任务执行失败: {str(e)}'}
@@ -107,6 +108,7 @@ class WorkflowVideoManager(WorkflowManager):
             'length': preset_config.get('length', 8),
             'steps': preset_config.get('steps', 20),
             'cfg': preset_config.get('cfg', 6.0),
+            'device': preset_config.get('device', 'default'),
             'seed': random.randint(0, 2**50 - 1) if seed < 0 else seed,
             'batch_size': preset_config.get('batch_size', 1),
             'shift': preset_config.get('shift', 8),
@@ -178,13 +180,13 @@ class WorkflowVideoManager(WorkflowManager):
                 return {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
 
             # 运行工作流
-            success = self.runner.run_workflow(updated_workflow, output_filename)
+            result = self.runner.run_workflow(updated_workflow, output_filename)
 
-            if success:
-                output_path = os.path.join(self.output_dir, output_filename)
-                return {'success': True, 'message': '文生视频任务处理成功', 'output_path': output_path}
+            if result and result.get('success'):
+                return {'success': True, 'message': '文生视频任务处理成功', 'output_paths': result.get('output_paths', '')}
             else:
-                return {'success': False, 'message': '工作流运行失败'}
+                message = result.get('message', '工作流运行失败') if result else '工作流运行失败'
+                return {'success': False, 'message': message}
         except Exception as e:
             error(f"文生视频任务执行失败: {str(e)}")
             return {'success': False, 'message': f'文生视频任务执行失败: {str(e)}'}
@@ -214,6 +216,7 @@ class WorkflowVideoManager(WorkflowManager):
             'length': preset_config.get('length', 8),
             'steps': preset_config.get('steps', 20),
             'cfg': preset_config.get('cfg', 8.5),
+            'device': preset_config.get('device', 'default'),
             'seed': random.randint(0, 2**50 - 1) if seed < 0 else seed,
             'batch_size': preset_config.get('batch_size', 1),
             'shift': preset_config.get('shift', 8),

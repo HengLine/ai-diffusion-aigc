@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Dict, Any, Callable, Tuple, Optional, List
 
 # 导入邮件发送模块
-from hengline.core.task_email import _async_send_failure_email
+from hengline.core.task_email import _async_send_failure_email, _async_send_success_email
 from hengline.logger import error, debug, warning, info
 from hengline.utils.config_utils import max_concurrent_tasks, get_task_config
 
@@ -428,6 +428,8 @@ class TaskQueueManager:
                 self._async_save_history()
 
             info(f"任务执行完成: {task.task_id}, 类型: {task.task_type}, 状态: {task.status}")
+
+            _async_send_success_email(task.task_id, task.task_type, task.start_time, task.end_time)
 
         except Exception as e:
             error(f"任务执行异常: {task.task_id}, 错误: {str(e)}")

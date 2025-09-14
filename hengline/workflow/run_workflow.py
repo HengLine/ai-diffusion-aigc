@@ -122,9 +122,11 @@ class ComfyUIRunner:
         if class_type == "CLIPTextEncode" and "text" in inputs:
             # 处理正向提示词节点（通常是第一个CLIPTextEncode）
             if not positive_prompt_processed and "prompt" in params:
+                # 直接使用原始提示词，确保完全保留所有空格、换行符和格式
                 inputs["text"] = params["prompt"]
             # 处理反向提示词节点（通常是第二个CLIPTextEncode）
             elif "negative_prompt" in params:
+                # 直接使用原始反向提示词，确保完全保留所有空格、换行符和格式
                 inputs["text"] = params["negative_prompt"]
         
         # 特殊处理图像到视频节点 (WanImageToVideo)
@@ -156,9 +158,7 @@ class ComfyUIRunner:
                 continue
             
             # 处理参数名称映射（如cfg和cfg_scale可能指向同一个属性）
-            if param_name == "cfg" and "cfg" in inputs:
-                inputs["cfg"] = param_value
-            elif param_name == "denoise" and "denoise" in inputs:
+            if param_name == "denoise" and "denoise" in inputs:
                 inputs["denoise"] = param_value
             elif param_name == "image_path" and "image" in inputs and class_type == "LoadImage":
                 inputs["image"] = param_value
@@ -208,7 +208,7 @@ class ComfyUIRunner:
                 error("转换后的工作流为空")
                 return {"success": False, "message": "转换后的工作流为空"}
 
-            debug(f"准备发送工作流到ComfyUI API. comfyui_workflow: {comfyui_workflow}")
+            info(f"准备发送工作流到ComfyUI API. comfyui_workflow: {comfyui_workflow}")
             # 发送工作流到ComfyUI API
             prompt_data = {
                 "prompt": comfyui_workflow,
