@@ -81,6 +81,7 @@ class EmailSender:
                 self.server = smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=30)
                 self.server.starttls()  # 启用TLS加密
 
+            self.server.set_debuglevel(1)  # 开启调试模式，会打印和服务器的交互信息
             # 如果提供了用户名和密码，则登录
             if self.username and self.password:
                 self.server.login(self.username, self.password)
@@ -143,12 +144,19 @@ class EmailSender:
             msg = MIMEMultipart()
 
             # 设置发件人和收件人
-            sender = f'{Header(self.from_name, "utf-8")} <{self.from_email}>' if self.from_name else self.from_email
-            receiver = f'{Header(to_name, "utf-8")} <{to_email}>' if to_name else to_email
-
-            msg['From'] = sender
-            msg['To'] = receiver
+            msg['From'] = f'{Header(self.from_name, "utf-8")} <{self.from_email}>' if self.from_name else self.from_email
+            msg['To'] = f'{Header(to_email, "utf-8")} < {to_email}>' if to_email else to_email
             msg['Subject'] = Header(subject, 'utf-8')
+
+            message = f"""
+                您好，{to_name}：
+                {message}
+
+                此致！
+
+                发送时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                发送平台：Hengline AIGC 创意平台
+            """
 
             # 设置邮件内容
             if is_html:
@@ -161,6 +169,7 @@ class EmailSender:
             receiver = [to_email]
             self.server.sendmail(sender, receiver, msg.as_string())
             info(f"成功发送邮件到: {to_email}, 主题: {subject}")
+            
             return True
         except Exception as e:
             error(f"发送邮件失败了: {str(e)}")

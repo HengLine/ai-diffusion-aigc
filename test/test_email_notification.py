@@ -40,7 +40,7 @@ except ImportError as e:
                 try:
                     await send_email(
                         subject=f"任务 {task_id} 执行失败",
-                        message=f"您提交的{task_type}任务已重试（{max_execution_count}次），但是由于：{task_msg}，请检查后再次提交任务"
+                        message=f"您提交的{task_type}任务已重试（{max_execution_count}次），但是由于：{task_msg}请检查后再次提交任务。"
                     )
                 except Exception as e:
                     error(f"Mock: 发送邮件失败: {e}")
@@ -91,7 +91,7 @@ class TestEmailNotification(unittest.TestCase):
             # 手动调用send_email来模拟行为，确保测试可以继续
             mock_send_email(
                 subject=f"任务 {task_id} 执行失败",
-                message=f"您提交的{task_type}任务已重试（{max_execution_count}次），但是由于：{task_msg}，请检查后再次提交任务"
+                message=f"您提交的{task_type}任务已重试（{max_execution_count}次），但是由于：{task_msg}请检查后再次提交任务。"
             )
         
         # 等待异步操作完成
