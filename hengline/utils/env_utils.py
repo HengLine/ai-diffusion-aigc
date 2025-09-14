@@ -73,7 +73,7 @@ def print_large_ascii():
                 ██╔══██║ ██╔══╝   ██║╚██╗██║ ██║   ██║      ██║      ██║ ██║╚██╗██║ ██╔══╝  
                 ██║  ██║ ███████╗ ██║ ╚████║ ╚██████╔╝      ███████╗ ██║ ██║ ╚████║ ███████╗
                 ╚═╝  ╚═╝ ╚══════╝ ╚═╝  ╚═══╝  ╚═════╝       ╚══════╝ ╚═╝ ╚═╝  ╚═══╝ ╚══════╝
-"""
+    """
 
     aigc_large = """
                                      █████╗     ██╗     ██████╗     ██████╗ 
@@ -82,7 +82,18 @@ def print_large_ascii():
                                     ██╔══██║    ██║    ██║   ██║   ██║      
                                     ██║  ██║    ██║    ╚██████╔╝   ╚██████╗ 
                                     ╚═╝  ╚═╝    ╚═╝     ╚═════╝     ╚═════╝ 
-"""
+    """
 
     print(hengline_large)
     print(aigc_large)
+
+
+def print_hengline_dots():
+    hengline_dots = """
+                H   H   EEEEE   N   N   GGGG       L       IIIII   N   N   EEEEE
+                H   H   E       NN  N   G          L         I     NN  N   E
+                HHHHH   EEEE    N N N   G  GG      L         I     N N N   EEEE
+                H   H   E       N  NN   G   G      L         I     N  NN   E
+                H   H   EEEEE   N   N   GGGG       LLLLL   IIIII   N   N   EEEEE
+    """
+    print(hengline_dots)

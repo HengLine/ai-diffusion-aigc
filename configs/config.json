@@ -47,7 +47,7 @@
       "workflow_max_retry": 3,
       "workflow_max_runtime_hours": 2,
       "workflow_timeout_seconds": 7200,
-      "workflow_view_timeout_seconds": 60,
+      "workflow_view_timeout_seconds": 180,
       "workflow_view_max_retries": 3
     },
     "logging": {

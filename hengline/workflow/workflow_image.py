@@ -60,7 +60,8 @@ class WorkflowImageManager(WorkflowManager):
 
             if success and success.get('success', False):
                 # output_path = os.path.join(self.output_dir, output_filename)
-                return {'success': True, 'message': '文生图任务处理成功', 'output_paths': success.get('output_paths', '')}
+                return {'success': True, 'message': '文生图任务处理成功',
+                        'output_paths': success.get('output_paths', '')}
             else:
                 return {'success': False, 'message': '工作流运行失败'}
         except Exception as e:
@@ -182,22 +183,21 @@ class WorkflowImageManager(WorkflowManager):
                 del params_without_image['image_path']
                 debug("已从参数中移除image_path以避免覆盖已设置的图片节点值")
 
-            # 更新其他工作流参数
-            updated_workflow = self.runner.update_workflow_params(updated_workflow, params_without_image)
-            if updated_workflow is None:
-                error("更新工作流参数失败")
-                result = {'success': False, 'message': '更新工作流参数失败'}
-                return result
-
-            # 检查ComfyUI服务器是否可用
-            if not self.runner._check_server_running():
-                warning("ComfyUI服务器连接异常")
-                result = {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
-                return result
-
             output_paths = []
             for i in range(int(params.get('batch_size', 1))):
-                updated_workflow['seed'] = random.randint(0, 2 ** 50 - 1)
+                # 检查ComfyUI服务器是否可用
+                if not self.runner._check_server_running():
+                    warning("ComfyUI服务器连接异常")
+                    result = {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
+                    return result
+
+                # 更新其他工作流参数
+                updated_workflow = self.runner.update_workflow_params(updated_workflow, params_without_image)
+                if updated_workflow is None:
+                    error("更新工作流参数失败")
+                    result = {'success': False, 'message': '更新工作流参数失败'}
+                    return result
+
                 # 生成唯一的输出文件名
                 output_filename = f"image_to_image_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
                 # 运行工作流
@@ -207,8 +207,13 @@ class WorkflowImageManager(WorkflowManager):
                     # 确保输出文件存在
                     debug(f"图生图任务处理成功，输出文件: {success.get('output_paths', '')}")
                     output_paths.append(success.get('output_paths', '')[0])
+
+                    params_without_image['seed'] = random.randint(0, 999999999999)
+                    params_without_image['denoise'] = float(params_without_image.get('denoise', 0.65)) + ((i + 1) * 0.005)
+                    params_without_image['steps'] = int(params_without_image.get('steps', 20)) + 1
+                    time.sleep(0.5)  # 短暂延迟，避免请求过快
                 else:
-                    error("工作流运行失败")
+                    error(f"工作流运行失败,无法生成图像 {output_filename}")
 
             if output_paths:
                 result = {'success': True, 'message': '图生图任务处理成功', 'output_paths': output_paths}
