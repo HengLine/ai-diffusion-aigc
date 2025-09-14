@@ -275,7 +275,7 @@ class ComfyUIApi:
                     # 确保history是字典类型
                     if not isinstance(history, dict):
                         debug(f"历史记录不是字典类型，而是: {type(history)}")
-                        time.sleep(1)
+                        time.sleep(10)
                         continue
 
                     if prompt_id in history:
@@ -283,14 +283,14 @@ class ComfyUIApi:
                         # 确保prompt_data是字典类型
                         if not isinstance(prompt_data, dict):
                             debug(f"prompt_data不是字典类型，而是: {type(prompt_data)}")
-                            time.sleep(1)
+                            time.sleep(10)
                             continue
 
                         # 检查工作流是否完成
                         if "outputs" in prompt_data:
                             debug("工作流处理完成")
                             return True
-                time.sleep(1)  # 每秒检查一次
+                time.sleep(10)  # 每秒检查一次
                 # 重置连续失败计数
                 consecutive_failures = 0
             except Exception as e:
@@ -302,7 +302,7 @@ class ComfyUIApi:
                     error(f"连续{max_consecutive_failures}次检查工作流状态失败，认为连接超时")
                     return False
 
-                time.sleep(2)  # 失败时等待更长时间再重试
+                time.sleep(20)  # 失败时等待更长时间再重试
 
 
     def get_workflow_outputs(self, prompt_id: str, output_path: str) -> tuple[bool, list[str]]:
