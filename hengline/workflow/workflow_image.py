@@ -197,6 +197,7 @@ class WorkflowImageManager(WorkflowManager):
 
             output_paths = []
             for i in range(int(params.get('batch_size', 1))):
+                updated_workflow['seed'] = random.randint(0, 2 ** 50 - 1)
                 # 生成唯一的输出文件名
                 output_filename = f"image_to_image_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
                 # 运行工作流

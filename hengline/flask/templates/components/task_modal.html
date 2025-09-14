@@ -488,10 +488,12 @@
                         // 构建结果模态框内容
                         let resultContent = '';
                         
-                        // 构建正确的结果URL
-                        const mainResultUrl = '/outputs/' + resultData.filename;
+                        // 使用后端提供的result_urls数组
+                        const resultUrls = resultData.result_urls || [];
+                        const filenames = resultData.filenames || [];
+                        const mainResultUrl = resultUrls.length > 0 ? resultUrls[0] : '/outputs/' + resultData.filename;
                         
-                        // 解析文件名以查找可能的多个结果
+                        // 解析文件名以查找可能的多个结果（向后兼容）
                         const baseName = resultData.filename.replace(/\.[^/.]+$/, "");
                         const extension = resultData.filename.substring(resultData.filename.lastIndexOf('.'));
                         
@@ -509,7 +511,7 @@
                                             <p><strong>任务类型:</strong> ${resultData.task_type}</p>
                                             <p><strong>提示词:</strong> ${resultData.prompt || '无'}</p>
                                             <p><strong>生成时间:</strong> ${new Date(resultData.end_time * 1000).toLocaleString('zh-CN')}</p>
-                                            <p><strong>当前结果:</strong> 1/1</p>
+                                            <p class="result-counter"><strong>当前结果:</strong> 1/${resultUrls.length > 0 ? resultUrls.length : 1}</p>
                                         </div>
                                         <div class="result-content">
                                             <video controls style="width: 100%; max-height: 500px; object-fit: contain;">
@@ -536,7 +538,7 @@
                                             <p><strong>任务类型:</strong> ${resultData.task_type}</p>
                                             <p><strong>提示词:</strong> ${resultData.prompt || '无'}</p>
                                             <p><strong>生成时间:</strong> ${new Date(resultData.end_time * 1000).toLocaleString('zh-CN')}</p>
-                                            <p class="result-counter"><strong>当前结果:</strong> 1/1</p>
+                                            <p class="result-counter"><strong>当前结果:</strong> 1/${resultUrls.length > 0 ? resultUrls.length : 1}</p>
                                         </div>
                                         <div class="result-carousel">
                                             <button class="carousel-button prev-button" onclick="showPreviousResult('${taskId}', this)">&lt;</button>
@@ -557,6 +559,12 @@
                         document.body.appendChild(resultModal);
                         resultModal.style.display = 'block';
                         
+                        // 保存任务数据到模态框的dataset中
+                        resultModal.dataset.taskData = JSON.stringify({
+                            resultUrls: resultData.result_urls || [],
+                            filenames: resultData.filenames || []
+                        });
+                        
                         // 点击模态框外部关闭
                         resultModal.addEventListener('click', function(event) {
                             if (event.target === resultModal) {
@@ -569,17 +577,41 @@
                             // 初始化轮播数据
                             const carouselData = {
                                 currentIndex: 0,
-                                allResults: [{url: mainResultUrl, filename: resultData.filename}],
+                                allResults: [],
                                 baseName: baseName,
                                 extension: extension,
                                 taskType: resultData.task_type
                             };
                             
+                            // 如果有后端提供的resultUrls和filenames，直接使用
+                            if (resultUrls.length > 0 && filenames.length > 0) {
+                                for (let i = 0; i < resultUrls.length && i < filenames.length; i++) {
+                                    carouselData.allResults.push({
+                                        url: resultUrls[i],
+                                        filename: filenames[i]
+                                    });
+                                }
+                            } else {
+                                // 向后兼容：使用主结果URL和文件名
+                                carouselData.allResults = [{url: mainResultUrl, filename: resultData.filename}];
+                            }
+                            
                             // 存储轮播数据
                             resultModal.dataset.carouselData = JSON.stringify(carouselData);
                             
-                            // 尝试查找其他可能的结果文件
-                            findAllResultsForTask(taskId, baseName, extension, resultModal);
+                            // 更新结果计数器
+                            const counter = resultModal.querySelector('.result-counter');
+                            if (counter) {
+                                counter.innerHTML = `<strong>当前结果:</strong> ${carouselData.currentIndex + 1}/${carouselData.allResults.length}`;
+                            }
+                            
+                            // 如果只有一个结果，隐藏导航按钮
+                            if (carouselData.allResults.length <= 1) {
+                                const prevButton = resultModal.querySelector('.prev-button');
+                                const nextButton = resultModal.querySelector('.next-button');
+                                if (prevButton) prevButton.style.display = 'none';
+                                if (nextButton) nextButton.style.display = 'none';
+                            }
                         }
                     } else {
                         showNotification('获取任务结果失败: ' + (data.message || '未知错误'), 'error', 3000);
@@ -593,28 +625,42 @@
         
         // 查找任务的所有结果文件
         function findAllResultsForTask(taskId, baseName, extension, modal) {
-            // 这里是一个客户端模拟查找多个结果的方法
-            // 实际项目中可能需要通过API获取任务的所有结果文件列表
+            // 从模态框数据中获取后端提供的结果URLs和文件名
+            const resultModal = document.getElementById('resultModal');
+            if (!resultModal) return;
             
-            // 假设的命名规则：baseName_0001.ext, baseName_0002.ext 等
+            // 获取从API获取的数据
+            const taskData = JSON.parse(resultModal.dataset.taskData || '{}');
+            const resultUrls = taskData.resultUrls || [];
+            const filenames = taskData.filenames || [];
+            
+            // 使用后端提供的结果URLs和文件名
             const results = [];
             
-            // 首先添加主结果文件
-            results.push({
-                url: '/outputs/' + baseName + extension,
-                filename: baseName + extension
-            });
-            
-            // 查找可能的其他结果文件（模拟）
-            // 实际项目中应该通过API获取
-            const maxResultsToCheck = 10; // 最多检查10个可能的额外结果
-            for (let i = 1; i <= maxResultsToCheck; i++) {
-                const possibleFilename = baseName + '_' + String(i).padStart(4, '0') + extension;
-                // 这里只是模拟添加，实际项目中应该通过API或检查文件是否存在
+            // 如果后端提供了resultUrls，则直接使用
+            if (resultUrls.length > 0 && filenames.length > 0) {
+                for (let i = 0; i < resultUrls.length && i < filenames.length; i++) {
+                    results.push({
+                        url: resultUrls[i],
+                        filename: filenames[i]
+                    });
+                }
+            } else {
+                // 向后兼容：如果没有resultUrls，使用模拟查找
                 results.push({
-                    url: '/outputs/' + possibleFilename,
-                    filename: possibleFilename
+                    url: '/outputs/' + baseName + extension,
+                    filename: baseName + extension
                 });
+                
+                // 查找可能的其他结果文件（模拟）
+                const maxResultsToCheck = 10; // 最多检查10个可能的额外结果
+                for (let i = 1; i <= maxResultsToCheck; i++) {
+                    const possibleFilename = baseName + '_' + String(i).padStart(4, '0') + extension;
+                    results.push({
+                        url: '/outputs/' + possibleFilename,
+                        filename: possibleFilename
+                    });
+                }
             }
             
             // 更新轮播数据
@@ -675,14 +721,14 @@
         function updateCarouselDisplay(modal, carouselData) {
             const currentResult = carouselData.allResults[carouselData.currentIndex];
             
-            // 更新图像
-            const image = modal.querySelector('#result-image-' + carouselData.baseName.split('_')[0]);
+            // 更新图像 - 使用taskId查找元素
+            const image = modal.querySelector('[id^="result-image-"]');
             if (image) {
                 image.src = currentResult.url;
             }
             
-            // 更新下载链接
-            const downloadLink = modal.querySelector('#download-link-' + carouselData.baseName.split('_')[0]);
+            // 更新下载链接 - 使用taskId查找元素
+            const downloadLink = modal.querySelector('[id^="download-link-"]');
             if (downloadLink) {
                 downloadLink.href = currentResult.url;
                 downloadLink.download = currentResult.filename;

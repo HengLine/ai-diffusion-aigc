@@ -187,7 +187,8 @@ def get_task_result(task_id):
                 'filename': result_filenames[0] if result_filenames else None,  # 向后兼容
                 'filenames': result_filenames,
                 'result_url': result_urls[0] if result_urls else None,  # 向后兼容
-                'result_urls': result_urls  # 返回URL列表，支持多个输出文件
+                'result_urls': result_urls,  # 返回URL列表，支持多个输出文件
+                'total_results': len(result_urls)  # 添加结果总数字段
             }
         }), 200
     except Exception as e:
