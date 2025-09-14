@@ -22,6 +22,7 @@ from typing import final
 from flask import json
 
 from hengline.logger import debug, info, warning, error
+from hengline.utils.env_utils import print_large_ascii
 
 # 获取当前脚本所在目录（项目根目录的绝对路径）
 # PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -324,9 +325,10 @@ class AppBaseEnv:
     @final
     def main(self, max_retries=3):
         """主函数 - 协调整个启动流程"""
-        info("===========================================")
-        info("            HengLine AIGC 创意平台          ")
-        info("===========================================")
+        print_large_ascii()
+        info("================================================")
+        info("          欢迎使用 HengLine AIGC 创意平台          ")
+        info("================================================")
         debug(f"当前工作目录: {os.getcwd()}")
         debug(f"项目根目录: {PROJECT_ROOT}")
         debug(f"将使用的虚拟环境: {VENV_DIR}")

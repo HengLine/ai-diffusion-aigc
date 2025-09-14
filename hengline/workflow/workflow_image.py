@@ -4,18 +4,18 @@
 工作流工具模块，包含WorkflowManager类和配置加载功能
 """
 import os
+import random
 import time
 import uuid
-import random
 
 from hengline.core.task_queue import task_queue_manager
 from hengline.logger import error, warning, debug
 # 从配置工具导入获取有效配置的函数
 from hengline.utils.config_utils import get_effective_config
-# 导入配置工具
-from hengline.workflow.workflow_core import WorkflowManager
 # 导入ComfyUI API封装类
 from hengline.workflow.workflow_comfyui import comfyui_api
+# 导入配置工具
+from hengline.workflow.workflow_core import WorkflowManager
 
 
 class WorkflowImageManager(WorkflowManager):
@@ -58,9 +58,9 @@ class WorkflowImageManager(WorkflowManager):
             # 运行工作流
             success = self.runner.run_workflow(updated_workflow, output_filename)
 
-            if success:
-                output_path = os.path.join(self.output_dir, output_filename)
-                return {'success': True, 'message': '文生图任务处理成功', 'output_path': output_path}
+            if success and success.get('success', False):
+                # output_path = os.path.join(self.output_dir, output_filename)
+                return {'success': True, 'message': '文生图任务处理成功', 'output_paths': success.get('output_paths', '')}
             else:
                 return {'success': False, 'message': '工作流运行失败'}
         except Exception as e:
@@ -93,7 +93,7 @@ class WorkflowImageManager(WorkflowManager):
             'steps': preset_config.get('steps', 20),
             'cfg': preset_config.get('cfg', 9.5),
             'denoise': preset_config.get('denoise', 0.8),
-            'seed': random.randint(0, 2**50 - 1) if seed < 0 else seed,
+            'seed': random.randint(0, 2 ** 50 - 1) if seed < 0 else seed,
             'batch_size': preset_config.get('batch_size', 1)
         }
 
@@ -135,7 +135,7 @@ class WorkflowImageManager(WorkflowManager):
     def _execute_image_to_image(self, params):
         """实际执行图生图任务的方法，用于队列调用"""
         result = {'success': False, 'message': '任务执行未返回结果'}
-        
+
         try:
             if not self.init_runner():
                 result = {'success': False, 'message': '无法初始化工作流运行器'}
@@ -143,9 +143,6 @@ class WorkflowImageManager(WorkflowManager):
                 return result
 
             debug(f"处理图生图任务: {params.get('prompt', '无提示词')}")
-
-            # 生成唯一的输出文件名
-            output_filename = f"image_to_image_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
 
             # 加载图生图工作流
             workflow_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -184,7 +181,7 @@ class WorkflowImageManager(WorkflowManager):
             if 'image_path' in params_without_image:
                 del params_without_image['image_path']
                 debug("已从参数中移除image_path以避免覆盖已设置的图片节点值")
-            
+
             # 更新其他工作流参数
             updated_workflow = self.runner.update_workflow_params(updated_workflow, params_without_image)
             if updated_workflow is None:
@@ -198,28 +195,32 @@ class WorkflowImageManager(WorkflowManager):
                 result = {'success': False, 'queued': True, 'message': 'ComfyUI服务器连接异常'}
                 return result
 
-            # 运行工作流
-            success = self.runner.run_workflow(updated_workflow, output_filename)
+            output_paths = []
+            for i in range(int(params.get('batch_size', 1))):
+                # 生成唯一的输出文件名
+                output_filename = f"image_to_image_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
+                # 运行工作流
+                success = self.runner.run_workflow(updated_workflow, output_filename)
 
-            if success:
-                output_path = os.path.join(self.output_dir, output_filename)
-                # 确保输出文件存在
-                if os.path.exists(output_path):
-                    debug(f"图生图任务处理成功，输出文件: {output_path}")
-                    result = {'success': True, 'message': '图生图任务处理成功', 'output_path': output_path}
+                if success and success.get('success', False):
+                    # 确保输出文件存在
+                    debug(f"图生图任务处理成功，输出文件: {success.get('output_paths', '')}")
+                    output_paths.append(success.get('output_paths', '')[0])
                 else:
-                    error(f"工作流运行成功但输出文件不存在: {output_path}")
-                    result = {'success': False, 'message': '工作流运行成功但输出文件不存在'}
+                    error("工作流运行失败")
+
+            if output_paths:
+                result = {'success': True, 'message': '图生图任务处理成功', 'output_paths': output_paths}
             else:
-                error("工作流运行失败")
-                result = {'success': False, 'message': '工作流运行失败'}
+                result = {'success': False, 'message': '图生图任务处理失败'}
+
         except Exception as e:
             error(f"图生图任务执行异常: {str(e)}")
             # 添加详细的异常信息
             import traceback
             debug(f"异常详情: {traceback.format_exc()}")
             result = {'success': False, 'message': f'图生图任务执行异常: {str(e)}'}
-        
+
         # 确保总是返回完整的结果
         debug(f"图生图任务处理结果: {result}")
         return result
@@ -242,7 +243,7 @@ class WorkflowImageManager(WorkflowManager):
         preset_config['negative_prompt'] = negative_prompt
 
         # 从有效配置中提取参数
-        seed = preset_config.get('seed',  -1)
+        seed = preset_config.get('seed', -1)
         # 准备任务参数
         task_params = {
             'image_path': image_path,
@@ -253,7 +254,7 @@ class WorkflowImageManager(WorkflowManager):
             'steps': preset_config.get('steps', 20),
             'cfg': preset_config.get('cfg', 7.0),
             'denoise': preset_config.get('denoise', 0.65),
-            'seed': random.randint(0, 2**50 - 1) if seed < 0 else seed,
+            'seed': random.randint(0, 2 ** 50 - 1) if seed < 0 else seed,
             'batch_size': preset_config.get('batch_size', 1)
         }
 

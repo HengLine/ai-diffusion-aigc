@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional
 import requests
 
 from hengline.logger import debug, error, warning
-
+from hengline.utils.config_utils import get_task_config
 
 class ComfyUIApi:
     """ComfyUI API接口类，统一管理所有与ComfyUI的交互功能"""
@@ -310,7 +310,7 @@ class ComfyUIApi:
 
                 time.sleep(2)  # 失败时等待更长时间再重试
 
-    def get_workflow_outputs(self, prompt_id: str, output_path: str) -> bool:
+    def get_workflow_outputs(self, prompt_id: str, output_path: str) -> tuple[bool, list[str]]:
         """
         获取工作流的输出结果
         
@@ -319,7 +319,7 @@ class ComfyUIApi:
             output_path: 输出文件保存路径
         
         Returns:
-            bool: 是否成功获取并保存输出结果
+            tuple[bool, list[str]]: (是否成功获取并保存输出结果, 保存的文件路径列表)
         """
         try:
             # 获取历史记录
@@ -329,7 +329,7 @@ class ComfyUIApi:
 
             if response.status_code != 200:
                 error(f"[ComfyUI API] 获取历史记录失败: 状态码={response.status_code}, 响应内容={response.text}")
-                return False
+                return False, []
 
             # 尝试解析JSON
             try:
@@ -337,21 +337,21 @@ class ComfyUIApi:
             except json.JSONDecodeError as json_err:
                 error(f"[ComfyUI API] 解析历史记录JSON失败: {str(json_err)}")
                 error(f"[ComfyUI API] 响应内容: {response.text[:500]}...")  # 只显示部分内容
-                return False
+                return False, []
 
             if not isinstance(history, dict) or prompt_id not in history:
                 error(f"[ComfyUI API] 历史记录格式不正确或找不到指定的prompt_id: {prompt_id}")
-                return False
+                return False, []
 
             prompt_data = history[prompt_id]
             if not isinstance(prompt_data, dict) or "outputs" not in prompt_data:
                 error(f"[ComfyUI API] 找不到工作流输出，prompt_data格式: {type(prompt_data)}")
-                return False
+                return False, []
 
             outputs = prompt_data["outputs"]
             if not isinstance(outputs, dict):
                 error(f"[ComfyUI API] outputs不是字典类型，而是: {type(outputs)}")
-                return False
+                return False, []
 
             debug(f"[ComfyUI API] 找到 {len(outputs)} 个输出节点")
 
@@ -363,10 +363,17 @@ class ComfyUIApi:
                     debug(f"[ComfyUI API] 创建输出目录: {output_dir}")
                 except Exception as mkdir_err:
                     error(f"[ComfyUI API] 创建输出目录失败: {str(mkdir_err)}")
-                    return False
+                    return False, []
 
             # 查找图像或视频输出
             found_output = False
+            saved_file_paths = []
+            all_output_types = ['images', 'videos', 'gifs']
+            
+            # 生成基本文件名（不带扩展名）和扩展名
+            base_name, ext = os.path.splitext(os.path.basename(output_path))
+            # 创建输出目录的完整路径
+            base_output_dir = os.path.dirname(output_path)
             for node_id, node_output in outputs.items():
                 debug(f"[ComfyUI API] 检查输出节点: {node_id}")
                 # 确保node_output是字典类型
@@ -374,184 +381,114 @@ class ComfyUIApi:
                     debug(f"[ComfyUI API] node_output不是字典类型，node_id: {node_id}, 类型: {type(node_output)}")
                     continue
 
-                # 处理图像输出
-                if "images" in node_output:
-                    debug(f"[ComfyUI API] 找到图像输出，节点ID: {node_id}")
-                    # 确保images是列表类型
-                    if not isinstance(node_output["images"], list):
-                        debug(f"[ComfyUI API] images不是列表类型，node_id: {node_id}")
-                        continue
-
-                    debug(f"[ComfyUI API] 图像数量: {len(node_output['images'])}")
-                    for idx, image_info in enumerate(node_output["images"]):
-                        # 确保image_info是字典类型
-                        if not isinstance(image_info, dict):
-                            debug(f"[ComfyUI API] image_info不是字典类型")
+                # 遍历所有支持的输出类型
+                for output_type in all_output_types:
+                    if output_type in node_output:
+                        debug(f"[ComfyUI API] 找到{output_type}输出，节点ID: {node_id}")
+                        # 确保输出内容是列表类型
+                        if not isinstance(node_output[output_type], list):
+                            debug(f"[ComfyUI API] {output_type}不是列表类型，node_id: {node_id}")
                             continue
 
-                        # 检查必要的键是否存在
-                        if not all(key in image_info for key in ['filename', 'subfolder', 'type']):
-                            debug(f"[ComfyUI API] image_info缺少必要的键: {list(image_info.keys())}")
-                            continue
+                        items = node_output[output_type]
+                        debug(f"[ComfyUI API] {output_type}数量: {len(items)}")
+                        
+                        # 根据输出类型设置超时时间
+                        timeout = get_task_config().get('workflow_view_timeout_seconds', 60)    # 默认超时时间
+                        if output_type == 'videos':
+                            timeout *= 3  # 视频可能需要更长的时间
+                        elif output_type == 'gifs':
+                            timeout *= 2  # GIF可能需要更长的时间
+                        debug(f"[ComfyUI API] {output_type}超时时间: {timeout}秒")
+                        max_retries = get_task_config().get('workflow_view_max_retries', 3)  # 默认重试次数
+                        
+                        for idx, item_info in enumerate(items):
+                            # 确保item_info是字典类型
+                            if not isinstance(item_info, dict):
+                                debug(f"[ComfyUI API] {output_type}中的item_info不是字典类型")
+                                continue
 
-                        debug(
-                            f"[ComfyUI API] 图像信息: 文件名={image_info['filename']}, 子文件夹={image_info['subfolder']}")
-                        # 获取图像数据
-                        try:
-                            # 添加超时设置
-                            view_url = f"{self.api_url}/view?filename={image_info['filename']}&subfolder={image_info['subfolder']}&type={image_info['type']}"
-                            debug(f"[ComfyUI API] 获取图像数据: {view_url}")
+                            # 检查必要的键是否存在
+                            if not all(key in item_info for key in ['filename', 'subfolder', 'type']):
+                                debug(f"[ComfyUI API] {output_type}中的item_info缺少必要的键: {list(item_info.keys())}")
+                                continue
 
-                            # 添加重试逻辑
-                            max_retries = 3
-                            retry_count = 0
-                            success = False
+                            debug(f"[ComfyUI API] {output_type}信息: 文件名={item_info['filename']}, 子文件夹={item_info['subfolder']}")
+                            
+                            try:
+                                # 添加超时设置
+                                view_url = f"{self.api_url}/view?filename={item_info['filename']}&subfolder={item_info['subfolder']}&type={item_info['type']}"
+                                debug(f"[ComfyUI API] 获取{output_type}数据: {view_url}")
 
-                            while retry_count < max_retries and not success:
-                                try:
-                                    image_data = requests.get(view_url, timeout=60)
-                                    if image_data.status_code == 200:
-                                        # 保存图像到指定路径
-                                        # 如果是多个图像，修改输出路径
-                                        save_path = output_path
-                                        if len(node_output['images']) > 1:
-                                            base_name, ext = os.path.splitext(output_path)
-                                            save_path = f"{base_name}_{idx}{ext}"
+                                # 添加重试逻辑
+                                retry_count = 0
+                                success = False
 
-                                        debug(f"[ComfyUI API] 图像数据获取成功，保存到: {save_path}")
+                                while retry_count < max_retries and not success:
+                                    try:
+                                        # 获取文件数据
+                                        item_data = requests.get(view_url, timeout=timeout)
+                                        if item_data.status_code == 200:
+                                            # 保存文件到指定路径
+                                            # 为每个文件生成唯一的保存路径，确保多文件输出不会覆盖
+                                            # 从ComfyUI原始文件名中获取扩展名，确保格式正确
+                                            comfy_ext = os.path.splitext(item_info['filename'])[1]
+                                            
+                                            # 创建统一的命名规则：基础文件名_输出类型_索引.原始扩展名
+                                            unique_filename = f"{base_name}_{output_type}_{idx+1}{comfy_ext}"
+                                            save_path = os.path.join(base_output_dir, unique_filename)
+                                            
+                                            debug(f"[ComfyUI API] {output_type}数据获取成功，保存到: {save_path}")
 
-                                        # 检查文件写入权限
-                                        try:
-                                            with open(save_path, 'wb') as f:
-                                                f.write(image_data.content)
-                                            debug(f"[ComfyUI API] 图像保存成功: {save_path}")
-                                            found_output = True
-                                            success = True
-                                        except PermissionError:
-                                            error(f"[ComfyUI API] 没有写入权限，无法保存图像到: {save_path}")
+                                            # 检查文件写入权限
+                                            try:
+                                                with open(save_path, 'wb') as f:
+                                                    f.write(item_data.content)
+                                                debug(f"[ComfyUI API] {output_type}保存成功: {save_path}")
+                                                found_output = True
+                                                success = True
+                                                saved_file_paths.append(save_path)
+                                            except PermissionError:
+                                                error(f"[ComfyUI API] 没有写入权限，无法保存{output_type}到: {save_path}")
+                                                retry_count += 1
+                                                time.sleep(1)
+                                            except Exception as write_err:
+                                                error(f"[ComfyUI API] 写入{output_type}文件失败: {str(write_err)}")
+                                                retry_count += 1
+                                                time.sleep(1)
+                                        else:
+                                            error(f"[ComfyUI API] {output_type}数据获取失败，状态码: {item_data.status_code}")
                                             retry_count += 1
                                             time.sleep(1)
-                                        except Exception as write_err:
-                                            error(f"[ComfyUI API] 写入图像文件失败: {str(write_err)}")
-                                            retry_count += 1
-                                            time.sleep(1)
-                                    else:
-                                        error(f"[ComfyUI API] 图像数据获取失败，状态码: {image_data.status_code}")
+                                    except requests.exceptions.Timeout:
+                                        error(f"[ComfyUI API] 获取{output_type}数据超时")
                                         retry_count += 1
                                         time.sleep(1)
-                                except requests.exceptions.Timeout:
-                                    error(f"[ComfyUI API] 获取图像数据超时")
-                                    retry_count += 1
-                                    time.sleep(1)
-                                except Exception as img_err:
-                                    error(f"[ComfyUI API] 获取图像数据时出错: {str(img_err)}")
-                                    retry_count += 1
-                                    time.sleep(1)
-                        except Exception as outer_err:
-                            error(f"[ComfyUI API] 处理图像时发生外部错误: {str(outer_err)}")
-                            continue
-
-                # 处理视频输出
-                elif "videos" in node_output:
-                    debug(f"[ComfyUI API] 找到视频输出，节点ID: {node_id}")
-                    # 确保videos是列表类型
-                    if not isinstance(node_output["videos"], list):
-                        debug(f"[ComfyUI API] videos不是列表类型，node_id: {node_id}")
-                        continue
-
-                    debug(f"[ComfyUI API] 视频数量: {len(node_output['videos'])}")
-                    for idx, video_info in enumerate(node_output["videos"]):
-                        # 确保video_info是字典类型
-                        if not isinstance(video_info, dict):
-                            debug(f"[ComfyUI API] video_info不是字典类型")
-                            continue
-
-                        # 检查必要的键是否存在
-                        if not all(key in video_info for key in ['filename', 'subfolder', 'type']):
-                            debug(f"[ComfyUI API] video_info缺少必要的键: {list(video_info.keys())}")
-                            continue
-
-                        debug(
-                            f"[ComfyUI API] 视频信息: 文件名={video_info['filename']}, 子文件夹={video_info['subfolder']}")
-                        # 获取视频数据
-                        try:
-                            # 添加超时设置
-                            view_url = f"{self.api_url}/view?filename={video_info['filename']}&subfolder={video_info['subfolder']}&type={video_info['type']}"
-                            debug(f"[ComfyUI API] 获取视频数据: {view_url}")
-
-                            # 添加重试逻辑
-                            max_retries = 3
-                            retry_count = 0
-                            success = False
-
-                            while retry_count < max_retries and not success:
-                                try:
-                                    video_data = requests.get(view_url, timeout=120)
-                                    if video_data.status_code == 200:
-                                        # 保存视频到指定路径
-                                        # 如果是多个视频，修改输出路径
-                                        save_path = output_path
-                                        if len(node_output['videos']) > 1:
-                                            base_name, ext = os.path.splitext(output_path)
-                                            save_path = f"{base_name}_{idx}{ext}"
-
-                                        debug(f"[ComfyUI API] 视频数据获取成功，保存到: {save_path}")
-
-                                        # 检查文件写入权限
-                                        try:
-                                            with open(save_path, 'wb') as f:
-                                                f.write(video_data.content)
-                                            debug(f"[ComfyUI API] 视频保存成功: {save_path}")
-                                            found_output = True
-                                            success = True
-                                        except PermissionError:
-                                            error(f"[ComfyUI API] 没有写入权限，无法保存视频到: {save_path}")
-                                            retry_count += 1
-                                            time.sleep(1)
-                                        except Exception as write_err:
-                                            error(f"[ComfyUI API] 写入视频文件失败: {str(write_err)}")
-                                            retry_count += 1
-                                            time.sleep(1)
-                                    else:
-                                        error(f"[ComfyUI API] 视频数据获取失败，状态码: {video_data.status_code}")
+                                    except Exception as data_err:
+                                        error(f"[ComfyUI API] 获取{output_type}数据时出错: {str(data_err)}")
                                         retry_count += 1
                                         time.sleep(1)
-                                except requests.exceptions.Timeout:
-                                    error(f"[ComfyUI API] 获取视频数据超时")
-                                    retry_count += 1
-                                    time.sleep(1)
-                                except Exception as vid_err:
-                                    error(f"[ComfyUI API] 获取视频数据时出错: {str(vid_err)}")
-                                    retry_count += 1
-                                    time.sleep(1)
-                        except Exception as outer_err:
-                            error(f"[ComfyUI API] 处理视频时发生外部错误: {str(outer_err)}")
-                            continue
-
-                # 检查其他可能的输出类型
-                elif "gifs" in node_output:
-                    debug(f"[ComfyUI API] 找到GIF输出，节点ID: {node_id}")
-                    # 处理逻辑类似于图像或视频
-                    # 这里只是记录日志，实际处理可以根据需要添加
-                    found_output = True
+                            except Exception as outer_err:
+                                error(f"[ComfyUI API] 处理{output_type}时发生外部错误: {str(outer_err)}")
+                                continue
 
             # 检查是否找到并成功保存了输出
             if found_output:
                 debug(f"[ComfyUI API] 工作流输出保存成功")
-                return True
+                return True, saved_file_paths
             else:
                 error("[ComfyUI API] 工作流没有产生可保存的图像或视频输出")
                 # 打印详细信息以帮助调试
                 for node_id, node_output in outputs.items():
                     if isinstance(node_output, dict):
                         error(f"[ComfyUI API] 节点 {node_id} 输出内容: {list(node_output.keys())}")
-                return False
+                return False, []
         except Exception as e:
             error(f"[ComfyUI API] 获取工作流输出时出错: {str(e)}")
             # 添加堆栈跟踪以帮助调试
             import traceback
             error(f"[ComfyUI API] 错误详细信息: {traceback.format_exc()}")
-            return False
+            return False, []
 
     def _is_valid_image_file(self, file_path: str) -> bool:
         """

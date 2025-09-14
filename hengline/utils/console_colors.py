@@ -49,12 +49,12 @@ def init_console_colors():
         if HAS_COLORAMA:
             # 初始化colorama，autoreset=True确保每次打印后自动重置颜色
             colorama.init(autoreset=True)
-            print(f"{Fore.GREEN}[控制台颜色] 已成功初始化colorama库{Style.RESET_ALL}")
+            # print(f"{Fore.GREEN}[控制台颜色] 已成功初始化colorama库{Style.RESET_ALL}")
             # 测试颜色输出
-            print(f"{Fore.BLUE}DEBUG{Style.RESET_ALL} - {Fore.GREEN}INFO{Style.RESET_ALL} - {Fore.YELLOW}WARNING{Style.RESET_ALL} - {Fore.RED}ERROR{Style.RESET_ALL} - {Fore.MAGENTA}CRITICAL{Style.RESET_ALL}")
-        else:
-            print("[控制台颜色] 警告: 在Windows平台上运行，但未安装colorama库，可能无法显示彩色日志。")
-            print("[控制台颜色] 建议安装: pip install colorama")
+            # print(f"{Fore.BLUE}DEBUG{Style.RESET_ALL} - {Fore.GREEN}INFO{Style.RESET_ALL} - {Fore.YELLOW}WARNING{Style.RESET_ALL} - {Fore.RED}ERROR{Style.RESET_ALL} - {Fore.MAGENTA}CRITICAL{Style.RESET_ALL}")
+        # else:
+        #     print("[控制台颜色] 警告: 在Windows平台上运行，但未安装colorama库，可能无法显示彩色日志。")
+        #     print("[控制台颜色] 建议安装: pip install colorama")
     else:
         # 非Windows平台通常原生支持ANSI颜色代码
         print("[控制台颜色] 非Windows平台，直接支持ANSI颜色代码")

@@ -503,10 +503,10 @@
                 <div class="slider-container">
                     <label for="numImagesSlider">生成数量</label>
                     <div class="slider-input-group">
-                        <input type="range" id="numImagesSlider" class="slider" min="1" max="10" step="1" value="{{ default_params.batch_size or 1 }}">
-                        <input type="number" id="batch_size" name="batch_size" min="1" max="10" step="1" value="{{ default_params.batch_size or 1 }}" class="slider-value">
+                        <input type="range" id="numImagesSlider" class="slider" min="1" max="8" step="1" value="{{ default_params.batch_size or 1 }}">
+                        <input type="number" id="batch_size" name="batch_size" min="1" max="8" step="1" value="{{ default_params.batch_size or 1 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">一次生成的图像数量，最多10张，建议值：1-5</p>
+                    <p class="parameter-description">一次生成的图像数量，最多8张，建议值：1-5</p>
                 </div>
             </div>
             </div>

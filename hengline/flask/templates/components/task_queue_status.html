@@ -19,7 +19,7 @@ function startQueueStatusPolling() {
         clearInterval(pollingInterval);
     }
     
-    pollingInterval = setInterval(updateQueueStatus, 10000); // 每5秒更新一次
+    pollingInterval = setInterval(updateQueueStatus, 20000); // 每5秒更新一次
     
     // 立即执行一次
     updateQueueStatus();

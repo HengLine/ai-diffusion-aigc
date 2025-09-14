@@ -194,10 +194,12 @@ def get_settings_config():
 
 def get_task_config():
     """获取任务相关配置"""
-    return get_config_section('task', {
-        'max_runtime_hours': 2,
-        'workflow_timeout_seconds': 1800,
-        'max_retry_count': 3
+    return get_config_section('workflow', {
+        'workflow_max_retry': 3,
+        'workflow_max_runtime_hours': 2,
+        'workflow_timeout_seconds': 3600,
+        'workflow_view_timeout_seconds': 60,
+        'workflow_view_max_retries': 3
     })
 
 

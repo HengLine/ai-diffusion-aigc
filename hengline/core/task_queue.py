@@ -38,7 +38,8 @@ class Task:
         self.end_time = None  # 任务结束时间
         self.task_lock = task_lock  # 使用传入的任务锁
         self.status = "queued"  # 任务状态: queued, running, completed, failed
-        self.output_filename = None  # 任务输出文件名
+        self.output_filename = None  # 任务输出文件名（向后兼容）
+        self.output_filenames = []  # 任务输出文件名列表，支持多个输出文件
         self.task_msg = None  # 任务消息，用于存储错误或状态信息
         self.execution_count = 0  # 任务执行次数，默认为0
 
@@ -335,7 +336,7 @@ class TaskQueueManager:
                     max_retry_count = 3
                     try:
                         from hengline.utils.config_utils import get_task_config
-                        max_retry_count = get_task_config().get('max_retry_count', 3)
+                        max_retry_count = get_task_config().get('workflow_max_retry', 3)
                     except:
                         pass
 
@@ -386,11 +387,28 @@ class TaskQueueManager:
 
                     # 保存输出文件名
                     if result and isinstance(result, dict):
-                        if 'output_path' in result:
+                        # 处理多个输出文件
+                        if 'output_paths' in result:
+                            # 从output_paths中提取文件名列表
+                            task.output_filenames = [os.path.basename(path) for path in result['output_paths']]
+                            # 设置第一个输出文件为默认输出文件名（向后兼容）
+                            if task.output_filenames:
+                                task.output_filename = task.output_filenames[0]
+                        elif 'filenames' in result:
+                            task.output_filenames = result['filenames']
+                            # 设置第一个输出文件为默认输出文件名（向后兼容）
+                            if task.output_filenames:
+                                task.output_filename = task.output_filenames[0]
+                        # 处理单个输出文件（向后兼容）
+                        elif 'output_path' in result:
                             # 从output_path中提取文件名
                             task.output_filename = os.path.basename(result['output_path'])
+                            # 同时添加到文件名列表中
+                            task.output_filenames = [task.output_filename]
                         elif 'filename' in result:
                             task.output_filename = result['filename']
+                            # 同时添加到文件名列表中
+                            task.output_filenames = [task.output_filename]
 
                     # 更新平均执行时间（在锁外异步执行）
                     if task.end_time and task.start_time:
@@ -427,7 +445,8 @@ class TaskQueueManager:
                 # 直接异步保存任务历史，避免阻塞
                 self._async_save_history()
 
-    def _execute_callback_with_timeout(self, task: Task, timeout: int = 1200):
+    @staticmethod
+    def _execute_callback_with_timeout(task: Task, timeout: int = 1200):
         """执行任务回调函数，并设置超时时间"""
         result = None
         exception = None
@@ -661,6 +680,7 @@ class TaskQueueManager:
                         'params': task.params,
                         'status': task.status,
                         'output_filename': task.output_filename,
+                        'output_filenames': task.output_filenames,
                         'execution_count': task.execution_count
                     }
 
@@ -761,6 +781,10 @@ class TaskQueueManager:
                         # 恢复输出文件名
                         if 'output_filename' in task_data:
                             task.output_filename = task_data['output_filename']
+                        
+                        # 恢复输出文件名列表
+                        if 'output_filenames' in task_data:
+                            task.output_filenames = task_data['output_filenames']
 
                         # 恢复任务状态
                         task.status = task_data.get('status', 'queued')

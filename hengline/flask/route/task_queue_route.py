@@ -143,13 +143,19 @@ def get_task_result(task_id):
         prompt = task.params.get("prompt", "") if task and task.params else ""
         negative_prompt = task.params.get("negative_prompt", "") if task and task.params else ""
 
-        # 使用实际的输出文件名
-        result_filename = None
-        if task and hasattr(task, 'output_filename'):
-            result_filename = task.output_filename
-
+        # 构建结果URL列表
+        result_filenames = []
+        result_urls = []
+        
+        # 优先使用多个输出文件（如果有）
+        if task and hasattr(task, 'output_filenames') and task.output_filenames:
+            result_filenames = task.output_filenames
+        elif task and hasattr(task, 'output_filename') and task.output_filename:
+            # 向后兼容：如果只有单个输出文件
+            result_filenames = [task.output_filename]
+        
         # 如果没有保存输出文件名，尝试使用旧的命名方式
-        if not result_filename:
+        if not result_filenames:
             # 根据任务类型确定扩展名
             extensions = {
                 'text_to_image': 'png',
@@ -159,10 +165,10 @@ def get_task_result(task_id):
             }
 
             extension = extensions.get(task_status['task_type'], 'png')
-            result_filename = f"{task_status['task_id']}.{extension}"
+            result_filenames = [f"{task_status['task_id']}.{extension}"]
 
-        # 构建完整的结果URL
-        result_url = url_for('serve_output', filename=result_filename, _external=True)
+        # 构建完整的结果URL列表
+        result_urls = [url_for('serve_output', filename=filename, _external=True) for filename in result_filenames]
 
         # 返回完整的任务结果数据
         return jsonify({
@@ -178,9 +184,10 @@ def get_task_result(task_id):
                 'queue_position': task_status.get('queue_position'),
                 'prompt': prompt,
                 'negative_prompt': negative_prompt,
-                'filename': result_filename,
-                'result_url': result_url,  # 返回完整的URL路径
-                'task_type': task_status['task_type']
+                'filename': result_filenames[0] if result_filenames else None,  # 向后兼容
+                'filenames': result_filenames,
+                'result_url': result_urls[0] if result_urls else None,  # 向后兼容
+                'result_urls': result_urls  # 返回URL列表，支持多个输出文件
             }
         }), 200
     except Exception as e:
