@@ -17,7 +17,7 @@ from typing import Dict, Any, Callable, Tuple, Optional, List
 # 导入邮件发送模块
 from hengline.core.task_email import _async_send_failure_email, _async_send_success_email
 from hengline.logger import error, debug, warning, info
-from hengline.utils.config_utils import max_concurrent_tasks, get_task_config
+from hengline.utils.config_utils import get_max_concurrent_tasks, get_task_config
 
 
 class Task:
@@ -257,7 +257,7 @@ class TaskQueueManager:
 
     def _process_tasks(self):
         """处理队列中的任务 - 任务级锁优化版本"""
-        workflow_timeout_seconds = get_task_config().get('workflow_timeout_seconds', 1800)
+        workflow_timeout_seconds = get_task_config().get('task_timeout_seconds', 1800)
         while self.running:
             try:
                 # 检查是否可以启动新任务
@@ -336,7 +336,7 @@ class TaskQueueManager:
                     max_retry_count = 3
                     try:
                         from hengline.utils.config_utils import get_task_config
-                        max_retry_count = get_task_config().get('workflow_max_retry', 3)
+                        max_retry_count = get_task_config().get('task_max_retry', 3)
                     except:
                         pass
 
@@ -908,4 +908,4 @@ class TaskQueueManager:
 
 
 # 全局任务队列管理器实例
-task_queue_manager = TaskQueueManager(max_concurrent_tasks)
+task_queue_manager = TaskQueueManager(get_max_concurrent_tasks())

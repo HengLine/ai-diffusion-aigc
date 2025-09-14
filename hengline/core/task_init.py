@@ -37,8 +37,8 @@ class StartupTaskListener:
         self.lock = Lock()
         self.processed_tasks_count = 0
         task_config = get_task_config()
-        self.max_retry_count = task_config.get('workflow_max_retry', 3)  # 最大重试次数
-        self.max_runtime_hours = task_config.get('workflow_max_runtime_hours', 2)  # 最大运行时间（小时）
+        self.max_retry_count = task_config.get('task_max_retry', 3)  # 最大重试次数
+        self.max_runtime_hours = task_config.get('task_max_runtime_hours', 2)  # 最大运行时间（小时）
         self.comfyui_api_url = get_comfyui_config().get('api_url', 'http://127.0.0.1:8188')
 
     def start(self):

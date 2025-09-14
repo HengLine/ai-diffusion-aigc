@@ -49,7 +49,7 @@ def configure():
         user_config = get_user_configs()
         user_config['email'] = email
         user_config['nickname'] = nickname
-        user_config['organization'] = organization
+        user_config['organization'] = "Hengline"  # 默认值
         current_config['settings']['user'] = user_config
 
         # 保存ComfyUI配置

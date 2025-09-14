@@ -30,25 +30,12 @@ def load_config():
         # 如果加载失败，返回默认配置
         _config = {
             'flask': {
-                'secret_key': 'default-fallback-key',
-                'debug': False,
                 'allowed_extensions': ['png', 'jpg', 'jpeg', 'gif']
             },
             'paths': {
                 'temp_folder': 'uploads',
                 'output_folder': 'outputs',
                 'workflows_dir': 'workflows'
-            },
-            'settings': {
-                'common': {
-                    'max_concurrent_tasks': 2,
-                    'cache_enabled': True,
-                    'cache_size': 1024
-                },
-                'comfyui': {
-                    'api_url': 'http://127.0.0.1:8188',
-                    'auto_start_server': False
-                }
             }
         }
         return _config
@@ -195,12 +182,19 @@ def get_settings_config():
 def get_task_config():
     """获取任务相关配置"""
     return get_config_section('workflow', {
-        'workflow_max_retry': 3,
-        'workflow_max_runtime_hours': 2,
-        'workflow_timeout_seconds': 3600,
-        'workflow_view_timeout_seconds': 60,
-        'workflow_view_max_retries': 3
+        'task_max_concurrent': 2,
+        'task_max_retry': 3,
+        'task_max_runtime_hours': 2,
+        'task_timeout_seconds': 3600,
+        'task_view_timeout_seconds': 60,
+        'task_view_max_retries': 3
     })
+
+
+def get_max_concurrent_tasks():
+    """获取最大并发任务数"""
+    return get_task_config().get('task_max_concurrent', 2)
+
 
 
 # 输出设置
@@ -234,15 +228,6 @@ def get_email_config():
     })
 
 
-def get_common_settings():
-    """获取通用设置"""
-    return get_settings_config().get('common', {
-        'max_concurrent_tasks': 2,
-        'cache_enabled': True,
-        'cache_size': 1024
-    })
-
-
 def get_task_settings(task_type, default=None):
     """获取指定任务类型的默认设置
     
@@ -266,11 +251,6 @@ def get_task_settings(task_type, default=None):
     
     # 作为后备，仍然从settings配置中尝试获取
     return get_settings_config().get(task_type, default)
-
-
-def get_max_concurrent_tasks():
-    """获取最大并发任务数"""
-    return get_common_settings().get('max_concurrent_tasks', 2)
 
 
 # 工作流文件路径
@@ -485,6 +465,3 @@ def get_workflow_path(task_type):
 
 # 初始化加载配置
 config = load_config()
-
-# 导出常用配置变量
-max_concurrent_tasks = get_max_concurrent_tasks()

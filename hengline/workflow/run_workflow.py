@@ -250,7 +250,7 @@ class ComfyUIRunner:
                 return {"success": False, "message": "解析API响应JSON失败"}
 
             # 等待工作流完成
-            workflow_completed = self._wait_for_workflow_completion(prompt_id)
+            workflow_completed = comfyui_api.wait_for_workflow_completion(prompt_id)
             if not workflow_completed:
                 error(f"工作流执行失败: 等待工作流完成超时或连接失败")
                 return {"success": False, "message": "工作流执行失败: 等待工作流完成超时或连接失败"}
@@ -307,60 +307,6 @@ class ComfyUIRunner:
         except:
             return False
 
-    def _wait_for_workflow_completion(self, prompt_id: str) -> bool:
-        """等待工作流完成并返回状态"""
-        debug("等待工作流处理完成...")
-
-        # 设置最大等待时间为1800秒（30分钟），增加处理复杂任务的时间
-        # 可以根据需要调整这个值
-        max_wait_time = 1800
-        start_time = time.time()
-        # 连续失败计数
-        consecutive_failures = 0
-        max_consecutive_failures = 10
-
-        while True:
-            # 检查是否超时
-            elapsed_time = time.time() - start_time
-            if elapsed_time > max_wait_time:
-                error(f"等待工作流完成超时，已等待{max_wait_time}秒")
-                return False
-
-            try:
-                response = requests.get(f"{self.api_url}/history/{prompt_id}", timeout=5)
-                if response.status_code == 200:
-                    history = response.json()
-                    # 确保history是字典类型
-                    if not isinstance(history, dict):
-                        debug(f"历史记录不是字典类型，而是: {type(history)}")
-                        time.sleep(1)
-                        continue
-
-                    if prompt_id in history:
-                        prompt_data = history[prompt_id]
-                        # 确保prompt_data是字典类型
-                        if not isinstance(prompt_data, dict):
-                            debug(f"prompt_data不是字典类型，而是: {type(prompt_data)}")
-                            time.sleep(1)
-                            continue
-
-                        # 检查工作流是否完成
-                        if "outputs" in prompt_data:
-                            debug("工作流处理完成")
-                            return True
-                time.sleep(1)  # 每秒检查一次
-                # 重置连续失败计数
-                consecutive_failures = 0
-            except Exception as e:
-                consecutive_failures += 1
-                error(f"检查工作流状态时出错（第{consecutive_failures}次）: {str(e)}")
-
-                # 如果连续失败次数过多，视为连接超时失败
-                if consecutive_failures >= max_consecutive_failures:
-                    error(f"连续{max_consecutive_failures}次检查工作流状态失败，认为连接超时")
-                    return False
-
-                time.sleep(2)  # 失败时等待更长时间再重试
 
     @staticmethod
     def _get_workflow_outputs(prompt_id: str, output_path: str) -> tuple[bool, list[str]]:

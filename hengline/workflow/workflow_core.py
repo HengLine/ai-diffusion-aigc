@@ -48,4 +48,4 @@ class WorkflowManager:
         return task_queue_manager.get_all_tasks()
 
 # 全局配置和管理器实例
-# workflow_manager = WorkflowManager(max_concurrent_tasks)
+# workflow_manager = WorkflowManager()

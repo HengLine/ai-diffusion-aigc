@@ -248,20 +248,14 @@ class ComfyUIApi:
             error(f"提交工作流失败: {str(e)}")
             return None
 
+
     def wait_for_workflow_completion(self, prompt_id: str) -> bool:
-        """
-        等待工作流完成并返回状态
-        
-        Args:
-            prompt_id: 工作流的prompt_id
-        
-        Returns:
-            bool: 工作流是否成功完成
-        """
+        """等待工作流完成并返回状态"""
         debug("等待工作流处理完成...")
 
-        # 设置最大等待时间为1800秒（30分钟）
-        max_wait_time = 1800
+        # 设置最大等待时间为1800秒（30分钟），增加处理复杂任务的时间
+        # 可以根据需要调整这个值
+        max_wait_time = get_task_config().get('task_timeout_seconds', 1800)
         start_time = time.time()
         # 连续失败计数
         consecutive_failures = 0
@@ -309,6 +303,7 @@ class ComfyUIApi:
                     return False
 
                 time.sleep(2)  # 失败时等待更长时间再重试
+
 
     def get_workflow_outputs(self, prompt_id: str, output_path: str) -> tuple[bool, list[str]]:
         """
@@ -394,13 +389,13 @@ class ComfyUIApi:
                         debug(f"[ComfyUI API] {output_type}数量: {len(items)}")
                         
                         # 根据输出类型设置超时时间
-                        timeout = get_task_config().get('workflow_view_timeout_seconds', 60)    # 默认超时时间
+                        timeout = get_task_config().get('task_view_timeout_seconds', 60)    # 默认超时时间
                         if output_type == 'videos':
                             timeout *= 3  # 视频可能需要更长的时间
                         elif output_type == 'gifs':
                             timeout *= 2  # GIF可能需要更长的时间
                         debug(f"[ComfyUI API] {output_type}超时时间: {timeout}秒")
-                        max_retries = get_task_config().get('workflow_view_max_retries', 3)  # 默认重试次数
+                        max_retries = get_task_config().get('task_view_max_retries', 3)  # 默认重试次数
                         
                         for idx, item_info in enumerate(items):
                             # 确保item_info是字典类型
