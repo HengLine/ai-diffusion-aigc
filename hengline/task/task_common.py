@@ -21,13 +21,16 @@ class TaskCommonBorg:
     _lock = threading.RLock()  # 可重入锁，支持嵌套调用
     _initialized = False
     task_locks: Dict[str, threading.Lock] = {}  # 任务级别的锁 {task_id: threading.Lock}
-    task_locks_lock = threading.Lock()  # 用于保护task_locks字典的锁
+    _task_locks_lock = threading.Lock()  # 用于保护task_locks字典的锁
     running_tasks: Dict[str, Task] = {}  # 当前运行中的任务 {task_id: Task}
+    _running_tasks_lock = threading.Lock()  # 用于保护running_tasks字典的锁
     history_tasks: Dict[str, Task] = {}  # 今天的任务记录 {task_id: Task}
+    _history_tasks_lock = threading.Lock()  # 用于保护history_tasks字典的锁
     task_queue = queue.PriorityQueue(task_config.get("task_queue_size", 1024))  # 优先队列，按时间戳排序
 
     # 添加任务类型计数器，用于精确跟踪不同类型任务的排队数量
     # 避免每次查询时遍历整个队列
+    _task_type_counters_lock = threading.RLock()
     task_type_counters: Dict[str, int] = {
         "text_to_image": 0,
         "image_to_image": 0,
@@ -52,7 +55,10 @@ class TaskCommonBorg:
             self.__PriorityQueue__ = self.task_queue
             self.__threading__ = self._lock
             self.__dict__ = self.task_locks
-            self.__threading__ = self.task_locks_lock
+            self.__threading__ = self._task_locks_lock
+            self.__threading__ = self._running_tasks_lock
+            self.__threading__ = self._history_tasks_lock
+            self.__threading__ = self._task_type_counters_lock
 
             # 确保基类只初始化一次
             if not self._initialized:
@@ -193,7 +199,7 @@ class TaskCommonBorg:
 
     def _get_task_lock(self, task_id: str) -> threading.Lock:
         """获取指定任务的锁，如果不存在则创建"""
-        with self.task_locks_lock:
+        with self._task_locks_lock:
             if task_id not in self.task_locks:
                 self.task_locks[task_id] = threading.Lock()
             return self.task_locks[task_id]

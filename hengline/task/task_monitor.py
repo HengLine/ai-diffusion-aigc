@@ -121,15 +121,13 @@ class TaskMonitor(TaskBase):
                         if len(self.running_tasks) >= self.task_max_concurrent:
                             # 无法启动新任务，将任务放回队列
                             self.add_queue_task(task)
-                            self.task_type_counters[task.task_type] = self.task_type_counters.get(
-                                task.task_type, 0) + 1
                             return
 
                             # 更新任务状态和执行次数
                         task.status = "running"
                         task.start_time = time.time()
                         task.execution_count += 1  # 执行次数加1
-                        self.running_tasks[task.task_id] = task
+                        self.add_running_task(task.task_id, task)
 
                         # 记录到历史
                         self.add_history_task(task.task_id, task)
@@ -197,8 +195,7 @@ class TaskMonitor(TaskBase):
 
                                 # 将任务重新加入队列
                                 self.add_queue_task(task)
-                                self.task_type_counters[task.task_type] = self.task_type_counters.get(task.task_type,
-                                                                                                      0) + 1
+
                         elif result is None:
                             # 任务未返回结果，可能是执行过程中出错
                             task.status = "failed"

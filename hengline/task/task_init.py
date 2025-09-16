@@ -194,8 +194,7 @@ class StartupTaskListener(TaskBase):
 
                                 # 将任务重新加入队列
                                 self.add_queue_task(task)
-                                with task_queue_manager.lock:
-                                    self.task_type_counters[task.task_type] = self.task_type_counters.get(task.task_type, 0) + 1
+
                             else:
                                 # 超过重试次数，标记为最终失败
                                 task.status = "failed"
@@ -236,8 +235,7 @@ class StartupTaskListener(TaskBase):
 
                             # 将任务重新加入队列
                             self.add_queue_task(task)
-                            with task_queue_manager.lock:
-                                self.task_type_counters[task.task_type] = self.task_type_counters.get(task.task_type, 0) + 1
+
                         else:
                             # 超过重试次数，标记为最终失败
                             task.status = "failed"
@@ -308,11 +306,7 @@ class StartupTaskListener(TaskBase):
                 task.end_time = None
 
                 # 将任务重新加入队列
-                self.add_queue_task(task_id, task)
-
-                # 更新任务类型计数器
-                with task_queue_manager.lock:
-                    self.task_type_counters[task_type] = self.task_type_counters.get(task_type, 0) + 1
+                self.add_queue_task(task)
 
                 debug(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
 

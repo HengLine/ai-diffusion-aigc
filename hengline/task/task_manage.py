@@ -16,7 +16,6 @@ from hengline.logger import error, debug
 from hengline.task.task_base import TaskBase
 # 导入邮件发送模块
 from hengline.task.task_history import task_history
-from hengline.task.task_monitor import task_monitor
 from hengline.task.task_queue import Task
 
 
@@ -31,8 +30,6 @@ class TaskQueueManager(TaskBase):
         """
         self.lock = threading.Lock()  # 用于线程同步的主锁
 
-        # 启动任务处理线程
-        task_monitor.start()
 
     def enqueue_task(self, task_id: str, task_type: str, params: Dict[str, Any], callback: Callable) -> Tuple[str, int, float]:
         """
@@ -86,9 +83,6 @@ class TaskQueueManager(TaskBase):
 
             # 将任务加入队列
             self.add_queue_task(task)
-
-            # 更新任务类型计数器
-            self.task_type_counters[task_type] = self.task_type_counters.get(task_type, 0) + 1
 
             # 计算队列中的位置（包括正在运行的任务）
             queue_position = len(self.running_tasks) + self.task_queue.qsize()
@@ -176,7 +170,6 @@ class TaskQueueManager(TaskBase):
             debug(f"更新任务状态成功: {task_id}, 状态从 {old_status} 变为 {status}")
 
         # 异步保存任务历史
-        # self.add_history_task(task_id, task)
         task_history.async_save_task_history()
 
     def get_all_tasks(self, date=None):

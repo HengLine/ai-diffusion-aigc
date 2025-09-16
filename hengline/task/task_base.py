@@ -13,7 +13,8 @@ class TaskBase(TaskCommonBorg):
     """添加任务到运行中缓存"""
 
     def add_running_task(self, key, value: Task):
-        self.running_tasks[key] = value
+        with self._running_tasks_lock:
+            self.running_tasks[key] = value
 
     def get_running_task(self, key):
         return self.running_tasks.get(key)
@@ -21,7 +22,8 @@ class TaskBase(TaskCommonBorg):
     """添加任务到历史记录缓存"""
 
     def add_history_task(self, key, value: Task):
-        self.history_tasks[key] = value
+        with self._history_tasks_lock:
+            self.history_tasks[key] = value
 
     def get_history_task(self, key):
         return self.history_tasks.get(key)
@@ -33,6 +35,10 @@ class TaskBase(TaskCommonBorg):
             self.task_queue.put(priority, task)
         else:
             self.task_queue.put(task)
+
+        with self._task_type_counters_lock:
+            # 更新任务类型计数器
+            self.task_type_counters[task.task_type] = self.task_type_counters.get(task.task_type, 0) + 1
 
     def get_queue_task(self):
         return self.task_queue.get(timeout=2)
