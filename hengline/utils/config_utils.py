@@ -170,8 +170,7 @@ def save_comfyui_config(api_url=None, auto_start_server=None):
 def get_user_configs():
     """获取用户信息"""
     # 获取settings.user配置，考虑到配置结构变更
-    settings = get_config_section('settings', {})
-    return settings.get('user', {})
+    return get_settings_config().get('user', {})
 
 
 def get_settings_config():
@@ -180,14 +179,15 @@ def get_settings_config():
 
 
 # 任务相关配置
-def get_task_config():
+def get_task_config() -> dict[str, int]:
     """获取任务相关配置"""
     # 正确的配置路径应该是'settings.task'
-    settings = get_config_section('settings', {})
-    return settings.get('task', {
+    return get_settings_config().get('task', {
         'task_max_concurrent': 2,
         'task_max_retry': 3,
         'task_timeout_seconds': 3600,
+        'task_queue_size': 1024,
+        'task_cache_size': 1024,
         'task_view_timeout_seconds': 60,
         'task_view_max_retries': 3
     })
@@ -219,8 +219,7 @@ def get_output_config():
 def get_email_config():
     """获取邮件配置"""
     # 正确的路径应该是从settings节点下获取email配置
-    settings = get_config_section('settings', {})
-    return settings.get('email', {
+    return get_settings_config().get('email', {
         'enabled': False,
         'smtp_server': '',
         'smtp_port': 587,

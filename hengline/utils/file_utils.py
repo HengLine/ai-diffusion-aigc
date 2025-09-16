@@ -4,6 +4,8 @@
 文件处理工具模块
 """
 import os
+import time
+import uuid
 
 from werkzeug.utils import secure_filename
 
@@ -27,3 +29,23 @@ def save_uploaded_file(file, upload_folder):
         file.save(file_path)
         return file_path
     return None
+
+
+def generate_output_filename(filename):
+    """生成输出文件名"""
+    return f"{filename}_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
+
+def is_valid_image_file( file_path: str) -> bool:
+    """
+    检查文件是否为有效的图片文件
+
+    Args:
+        file_path: 文件路径
+
+    Returns:
+        bool: 是否为有效图片文件
+    """
+    # 检查文件扩展名
+    valid_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff']
+    _, ext = os.path.splitext(file_path.lower())
+    return ext in valid_extensions

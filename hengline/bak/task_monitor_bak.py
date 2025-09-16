@@ -12,13 +12,13 @@ from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 
 # 导入邮件发送模块
-from hengline.core.task_email import _async_send_failure_email, _async_send_success_email
+from hengline.task.task_email import _async_send_failure_email, _async_send_success_email
 # 导入任务队列管理器
-from hengline.core.task_queue import task_queue_manager
+from hengline.task.task_manage import task_queue_manager
 # 导入自定义日志模块
 from hengline.logger import error, debug, warning
 from hengline.utils.config_utils import config
-
+from hengline.utils.log_utils import print_log_exception
 
 
 class TaskMonitor:
@@ -82,6 +82,7 @@ class TaskMonitor:
                 self._check_tasks(current_thread)
             except Exception as e:
                 error(f"任务检查过程中出错: {str(e)}")
+                print_log_exception()
 
             # 等待指定的检查间隔
             for _ in range(self.check_interval):
@@ -138,11 +139,12 @@ class TaskMonitor:
                             tasks_to_save.add(task_id)
                 except Exception as e:
                     error(f"处理任务 {task_id} 时出错: {str(e)}")
+                    print_log_exception()
 
             # 如果有任务需要保存，批量异步保存
             if tasks_to_save:
                 debug(f"批量保存 {len(tasks_to_save)} 个任务历史")
-                task_queue_manager._async_save_history()
+                task_queue_manager.save_task_history()
         finally:
             # 确保锁被释放
             self._task_check_lock.release()

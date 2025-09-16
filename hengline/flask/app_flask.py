@@ -52,11 +52,9 @@ OUTPUT_FOLDER = os.path.join(project_root, get_output_folder())
 TEMP_FOLDER = os.path.join(project_root, 'temp')  # 使用固定的临时目录
 
 # 全局变量存储任务队列管理器
-from hengline.core.task_queue import task_queue_manager
-
-# from hengline.core.task_monitor import task_monitor
+from hengline.task.task_monitor import task_monitor
 # 导入启动任务监听器
-from hengline.core.task_init import startup_task_listener
+from hengline.task.task_init import task_init
 
 # 确保目录存在
 for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, TEMP_FOLDER]:
@@ -127,6 +125,7 @@ def serve_output(filename):
     """提供输出文件的路由"""
     return send_from_directory(OUTPUT_FOLDER, filename)
 
+
 @app.route('/configs/<filename>')
 def serve_config_file(filename):
     """提供配置文件的路由"""
@@ -139,24 +138,14 @@ def handle_shutdown(signum, frame):
     info("接收到终止信号，正在异步关闭任务队列管理器...")
 
     # 停止任务监控器
-    # task_monitor.stop()
-
-    # 异步调用shutdown方法
-    shutdown_thread = threading.Thread(target=task_queue_manager.shutdown)
+    shutdown_thread = threading.Thread(target=task_monitor.stop())
     shutdown_thread.daemon = True
     shutdown_thread.start()
 
     # 等待一段时间让异步关闭有时间完成
-    time.sleep(2)
+    time.sleep(3)
 
-    # 停止ComfyUI服务器
-    global runner, server_process
-    if server_process and runner:
-        runner.stop_comfyui_server(server_process)
-        server_process = None
-        runner = None
-
-    info("服务正在关闭...")
+    info("服务正在关闭，请稍等片刻......")
 
     # 在信号处理上下文中，我们不应该尝试通过request.environ获取shutdown函数
     # 因为此时没有活跃的HTTP请求上下文，直接退出程序
@@ -166,15 +155,8 @@ def handle_shutdown(signum, frame):
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
     """关闭服务器的路由"""
-    # 停止ComfyUI服务器
-    global runner, server_process
-    if server_process and runner:
-        runner.stop_comfyui_server(server_process)
-        server_process = None
-        runner = None
-
     # 异步调用shutdown方法
-    shutdown_thread = threading.Thread(target=task_queue_manager.shutdown)
+    shutdown_thread = threading.Thread(target=task_monitor.stop())
     shutdown_thread.daemon = True
     shutdown_thread.start()
 
@@ -183,14 +165,14 @@ def shutdown():
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
     func()
-    return 'Server shutting down...'
+    return '服务正在关闭，请稍等片刻......'
 
 
 def run_flask_app():
     """\在独立函数中运行Flask应用，便于信号处理"""
     try:
         # 启动Flask应用 - 在Windows上强制禁用reloader
-        app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+        app.run(debug=True, host='0.0.0.0', port=8000, use_reloader=False)
     except KeyboardInterrupt:
         info("Flask应用被用户中断")
         handle_shutdown(None, None)
@@ -212,17 +194,15 @@ if __name__ == '__main__':
             # 抛出KeyboardInterrupt异常以终止主循环
             raise KeyboardInterrupt("Windows平台强制中断应用")
 
+
         # 设置信号处理器
         signal.signal(signal.SIGINT, windows_sigint_handler)
         debug("已设置Windows平台信号处理器")
 
     # 异步启动任务监听器，处理历史未完成任务
-    startup_task_thread = threading.Thread(target=startup_task_listener.start, name="StartupTaskListenerThread")
-    startup_task_thread.daemon = True
-    startup_task_thread.start()
-
+    task_init.start()
     # 启动任务监控器
-    # task_monitor.start()
+    task_monitor.start()
 
     # 在主进程中运行Flask应用，确保信号可以正确捕获
     try:

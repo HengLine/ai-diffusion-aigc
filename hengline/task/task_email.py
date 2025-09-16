@@ -3,10 +3,11 @@ import threading
 from datetime import datetime
 
 from hengline.logger import error
+from hengline.common import get_name_by_type
 from hengline.utils.email_utils import email_sender
 
 
-def _async_send_failure_email(task_id: str, task_type: str, task_msg: str, max_retry_count: int):
+def async_send_failure_email(task_id: str, task_type: str, task_msg: str, max_retry_count: int):
     # 异步发送邮件通知
     threading.Thread(
         target=_send_failure_email,
@@ -15,25 +16,13 @@ def _async_send_failure_email(task_id: str, task_type: str, task_msg: str, max_r
     ).start()
 
 
-def get_name_by_type(task_type: str):
-    if task_type == 'text_to_image':
-        return '文本生图片'
-    elif task_type == 'image_to_image':
-        return '图片生图片'
-    elif task_type == 'image_to_video':
-        return '图片生视频'
-    elif task_type == 'text_to_video':
-        return '文本生视频'
-    else:
-        return '未知任务类型'
-
 def _send_failure_email(task_id: str, task_type: str, task_msg: str, max_execution_count: int):
     """发送任务失败邮件通知"""
     try:
         # 直接同步调用邮件发送函数
         email_sender.send_user_email(
             subject=f"您提交的AIGC 任务执行失败了",
-            message = f"""
+            message=f"""
                 您提交的{get_name_by_type(task_type)}任务 （{task_id}） 已重试（{max_execution_count}次）
                 但是由于：{task_msg}
                 请检查后再次提交任务。
@@ -44,7 +33,7 @@ def _send_failure_email(task_id: str, task_type: str, task_msg: str, max_executi
         error(f"发送任务失败，邮件通知失败: {str(e)}")
 
 
-def _async_send_success_email(task_id: str, task_type: str, start_time: float, end_time: float):
+def async_send_success_email(task_id: str, task_type: str, start_time: float, end_time: float):
     # 异步发送邮件通知
     threading.Thread(
         target=_send_success_email,
