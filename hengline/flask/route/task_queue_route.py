@@ -1,3 +1,5 @@
+from urllib.parse import quote, unquote
+
 from flask import Blueprint, jsonify, url_for, request
 
 from hengline.task.task_manage import task_queue_manager
@@ -139,20 +141,19 @@ def get_task_result(task_id):
             }), 404
 
         # 从task_history中获取原始任务对象，以获取完整的参数信息
-        task = task_queue_manager.task_history.get(task_id)
+        task = task_queue_manager.history_tasks.get(task_id)
         prompt = task.params.get("prompt", "") if task and task.params else ""
         negative_prompt = task.params.get("negative_prompt", "") if task and task.params else ""
 
         # 构建结果URL列表
         result_filenames = []
-        result_urls = []
-        
+
         # 优先使用多个输出文件（如果有）
         if task and hasattr(task, 'output_filenames') and task.output_filenames:
             result_filenames = task.output_filenames
         elif task and hasattr(task, 'output_filename') and task.output_filename:
             # 向后兼容：如果只有单个输出文件
-            result_filenames = [task.output_filename]
+            result_filenames = task.output_filename
         
         # 如果没有保存输出文件名，尝试使用旧的命名方式
         if not result_filenames:
@@ -165,7 +166,7 @@ def get_task_result(task_id):
             }
 
             extension = extensions.get(task_status['task_type'], 'png')
-            result_filenames = [f"{task_status['task_id']}.{extension}"]
+            result_filenames = f"{task_status['task_id']}.{extension}"
 
         # 构建完整的结果URL列表
         result_urls = [url_for('serve_output', filename=filename, _external=True) for filename in result_filenames]

@@ -51,6 +51,7 @@ def api_text_to_image():
             data = request.get_json()
         except Exception as e:
             error(f"[{request_id}] JSON数据解析失败: {str(e)}")
+            print_log_exception()
             # 尝试直接读取原始请求体，用于调试
             try:
                 raw_data = request.get_data().decode('utf-8')

@@ -17,6 +17,7 @@ from hengline.task.task_base import TaskBase
 # 导入邮件发送模块
 from hengline.task.task_history import task_history
 from hengline.task.task_queue import Task
+from hengline.utils.log_utils import print_log_exception
 
 
 class TaskQueueManager(TaskBase):
@@ -257,6 +258,7 @@ class TaskQueueManager(TaskBase):
             return all_tasks
         except Exception as e:
             error(f"获取任务列表失败: {str(e)}")
+            print_log_exception()
             return []
 
 

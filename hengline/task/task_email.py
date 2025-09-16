@@ -5,6 +5,7 @@ from datetime import datetime
 from hengline.logger import error
 from hengline.common import get_name_by_type
 from hengline.utils.email_utils import email_sender
+from hengline.utils.log_utils import print_log_exception
 
 
 def async_send_failure_email(task_id: str, task_type: str, task_msg: str, max_retry_count: int):
@@ -31,6 +32,7 @@ def _send_failure_email(task_id: str, task_type: str, task_msg: str, max_executi
         )
     except Exception as e:
         error(f"发送任务失败，邮件通知失败: {str(e)}")
+        print_log_exception()
 
 
 def async_send_success_email(task_id: str, task_type: str, start_time: float, end_time: float):
@@ -61,3 +63,4 @@ def _send_success_email(task_id: str, task_type: str, start_time: float, end_tim
         )
     except Exception as e:
         error(f"发送任务成功邮件通知失败: {str(e)}")
+        print_log_exception()

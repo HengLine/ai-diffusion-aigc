@@ -10,6 +10,8 @@ from flask import json
 from hengline.logger import info, debug, error, warning
 from hengline.task.task_queue import Task
 from hengline.utils.config_utils import get_task_config, get_comfyui_config
+from hengline.utils.file_utils import file_exists
+from hengline.utils.log_utils import print_log_exception
 
 
 class TaskCommonBorg:
@@ -109,7 +111,9 @@ class TaskCommonBorg:
             loaded_task_count = 0
 
             for file_path in history_files:
-                file_name = os.path.basename(file_path)
+                if not file_exists(file_path):
+                    warning(f"任务历史文件不存在: {file_path}")
+                    continue
 
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
@@ -127,13 +131,15 @@ class TaskCommonBorg:
                         self._select_history_task(task)
 
                 except Exception as e:
-                    error(f"处理任务历史文件 {file_name} 失败: {str(e)}")
+                    error(f"处理任务历史文件 {os.path.basename(file_path)} 失败: {str(e)}")
+                    print_log_exception()
 
             debug(f"已加载今天历史任务，共 {loaded_task_count} 个任务")
-            debug(f"已将今天 {len(self.cache_init_tasks) if self.cache_init_tasks else 0} 个排队中的任务添加到队列")
+            debug(f"已将今天 {len(self.cache_init_tasks)} 个排队中的任务添加到队列")
 
         except Exception as e:
             error(f"加载今天的历史失败: {str(e)}")
+            print_log_exception()
 
     def _select_history_task(self, task: Task):
         """从队列中选择任务"""
@@ -157,7 +163,6 @@ class TaskCommonBorg:
         self.cache_init_tasks[task.task_id] = task
         debug(f"已添加任务 {task.task_id} 到初始化任务列表")
 
-
     # 填充任务默认值
     def _fill_task_defaults(self, task_data) -> Task:
         task_lock = self._get_task_lock(task_data['task_id'])
@@ -170,6 +175,8 @@ class TaskCommonBorg:
             task_lock=task_lock,  # 传入任务锁
             callback=lambda params: None  # 加载的任务不需要回调函数
         )
+        if 'prompt_id' in task_data:
+            task.prompt_id = task_data['prompt_id']
 
         # 恢复输出文件名
         if 'output_filename' in task_data:

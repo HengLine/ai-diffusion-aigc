@@ -28,17 +28,17 @@ class TaskMonitor(TaskBase):
 
         """
         super().__init__()
-        self._running = False
+        self._monitor_running = False
         self._monitor_thread = None
         self.comfyui_runner = None
-        self._instance_id = str(uuid.uuid4())[:8]  # 生成一个简短的实例ID  # 生成一个简短的实例ID
-        self._process_id = os.getpid()  # 获取当前进程ID
+        self._monitor_instance_id = str(uuid.uuid4())[:8]  # 生成一个简短的实例ID  # 生成一个简短的实例ID
+        self._monitor_process_id = os.getpid()  # 获取当前进程ID
         self._task_monitor_lock = threading.Lock()  # 添加线程锁以防止并发执行
 
     def start(self):
         """启动任务监控器"""
         with self._task_monitor_lock:
-            if self._running:
+            if self._monitor_running:
                 debug("队列任务监控器已经在运行中")
                 return
 
@@ -46,17 +46,17 @@ class TaskMonitor(TaskBase):
             info("          启动实时任务监听器          ")
             info("=" * 50)
 
-            self._running = True
-            self._monitor_thread = threading.Thread(target=self._monitor_loop, name=f"TaskMonitorThread-{self._instance_id}")
+            self._monitor_running = True
+            self._monitor_thread = threading.Thread(target=self._monitor_loop, name=f"TaskMonitorThread-{self._monitor_instance_id}")
             self._monitor_thread.daemon = True
             self._monitor_thread.start()
 
-            info(f"队列任务监控器已启动({threading.current_thread().name}) - 实例ID: {self._instance_id}, 进程ID: {self._process_id}")
+            info(f"队列任务监控器已启动({threading.current_thread().name}) - 实例ID: {self._monitor_instance_id}, 进程ID: {self._monitor_process_id}")
 
     def stop(self):
         """停止任务监控器"""
         with self._task_monitor_lock:
-            if not self._running:
+            if not self._monitor_running:
                 warning("队列任务监控器未运行")
                 return
 
@@ -72,7 +72,7 @@ class TaskMonitor(TaskBase):
             # 保存任务历史
             task_history.save_task_history()
 
-            self._running = False
+            self._monitor_running = False
             if self._monitor_thread and self._monitor_thread.is_alive():
                 self._monitor_thread.join(timeout=5)
 
@@ -84,11 +84,12 @@ class TaskMonitor(TaskBase):
 
         debug(f"监控循环开始执行 - 线程ID: {current_thread.ident}, 线程名称: {current_thread.name}")
 
-        while self._running:
+        while self._monitor_running:
             try:
                 self._process_tasks()
             except Exception as e:
                 error(f"任务检查过程中出错: {str(e)}")
+                print_log_exception()
             finally:
                 # 等待指定的检查间隔
                 time.sleep(0.5)
@@ -170,21 +171,14 @@ class TaskMonitor(TaskBase):
                         # 检查任务是否遇到连接异常
                         elif result and isinstance(result, dict) and result.get('queued'):
                             # 从配置中获取最大重试次数（默认为3）
-                            max_retry_count = 3
-                            try:
-                                from hengline.utils.config_utils import get_task_config
-                                max_retry_count = get_task_config().get('task_max_retry', 3)
-                            except:
-                                pass
-
                             # 检查是否超过最大重试次数
-                            if task.execution_count > max_retry_count:
-                                warning(f"任务 {task.task_id} 执行次数已达到最大限制 {max_retry_count}，不再重试")
+                            if task.execution_count > self.task_max_retry:
+                                warning(f"任务 {task.task_id} 执行次数已达到最大限制 {self.task_max_retry}，不再重试")
                                 task.status = "failed"
-                                task.task_msg = f"ComfyUI 工作流连接超时，任务已重试 {max_retry_count} 次。请检查ComfyUI服务器是否运行，或配置中URL是否正确。"
+                                task.task_msg = f"ComfyUI 工作流连接超时，任务已重试 {self.task_max_retry} 次。请检查ComfyUI服务器是否运行，或配置中URL是否正确。"
                                 task.end_time = time.time()
 
-                                async_send_failure_email(task.task_id, task.task_type, task.task_msg, max_retry_count)
+                                async_send_failure_email(task.task_id, task.task_type, task.task_msg, self.task_max_retry)
 
                             else:
                                 # 如果未超过最大重试次数，将任务重新加入队列
@@ -257,6 +251,7 @@ class TaskMonitor(TaskBase):
 
                 except Exception as e:
                     error(f"任务完成回调处理异常: {task.task_id}, 错误: {str(e)}")
+                    print_log_exception()
 
             # 使用异步方式执行回调函数，不阻塞主线程
             self._execute_callback_async(task, timeout, task_completion_callback)
@@ -267,7 +262,7 @@ class TaskMonitor(TaskBase):
             # 使用任务级锁更新任务状态
             with task_lock:
                 task.status = "failed"
-                task.task_msg = f"任务执行异常: {str(e)}"
+                task.task_msg = f"任务执行异常了: {str(e)}"
                 task.end_time = time.time()
 
                 # 从运行中任务列表移除
@@ -306,9 +301,9 @@ class TaskMonitor(TaskBase):
                     asyncio.set_event_loop(loop)
                     try:
                         # 使用事件循环运行协程函数
-                        result = loop.run_until_complete(
+                        result =  loop.run_until_complete(
                             asyncio.wait_for(
-                                task.callback(task.params),
+                                task.callback(task.task_type, task.params, task.task_id),
                                 timeout=timeout - 10  # 留出一点时间处理超时逻辑
                             )
                         )
@@ -318,9 +313,11 @@ class TaskMonitor(TaskBase):
                         loop.close()
                 else:
                     # 对于普通函数，直接调用
-                    result = task.callback(task.task_type, task.params, task.task_id)
-                    task_completed = False
+                    result = task.callback(task.params)
+                    task_completed = True
             except Exception as e:
+                error(f"任务执行异常: {task.task_id}, 错误: {str(e)}")
+                print_log_exception()
                 exception = e
                 task_completed = True
             finally:

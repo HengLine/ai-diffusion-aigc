@@ -1,5 +1,6 @@
 # 导入asyncio用于处理协程
 from hengline.logger import debug, error
+from hengline.utils.log_utils import print_log_exception
 
 
 def get_name_by_type(task_type: str):
@@ -35,3 +36,4 @@ def update_average_duration(self, task_type: str, duration: float):
         debug(f"更新任务类型 {task_type} 的平均执行时间: 旧值={old_avg:.1f}秒, 新值={new_avg:.1f}秒")
     except Exception as e:
         error(f"异步更新平均执行时间失败: {str(e)}")
+        print_log_exception()

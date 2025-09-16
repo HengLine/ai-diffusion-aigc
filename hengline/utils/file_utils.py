@@ -6,6 +6,7 @@
 import os
 import time
 import uuid
+from pathlib import Path
 
 from werkzeug.utils import secure_filename
 
@@ -31,9 +32,9 @@ def save_uploaded_file(file, upload_folder):
     return None
 
 
-def generate_output_filename(filename):
+def generate_output_filename(task_type):
     """生成输出文件名"""
-    return f"{filename}_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
+    return f"{task_type}_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
 
 def is_valid_image_file( file_path: str) -> bool:
     """
@@ -49,3 +50,8 @@ def is_valid_image_file( file_path: str) -> bool:
     valid_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff']
     _, ext = os.path.splitext(file_path.lower())
     return ext in valid_extensions
+
+def file_exists(file_path):
+    """检查文件是否存在"""
+    path = Path(file_path)
+    return path.is_file()

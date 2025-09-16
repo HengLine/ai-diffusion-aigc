@@ -26,6 +26,7 @@ class Task:
         except (ValueError, TypeError):
             self.timestamp = time.time()
         self.params = params  # 任务参数
+        self.prompt_id = None  # 任务关联的，提交任务生成的prompt_id
         self.callback = callback  # 任务完成后的回调函数
         self.start_time = None  # 任务开始执行时间
         self.end_time = None  # 任务结束时间

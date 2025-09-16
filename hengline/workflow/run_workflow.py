@@ -3,6 +3,7 @@
 """
 运行ComfyUI工作流的主脚本
 """
+import asyncio
 import json
 import os
 import sys
@@ -12,6 +13,7 @@ import requests
 
 from hengline.logger import debug, info, error, warning
 from hengline.task.task_manage import task_queue_manager
+from hengline.utils.config_utils import get_task_config
 from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.workflow_comfyui import comfyui_api
 from hengline.workflow.workflow_status_checker import workflow_status_checker
@@ -33,6 +35,8 @@ class ComfyUIRunner:
         """
         self.output_dir = output_dir
         self.api_url = api_url
+        self.task_timeout_seconds = get_task_config().get('task_timeout_seconds', 1800)
+        self.task_view_timeout_seconds = get_task_config().get('task_view_timeout_seconds', 200)
 
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)
@@ -160,13 +164,13 @@ class ComfyUIRunner:
             debug(f"异常详情: {traceback.format_exc()}")
             return {"success": False, "message": f"工作流运行失败: {str(e)}"}
 
-    def async_run_workflow(self, workflow, output_path, on_complete=None, on_error=None, task_id=None):
+    def async_run_workflow(self, workflow, output_name, on_complete=None, on_error=None, task_id=None):
         """
         异步运行工作流
         
         Args:
             workflow: 工作流数据
-            output_path: 输出文件路径
+            output_name: 输出文件路径
             on_complete: 工作流完成时的回调函数
             on_error: 工作流出错时的回调函数
             task_id: 可选的外部任务ID，如果不提供则内部生成
@@ -211,9 +215,16 @@ class ComfyUIRunner:
                     on_error(error_msg)
                 return ""
 
+            if on_complete:
+                on_complete(task_id, prompt_id)
+
+            # 4. 启动定时器，等待工作流完成
+
             # 5. 定义工作流完成处理函数
             def handle_workflow_completion(prompt_id, success):
                 if success:
+                    output_path = os.path.join(self.output_dir, output_name)
+
                     # 获取工作流输出
                     outputs_success, file_paths = comfyui_api.get_workflow_outputs(prompt_id, output_path)
                     if outputs_success:
@@ -224,8 +235,8 @@ class ComfyUIRunner:
                             task_queue_manager.update_task_status(task_id, "completed",
                                                                   "工作流执行完成", file_paths)
 
-                        if on_complete:
-                            on_complete(file_paths, task_id, prompt_id)
+                        # if on_complete:
+                        #     on_complete(file_paths, task_id, prompt_id)
                     else:
                         error_msg = "工作流执行成功但获取输出失败"
                         error(error_msg)
@@ -236,6 +247,7 @@ class ComfyUIRunner:
 
                         if on_error:
                             on_error(error_msg)
+
                 else:
                     error_msg = "工作流执行失败"
                     error(error_msg)
@@ -278,3 +290,37 @@ class ComfyUIRunner:
             if on_error:
                 on_error(error_msg)
             return ""
+
+    def timer_get_outputs(self, prompt_id, output_path, timeout=30):
+        """
+        定时获取工作流输出，直到成功或超时
+
+        Args:
+            prompt_id: 工作流的prompt_id
+            output_path: 输出文件路径
+            timeout: 超时时间，单位秒，默认300秒
+
+        Returns:
+            tuple: (bool, list) 第一个元素表示是否成功，第二个元素是输出文件路径列表
+        """
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                # 使用事件循环运行协程函数
+                result = loop.run_until_complete(
+                    asyncio.wait_for(
+                        comfyui_api.get_workflow_outputs(prompt_id, output_path),
+                        timeout=timeout
+                    )
+                )
+                return result
+            except asyncio.TimeoutError:
+                error(f"获取工作流输出超时({timeout}秒)，prompt_id: {prompt_id}")
+                return False, []
+            finally:
+                loop.close()
+        except Exception as e:
+            error(f"获取工作流输出失败: {str(e)}")
+            print_log_exception()
+            return False, []

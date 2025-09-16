@@ -91,7 +91,7 @@ class WorkflowManager:
             'waiting_time': waiting_str
         }
 
-    def _execute_common(self, task_type, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
+    async def _execute_common(self, task_type, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
         """
         执行文本到图像的工作流（异步版本）
 
@@ -156,9 +156,10 @@ class WorkflowManager:
             output_filename = generate_output_filename(task_type)
 
             # 异步运行工作流并设置回调函数
-            def on_completion(output_paths, task_id, prompt_id):
-                debug(f"文生图工作流完成，输出文件路径: {output_paths}")
-                task_queue_manager.history_tasks[task_id].params['prompt_id'] = prompt_id
+            def on_completion(task_id, prompt_id):
+                debug(f"文生图工作流完成，输出文件路径: {prompt_id}")
+                task_queue_manager.history_tasks[task_id].prompt_id = prompt_id
+                # task_history.async_save_task_history()
 
             def on_error(error_message):
                 debug(f"文生图工作流失败: {error_message}")
@@ -186,3 +187,17 @@ class WorkflowManager:
             # 添加详细的异常信息
             print_log_exception()
             return {"success": False, "message": f"执行{task_id}工作流时出错: {str(e)}"}
+
+    async def execute_common(self, task_type, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
+        """
+        执行文本到图像的工作流（同步版本）
+        Args:
+            params: 工作流参数
+            task_id: 从外部传入的任务ID
+        Returns:
+            Dict[str, Any]: 工作流执行结果
+        """
+        return await self._execute_common(task_type, params, task_id)
+
+
+workflow_manager = WorkflowManager()

@@ -401,6 +401,7 @@ class ComfyUIApi:
                                                 time.sleep(1)
                                             except Exception as write_err:
                                                 error(f"[ComfyUI API] 写入{output_type}文件失败: {str(write_err)}")
+                                                print_log_exception()
                                                 retry_count += 1
                                                 time.sleep(1)
                                         else:
@@ -492,6 +493,7 @@ class ComfyUIApi:
             return False, []
         except Exception as e:
             error(f"获取工作流输出时出错: {str(e)}")
+            print_log_exception()
             return False, []
 
 # 全局ComfyUIApi实例，方便其他模块直接使用

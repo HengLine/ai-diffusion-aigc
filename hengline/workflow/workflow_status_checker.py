@@ -13,6 +13,7 @@ import requests
 
 from hengline.logger import debug, error
 from hengline.utils.config_utils import get_task_config
+from hengline.utils.log_utils import print_log_exception
 
 
 class WorkflowStatusChecker:
@@ -24,8 +25,8 @@ class WorkflowStatusChecker:
         self.checking_tasks_lock = threading.Lock()
         self.default_check_interval = 10  # 默认检查间隔（秒）
         self.max_check_interval = 30  # 最大检查间隔（秒）
-        self.task_timeout_seconds = get_task_config().get('task_view_timeout_seconds', 1800)  # 默认超时时间
-        self.max_consecutive_failures = get_task_config().get('task_view_max_retries', 5)  # 连续失败次数上限
+        self.task_timeout_seconds = get_task_config().get('task_timeout_seconds', 1800)  # 默认超时时间
+        self.max_consecutive_failures = get_task_config().get('task_max_retry', 5)  # 连续失败次数上限
 
     def check_workflow_status_async(self, prompt_id: str, api_url: str,
                                     on_complete: Callable[[str, bool], None],
@@ -51,8 +52,8 @@ class WorkflowStatusChecker:
         # 如果没有提供task_id，则在内部生成
         if task_id is None:
             task_id = f"check_{prompt_id}_{int(time.time())}"
-        check_interval = check_interval or self.default_check_interval
-        timeout_seconds = timeout_seconds or self.task_timeout_seconds
+        check_interval = check_interval if check_interval else self.default_check_interval
+        timeout_seconds = timeout_seconds if timeout_seconds else self.task_timeout_seconds
         max_consecutive_failures = self.max_consecutive_failures
 
         # 限制检查间隔在合理范围内
@@ -122,6 +123,7 @@ class WorkflowStatusChecker:
                 on_timeout(prompt_id)
             except Exception as e:
                 error(f"执行超时回调时出错: {str(e)}")
+                print_log_exception()
 
             # 移除任务
             with self.checking_tasks_lock:
@@ -174,6 +176,7 @@ class WorkflowStatusChecker:
                             on_complete(prompt_id, True)
                         except Exception as e:
                             error(f"执行完成回调时出错: {str(e)}")
+                            print_log_exception()
 
                         # 移除任务
                         with self.checking_tasks_lock:
@@ -189,6 +192,7 @@ class WorkflowStatusChecker:
                             on_complete(prompt_id, False)
                         except Exception as e:
                             error(f"执行完成回调时出错: {str(e)}")
+                            print_log_exception()
 
                         # 移除任务
                         with self.checking_tasks_lock:
@@ -250,6 +254,7 @@ class WorkflowStatusChecker:
                     on_complete(prompt_id, False)
                 except Exception as e:
                     error(f"执行完成回调时出错: {str(e)}")
+                    print_log_exception()
 
                 # 移除任务
                 with self.checking_tasks_lock:
@@ -268,6 +273,7 @@ class WorkflowStatusChecker:
         except Exception as e:
             consecutive_failures += 1
             error(f"检查工作流状态时出错（第{consecutive_failures}次）: {str(e)}")
+            print_log_exception()
 
             # 更新连续失败计数
             with self.checking_tasks_lock:
@@ -283,6 +289,7 @@ class WorkflowStatusChecker:
                     on_complete(prompt_id, False)
                 except Exception as e:
                     error(f"执行完成回调时出错: {str(e)}")
+                    print_log_exception()
 
                 # 移除任务
                 with self.checking_tasks_lock:

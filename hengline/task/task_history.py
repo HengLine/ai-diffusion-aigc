@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from hengline.logger import error, debug, warning
 from hengline.task.task_base import TaskBase
+from hengline.utils.log_utils import print_log_exception
 
 
 class TaskHistoryManager(TaskBase):
@@ -54,9 +55,11 @@ class TaskHistoryManager(TaskBase):
 
                 except Exception as e:
                     error(f"处理任务历史文件 {file_name} 失败: {str(e)}")
+                    print_log_exception()
 
         except Exception as e:
             error(f"加载任务历史失败: {str(e)}")
+            print_log_exception()
 
     def async_save_task_history(self):
         """保存任务历史到按日期分类的文件 - 优化版本"""
@@ -97,6 +100,9 @@ class TaskHistoryManager(TaskBase):
                         'output_filenames': task.output_filenames,
                         'execution_count': task.execution_count
                     }
+
+                    if task.prompt_id:
+                        task_data['prompt_id'] = task.prompt_id
 
                     # 添加任务消息
                     if task.task_msg:
@@ -142,6 +148,7 @@ class TaskHistoryManager(TaskBase):
             debug(f"已异步保存任务历史")
         except Exception as e:
             error(f"异步保存任务历史失败: {str(e)}")
+            print_log_exception()
 
 
 task_history = TaskHistoryManager()

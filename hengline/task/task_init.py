@@ -30,6 +30,7 @@ from hengline.task.task_manage import task_queue_manager
 from hengline.task.task_email import async_send_failure_email
 # 导入工作流状态检查器
 from hengline.workflow.workflow_status_checker import workflow_status_checker
+from hengline.workflow.workflow_core import workflow_manager
 
 
 class StartupTaskListener(TaskBase):
@@ -39,18 +40,17 @@ class StartupTaskListener(TaskBase):
         """初始化启动任务监听器"""
         super().__init__()
         self.lock = Lock()
-        self.processed_tasks_count = 0
-        self._running = False
+        self._init_running = False
         self._init_thread = None
-        self._instance_id = None  # 生成一个简短的实例ID
-        self._process_id = os.getpid()  # 获取当前进程ID
+        self._init_instance_id = None  # 生成一个简短的实例ID
+        self._init_process_id = os.getpid()  # 获取当前进程ID
         self._task_init_lock = threading.Lock()  # 添加线程锁以防止并发执行
 
     def start(self):
         """启动监听器，处理历史任务"""
 
         with self._task_init_lock:
-            if self._running:
+            if self._init_running:
                 debug("历史任务监控器已经在运行中")
                 return
 
@@ -58,13 +58,13 @@ class StartupTaskListener(TaskBase):
             info("          启动历史任务监听器          ")
             info("=" * 50)
 
-            self._instance_id = str(uuid.uuid4())[:8]  # 生成一个简短的实例ID
-            self._running = True
-            self._init_thread = threading.Thread(target=self._process_historical_tasks, name=f"StartupTaskListenerThread-{self._instance_id}")
+            self._init_instance_id = str(uuid.uuid4())[:8]  # 生成一个简短的实例ID
+            self._init_running = True
+            self._init_thread = threading.Thread(target=self._process_historical_tasks, name=f"StartupTaskListenerThread-{self._init_instance_id}")
             self._init_thread.daemon = True
             self._init_thread.start()
 
-            info(f"历史任务监控器已启动({threading.current_thread().name}) - 实例ID: {self._instance_id}, 进程ID: {self._process_id}")
+            info(f"历史任务监控器已启动({threading.current_thread().name}) - 实例ID: {self._init_instance_id}, 进程ID: {self._init_process_id}")
 
             # 加载并处理历史任务
             # info(f"启动任务监听器处理完成，共处理了 {self.processed_tasks_count} 个任务")
@@ -112,9 +112,9 @@ class StartupTaskListener(TaskBase):
                 # 运行中的任务，加入异步结果检查
                 self._handle_running_task_with_async_check(task.task_id, task.task_type)
 
-            self.processed_tasks_count += 1
         except Exception as e:
             error(f"处理任务 {task.task_type} 时发生异常: {str(e)}")
+            print_log_exception()
 
     def _handle_running_task_with_async_check(self, task_id: str, task_type):
         """处理运行中的任务，加入异步结果检查
@@ -139,9 +139,6 @@ class StartupTaskListener(TaskBase):
             current_time = time.time()
             runtime_seconds = current_time - task.start_time
 
-            # 获取prompt_id用于查询ComfyUI状态
-            prompt_id = task.params.get('prompt_id')
-
             # 如果超过最大运行时间，直接标记为失败
             if runtime_seconds > self.task_timeout_seconds:
                 debug(f"任务 {task_id} 运行时间超过{self.task_timeout_seconds} 秒，标记为失败")
@@ -162,9 +159,9 @@ class StartupTaskListener(TaskBase):
                 return
 
             # 如果没有prompt_id，则重新加入队列
-            if not prompt_id:
+            if not task.prompt_id:
                 debug(f"任务 {task_id} 没有prompt_id，重新加入队列")
-                self._requeue_task(task_id, task.task_type, "运行中任务无prompt_id，重新加入队列")
+                self._requeue_task(task_id, task.task_type, "任务无提交记录，重新执行一次")
                 return
 
             # 定义回调函数处理工作流完成或失败的情况
@@ -179,7 +176,7 @@ class StartupTaskListener(TaskBase):
                         if success:
                             # 任务完成
                             task.status = "completed"
-                            task.task_msg = f"任务执行成功，ComfyUI流程已完成: {prompt_id}"
+                            task.task_msg = f"任务执行成功，工作流已完成: {prompt_id}"
                             # 设置结束时间为当前时间
                             if not task.end_time:
                                 task.end_time = time.time()
@@ -187,9 +184,9 @@ class StartupTaskListener(TaskBase):
                         else:
                             # 任务失败，重新加入队列
                             if task.execution_count <= self.task_max_retry:
-                                warning(f"任务 {task_id} 在异步检查中失败，重新加入队列")
+                                warning(f"任务 {task_id} 在异步检查中失败，重新执行一次")
                                 task.status = "queued"
-                                task.task_msg = "ComfyUI 工作流连接失败，任务将在稍后重试"
+                                task.task_msg = "工作流连接失败，任务将在稍后重试"
                                 task.end_time = None  # 清除结束时间
 
                                 # 将任务重新加入队列
@@ -198,7 +195,7 @@ class StartupTaskListener(TaskBase):
                             else:
                                 # 超过重试次数，标记为最终失败
                                 task.status = "failed"
-                                task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次"
+                                task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次，不在执行。"
                                 task.end_time = time.time()
 
                                 # 发送失败邮件
@@ -255,15 +252,16 @@ class StartupTaskListener(TaskBase):
 
                 except Exception as e:
                     error(f"处理工作流超时回调时出错: {str(e)}")
+                    print_log_exception()
 
             # 计算剩余超时时间（基于最大运行时间）
             remaining_time_seconds = max(0, (self.task_timeout_seconds) - runtime_seconds)
-            timeout_seconds = min(3600, remaining_time_seconds)  # 最大超时1小时
+            timeout_seconds = min(7200, remaining_time_seconds)  # 最大超时1小时
 
             # 加入异步结果检查
-            debug(f"将任务 {task_id} 加入异步结果检查，prompt_id: {prompt_id}")
+            debug(f"将任务 {task_id} 加入异步结果检查，prompt_id: {task.prompt_id}")
             workflow_status_checker.check_workflow_status_async(
-                prompt_id=prompt_id,
+                prompt_id=task.prompt_id,
                 api_url=self.comfyui_api_url,
                 on_complete=on_complete,
                 on_timeout=on_timeout,
@@ -271,6 +269,7 @@ class StartupTaskListener(TaskBase):
             )
         except Exception as e:
             error(f"处理运行中任务 {task_id} 时发生异常: {str(e)}")
+            print_log_exception()
             # 发生异常时，尝试将任务重新加入队列
             try:
                 self._requeue_task(task_id, task_type, "查询状态异常，重新加入队列")
@@ -298,6 +297,8 @@ class StartupTaskListener(TaskBase):
                 # 更新任务状态为queued
                 task.status = "queued"
 
+                task.callback = workflow_manager.execute_common
+
                 # 设置任务消息
                 task.task_msg = reason
 
@@ -308,10 +309,11 @@ class StartupTaskListener(TaskBase):
                 # 将任务重新加入队列
                 self.add_queue_task(task)
 
-                debug(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
+                info(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
 
         except Exception as e:
             error(f"将任务 {task_id} 重新加入队列时发生异常: {str(e)}")
+            print_log_exception()
 
     def _mark_task_as_final_failure(self, task_id: str, task_type: str, execution_count: int):
         """将任务标记为最终失败
@@ -352,6 +354,7 @@ class StartupTaskListener(TaskBase):
 
         except Exception as e:
             error(f"将任务 {task_id} 标记为失败时发生异常: {str(e)}")
+            print_log_exception()
 
 
 # 创建全局启动任务监听器实例
