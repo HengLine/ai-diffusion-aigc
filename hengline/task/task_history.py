@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from hengline.logger import error, debug, warning
 from hengline.task.task_base import TaskBase
+from hengline.task.task_queue import TaskStatus
 from hengline.utils.log_utils import print_log_exception
 
 
@@ -45,10 +46,11 @@ class TaskHistoryManager(TaskBase):
                     # tasks_data.sort(key=lambda x: x.timestamp)
                     sorted(tasks_data, key=lambda x: x['timestamp'])
 
-                    tasks = []
+                    tasks = {}
                     for task_data in tasks_data:
                         # 创建任务对象
-                        tasks.append(self._fill_task_defaults(task_data))
+                        task = self._fill_task_defaults(task_data)
+                        tasks[task.task_id] = task
 
                     self.cache_query_tasks[task_date] = tasks
                     return tasks
@@ -84,7 +86,7 @@ class TaskHistoryManager(TaskBase):
                 yesterday = today - timedelta(days=1)
 
                 # 只处理今天和昨天的任务，以及状态为queued的任务
-                if (task_time >= yesterday and task_time < today + timedelta(days=1)) or task.status == "queued":
+                if (task_time >= yesterday and task_time < today + timedelta(days=1)) or TaskStatus.is_queued(task.status):
                     task_date = task_time.strftime('%Y-%m-%d')
                     if task_date not in tasks_by_date:
                         tasks_by_date[task_date] = []

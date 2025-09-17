@@ -13,6 +13,7 @@ import requests
 
 from hengline.logger import debug, info, error, warning
 from hengline.task.task_manage import task_queue_manager
+from hengline.task.task_queue import TaskStatus
 from hengline.utils.config_utils import get_task_config
 from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.workflow_comfyui import comfyui_api
@@ -184,7 +185,7 @@ class ComfyUIRunner:
                 error_msg = "ComfyUI服务器未运行"
                 error(error_msg)
                 if on_error:
-                    on_error(error_msg)
+                    on_error(task_id, error_msg)
                 return ""
 
             # 2. 确保workflow是字典格式
@@ -195,7 +196,7 @@ class ComfyUIRunner:
                     error_msg = "工作流格式无效，无法解析为JSON"
                     error(error_msg)
                     if on_error:
-                        on_error(error_msg)
+                        on_error(task_id, error_msg)
                     return ""
 
             # 3. 发送工作流到ComfyUI API
@@ -204,7 +205,7 @@ class ComfyUIRunner:
                 error_msg = f"提交工作流失败: {rssult.get('message', '未知错误') if rssult else '无响应'}"
                 error(error_msg)
                 if on_error:
-                    on_error(error_msg)
+                    on_error(task_id, error_msg)
                 return ""
 
             prompt_id = rssult.get("prompt_id")
@@ -212,7 +213,7 @@ class ComfyUIRunner:
                 error_msg = "无法获取prompt_id"
                 error(error_msg)
                 if on_error:
-                    on_error(error_msg)
+                    on_error(task_id, error_msg)
                 return ""
 
             if on_complete:
@@ -232,7 +233,7 @@ class ComfyUIRunner:
 
                         # 当工作流真正完成时，更新任务状态为completed
                         if task_id:
-                            task_queue_manager.update_task_status(task_id, "completed",
+                            task_queue_manager.update_task_status(task_id, TaskStatus.SUCCESS,
                                                                   "工作流执行完成", file_paths)
 
                         # if on_complete:
@@ -243,10 +244,10 @@ class ComfyUIRunner:
 
                         # 更新任务状态为failed
                         if task_id:
-                            task_queue_manager.update_task_status(task_id, "failed", error_msg)
+                            task_queue_manager.update_task_status(task_id, TaskStatus.FAILED, error_msg)
 
                         if on_error:
-                            on_error(error_msg)
+                            on_error(task_id, error_msg)
 
                 else:
                     error_msg = "工作流执行失败"
@@ -254,10 +255,10 @@ class ComfyUIRunner:
 
                     # 更新任务状态为failed
                     if task_id:
-                        task_queue_manager.update_task_status(task_id, "failed", error_msg)
+                        task_queue_manager.update_task_status(task_id, TaskStatus.FAILED, error_msg)
 
                     if on_error:
-                        on_error(error_msg)
+                        on_error(task_id, error_msg)
 
             # 定义工作流超时处理函数
             def handle_workflow_timeout(prompt_id):
@@ -266,10 +267,10 @@ class ComfyUIRunner:
 
                 # 更新任务状态为failed
                 if task_id:
-                    task_queue_manager.update_task_status(task_id, "failed", error_msg)
+                    task_queue_manager.update_task_status(task_id, TaskStatus.FAILED, error_msg)
 
                 if on_error:
-                    on_error(error_msg)
+                    on_error(task_id, error_msg)
 
             # 6. 异步检查工作流状态 asyncio.run(
             workflow_status_checker.check_workflow_status_async(
@@ -288,7 +289,7 @@ class ComfyUIRunner:
             print_log_exception()
             error(error_msg)
             if on_error:
-                on_error(error_msg)
+                on_error(task_id, error_msg)
             return ""
 
     def timer_get_outputs(self, prompt_id, output_path, timeout=30):

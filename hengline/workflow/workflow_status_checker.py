@@ -251,7 +251,7 @@ class WorkflowStatusChecker:
 
                 # 执行完成回调，标记为失败
                 try:
-                    on_complete(prompt_id, False)
+                    on_complete(prompt_id, False, "ComfyUI服务连接失败，服务器可能已宕机")
                 except Exception as e:
                     error(f"执行完成回调时出错: {str(e)}")
                     print_log_exception()

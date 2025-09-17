@@ -9,6 +9,7 @@ from typing import Dict, Any
 
 from hengline.logger import info, error, debug
 from hengline.task.task_manage import task_queue_manager
+from hengline.task.task_queue import TaskStatus
 # 导入配置工具
 from hengline.utils.config_utils import load_workflow_presets, get_comfyui_api_url, \
     get_output_folder, get_effective_config, get_workflow_path
@@ -103,7 +104,7 @@ class WorkflowManager:
             Dict[str, Any]: 工作流执行结果
         """
         try:
-            info(f"执行{task_type}的{task_id}工作流...")
+            info(f"开始执行{task_type}（{task_id}）工作流...")
             if not self.init_runner():
                 return {'success': False, 'message': '无法初始化工作流运行器'}
 
@@ -112,6 +113,7 @@ class WorkflowManager:
             server_running = comfyui_api.check_server_status()
             if not server_running:
                 error("无法连接到ComfyUI服务器，请确保服务器已启动")
+                # raise Exception("无法连接到ComfyUI服务器，请确保服务器已启动")
                 return {"success": False, "message": "无法连接到ComfyUI服务器，请确保服务器已启动"}
 
             # 获取工作流文件路径
@@ -156,14 +158,14 @@ class WorkflowManager:
             output_filename = generate_output_filename(task_type)
 
             # 异步运行工作流并设置回调函数
-            def on_completion(task_id, prompt_id):
-                debug(f"文生图工作流完成，输出文件路径: {prompt_id}")
-                task_queue_manager.history_tasks[task_id].prompt_id = prompt_id
-                # task_history.async_save_task_history()
+            def on_completion(on_task_id, on_prompt_id):
+                info(f"{on_task_id}任务提交成功，prompt_id: {on_prompt_id}")
+                # task_queue_manager.history_tasks[on_task_id].prompt_id = on_prompt_id
+                task_queue_manager.update_task_status(on_task_id, TaskStatus.RUNNING, "任务正在运行，请稍候...", prompt_id=on_prompt_id)
 
-            def on_error(error_message):
-                debug(f"文生图工作流失败: {error_message}")
-                # 这里可以添加任何工作流失败后的处理逻辑
+            def on_error(on_task_id, error_message):
+                error(f"{on_task_id}任务提交失败: {error_message}")
+                task_queue_manager.update_task_status(on_task_id, TaskStatus.FAILED, error_message)
 
             prompt_id = self.runner.async_run_workflow(
                 updated_workflow,

@@ -15,7 +15,7 @@ from hengline.logger import error, debug, warning, info
 from hengline.task.task_base import TaskBase
 from hengline.task.task_email import async_send_failure_email, async_send_success_email
 from hengline.task.task_history import task_history
-from hengline.task.task_queue import Task
+from hengline.task.task_queue import Task, TaskStatus
 from hengline.utils.log_utils import print_log_exception
 
 
@@ -125,7 +125,7 @@ class TaskMonitor(TaskBase):
                             return
 
                             # 更新任务状态和执行次数
-                        task.status = "running"
+                        task.status = TaskStatus.RUNNING.value
                         task.start_time = time.time()
                         task.execution_count += 1  # 执行次数加1
                         self.add_running_task(task.task_id, task)
@@ -165,16 +165,16 @@ class TaskMonitor(TaskBase):
                     with task_lock:
                         # 检查是否遇到异常
                         if exception:
-                            task.status = "failed"
+                            task.status = TaskStatus.FAILED.value
                             task.task_msg = f"任务执行异常: {str(exception)}"
                             task.end_time = time.time()
                         # 检查任务是否遇到连接异常
-                        elif result and isinstance(result, dict) and result.get('queued'):
+                        elif result and isinstance(result, dict) and result.get(TaskStatus.QUEUED.value):
                             # 从配置中获取最大重试次数（默认为3）
                             # 检查是否超过最大重试次数
                             if task.execution_count > self.task_max_retry:
                                 warning(f"任务 {task.task_id} 执行次数已达到最大限制 {self.task_max_retry}，不再重试")
-                                task.status = "failed"
+                                task.status = TaskStatus.FAILED.value
                                 task.task_msg = f"ComfyUI 工作流连接超时，任务已重试 {self.task_max_retry} 次。请检查ComfyUI服务器是否运行，或配置中URL是否正确。"
                                 task.end_time = time.time()
 
@@ -183,7 +183,7 @@ class TaskMonitor(TaskBase):
                             else:
                                 # 如果未超过最大重试次数，将任务重新加入队列
                                 warning(f"任务执行失败，ComfyUI服务器连接异常，将任务重新加入队列: {task.task_id}")
-                                task.status = "queued"
+                                task.status = TaskStatus.QUEUED.value
                                 task.task_msg = "ComfyUI 工作流连接超时，任务将在稍后重试。请检查ComfyUI服务器是否运行，或配置中URL是否正确。"
                                 task.end_time = None  # 清除结束时间
 
@@ -192,7 +192,7 @@ class TaskMonitor(TaskBase):
 
                         elif result is None:
                             # 任务未返回结果，可能是执行过程中出错
-                            task.status = "failed"
+                            task.status = TaskStatus.FAILED.value
                             task.task_msg = f"任务执行未返回结果: {task.task_id}"
                             task.end_time = time.time()
 
@@ -200,13 +200,13 @@ class TaskMonitor(TaskBase):
 
                         elif isinstance(result, dict) and not result.get('success', True):
                             # 任务返回结果但标记为失败
-                            task.status = "failed"
+                            task.status = TaskStatus.FAILED.value
                             task.task_msg = result.get('message', '任务执行失败')
                             task.end_time = time.time()
                         else:
                             # 任务执行成功，但需要等待实际工作流完成
                             # 不立即设置为completed状态
-                            task.status = "running"
+                            task.status = TaskStatus.RUNNING.value
                             task.task_msg = "任务已提交到工作流服务器，正在处理..."
 
                             # 保存输出文件名（如果有）
@@ -235,7 +235,7 @@ class TaskMonitor(TaskBase):
                                     task.output_filenames = [task.output_filename]
 
                         # 从运行中任务列表移除
-                        if task.task_id in self.running_tasks and task.status != "running":
+                        if task.task_id in self.running_tasks and not TaskStatus.is_running(task.status):
                             del self.running_tasks[task.task_id]
 
                         # 直接异步保存任务历史，避免阻塞
@@ -244,9 +244,9 @@ class TaskMonitor(TaskBase):
                     info(f"任务执行状态更新: {task.task_id}, 类型: {task.task_type}, 状态: {task.status}")
 
                     # 异步发送邮件通知
-                    if task.status == "completed":
+                    if TaskStatus.is_success(task.status):
                         async_send_success_email(task.task_id, task.task_type, task.start_time, task.end_time)
-                    elif task.status == "failed":
+                    elif TaskStatus.is_failed(task.status):
                         async_send_failure_email(task.task_id, task.task_type, task.task_msg, task.execution_count)
 
                 except Exception as e:
@@ -261,7 +261,7 @@ class TaskMonitor(TaskBase):
             print_log_exception()
             # 使用任务级锁更新任务状态
             with task_lock:
-                task.status = "failed"
+                task.status = TaskStatus.FAILED.value
                 task.task_msg = f"任务执行异常了: {str(e)}"
                 task.end_time = time.time()
 

@@ -5,7 +5,7 @@
 """
 import os
 import sys
-from typing import Dict, Any
+from typing import Dict, Any, Coroutine
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -17,7 +17,7 @@ from hengline.workflow.workflow_core import WorkflowManager
 class WorkflowImageManager(WorkflowManager):
     """工作流图像管理器类，用于处理各种AI图像生成任务"""
 
-    def execute_text_to_image(self, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
+    def execute_text_to_image(self, params: Dict[str, Any], task_id: str) -> Coroutine[Any, Any, dict[str, Any]]:
         """
         执行文本到图像的工作流（异步版本）
         
@@ -30,7 +30,7 @@ class WorkflowImageManager(WorkflowManager):
         """
         return self._execute_common(self, "text_to_image", params, task_id)
 
-    def execute_image_to_image(self, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
+    def execute_image_to_image(self, params: Dict[str, Any], task_id: str) -> Coroutine[Any, Any, dict[str, Any]]:
         """
         执行图像到图像的工作流（异步版本）
         

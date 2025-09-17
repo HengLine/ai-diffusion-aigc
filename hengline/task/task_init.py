@@ -18,7 +18,7 @@ from threading import Lock
 
 from hengline.task.task_base import TaskBase
 from hengline.task.task_history import task_history
-from hengline.task.task_queue import Task
+from hengline.task.task_queue import Task, TaskStatus
 from hengline.utils.log_utils import print_log_exception
 
 # 添加项目根目录到Python路径
@@ -96,10 +96,10 @@ class StartupTaskListener(TaskBase):
             debug(f"处理任务: {task.task_id}, 类型: {task.task_type}, 状态: {task.status}, 执行次数: {task.execution_count}")
 
             # 根据不同状态进行处理
-            if task.status == 'queued':
+            if TaskStatus.is_queued(task.status):
                 # 排队中的任务，直接加入队列
                 self._requeue_task(task.task_id, task.task_type, "排队中的任务重新加入队列")
-            elif task.status == 'failed':
+            elif TaskStatus.is_failed(task.status):
                 # 失败的任务，根据重试次数决定是否重新加入队列
                 if task.execution_count <= self.task_max_retry:
                     self._requeue_task(task.task_id, task.task_type, f"失败任务重新加入队列，当前重试次数: {task.execution_count}")
@@ -108,7 +108,7 @@ class StartupTaskListener(TaskBase):
                     # 标记为最终失败
                     self._mark_task_as_final_failure(task.task_id, task.task_type, task.execution_count)
                     return
-            elif task.status == 'running':
+            elif TaskStatus.is_running(task.status):
                 # 运行中的任务，加入异步结果检查
                 self._handle_running_task_with_async_check(task.task_id, task.task_type)
 
@@ -142,7 +142,7 @@ class StartupTaskListener(TaskBase):
             # 如果超过最大运行时间，直接标记为失败
             if runtime_seconds > self.task_timeout_seconds:
                 debug(f"任务 {task_id} 运行时间超过{self.task_timeout_seconds} 秒，标记为失败")
-                task.status = "failed"
+                task.status = TaskStatus.FAILED.value
                 task.task_msg = f"任务运行时间超过{self.task_timeout_seconds} 秒上限"
                 task.end_time = current_time
 
@@ -161,11 +161,11 @@ class StartupTaskListener(TaskBase):
             # 如果没有prompt_id，则重新加入队列
             if not task.prompt_id:
                 debug(f"任务 {task_id} 没有prompt_id，重新加入队列")
-                self._requeue_task(task_id, task.task_type, "任务无提交记录，重新执行一次")
-                return
+                self._requeue_task(task_id, task.task_type, "任务可能没提交，重新执行一次")
+                time.sleep(1)  # 短暂等待，避免过快重试
 
             # 定义回调函数处理工作流完成或失败的情况
-            def on_complete(prompt_id, success):
+            def on_complete(prompt_id, success, msg):
                 try:
                     with self._get_task_lock(task_id):
                         if task_id not in self.history_tasks:
@@ -175,7 +175,7 @@ class StartupTaskListener(TaskBase):
 
                         if success:
                             # 任务完成
-                            task.status = "completed"
+                            task.status = TaskStatus.SUCCESS.value
                             task.task_msg = f"任务执行成功，工作流已完成: {prompt_id}"
                             # 设置结束时间为当前时间
                             if not task.end_time:
@@ -185,17 +185,18 @@ class StartupTaskListener(TaskBase):
                             # 任务失败，重新加入队列
                             if task.execution_count <= self.task_max_retry:
                                 warning(f"任务 {task_id} 在异步检查中失败，重新执行一次")
-                                task.status = "queued"
-                                task.task_msg = "工作流连接失败，任务将在稍后重试"
+                                task.status = TaskStatus.QUEUED.value
+                                task.task_msg = "ComfyUI 工作流连接失败，任务将在稍后重试"
                                 task.end_time = None  # 清除结束时间
 
                                 # 将任务重新加入队列
-                                self.add_queue_task(task)
+                                # self.add_queue_task(task)
+                                self._requeue_task(task_id, task.task_type, task.task_msg)
 
                             else:
                                 # 超过重试次数，标记为最终失败
-                                task.status = "failed"
-                                task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次，不在执行。"
+                                task.status = TaskStatus.FAILED.value
+                                task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次，{msg}"
                                 task.end_time = time.time()
 
                                 # 发送失败邮件
@@ -226,7 +227,7 @@ class StartupTaskListener(TaskBase):
                         # 超时，标记为失败并重试
                         if task.execution_count <= self.task_max_retry:
                             warning(f"任务 {task_id} 异步检查超时，重新加入队列")
-                            task.status = "queued"
+                            task.status = TaskStatus.QUEUED.value
                             task.task_msg = "ComfyUI 工作流检查超时，任务将在稍后重试"
                             task.end_time = None  # 清除结束时间
 
@@ -235,7 +236,7 @@ class StartupTaskListener(TaskBase):
 
                         else:
                             # 超过重试次数，标记为最终失败
-                            task.status = "failed"
+                            task.status = TaskStatus.FAILED.value
                             task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次"
                             task.end_time = time.time()
 
@@ -295,7 +296,7 @@ class StartupTaskListener(TaskBase):
                 task = self.history_tasks[task_id]
 
                 # 更新任务状态为queued
-                task.status = "queued"
+                task.status = TaskStatus.QUEUED.value
 
                 task.callback = workflow_manager.execute_common
 
@@ -334,7 +335,7 @@ class StartupTaskListener(TaskBase):
                 task = self.history_tasks[task_id]
 
                 # 更新任务状态为failed
-                task.status = "failed"
+                task.status = TaskStatus.FAILED.value
 
                 # 设置失败消息
                 failure_reason = task.task_msg if task.task_msg else "未知原因"

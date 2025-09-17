@@ -12,7 +12,8 @@ import threading
 import time
 
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
-
+from werkzeug.routing import PathConverter
+from werkzeug.middleware.proxy_fix import ProxyFix
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -38,6 +39,11 @@ from route.flask_config_route import config_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='templates')
+# class EverythingConverter(PathConverter):
+#     regex = '.*'
+# app.url_map.converters['everything'] = EverythingConverter
+app.config['JSON_AS_ASCII'] = False  # 允许非ASCII字符
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # 从配置工具获取Flask配置
 app.secret_key = get_flask_secret_key()
@@ -68,6 +74,7 @@ runner = None
 server_process = None
 
 # 注意：file_utils相关函数已在其他地方导入，避免重复导入
+
 
 # 注册拆分后的Blueprint
 app.register_blueprint(config_bp)

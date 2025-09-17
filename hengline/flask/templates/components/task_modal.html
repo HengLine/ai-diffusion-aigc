@@ -14,7 +14,7 @@
                         <option value="all">全部状态</option>
                         <option value="queued">排队中</option>
                         <option value="running">运行中</option>
-                        <option value="completed">已完成</option>
+                        <option value="success">已完成</option>
                         <option value="failed">失败</option>
                     </select>
                 </div>
@@ -437,10 +437,11 @@
                                         <div class="task-info">开始时间: ${startTime}</div>
                                         <div class="task-info">结束时间: ${endTime}</div>
                                         <div class="task-info">执行时长: ${duration}</div>
-                                        ${task.task_msg ? '<div class="task-info task-message" style="color: #dc3545;">异常信息: ' + task.task_msg + '</div>' : ''}
+                                        ${task.task_msg && task.status === 'failed' ? '<div class="task-info task-message" style="color: #dc3545;"> ' + task.task_msg + '</div>' : ''}
+                                        ${task.task_msg && task.status != 'failed' ? '<div class="task-info task-message" style="color: #409C25;"> ' + task.task_msg + '</div>' : ''}
                                     </div>
                                     <div class="task-actions">
-                                        ${task.status === 'completed' ? 
+                                        ${task.status === 'success' ? 
                                             '<button class="view-result-button" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>' : 
                                             ''
                                         }
@@ -465,7 +466,7 @@
             const statusTexts = {
                 'queued': '排队中',
                 'running': '运行中',
-                'completed': '已完成',
+                'success': '已完成',
                 'failed': '失败'
             };
             return statusTexts[status] || status;

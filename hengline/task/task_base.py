@@ -2,7 +2,7 @@ from typing import Optional, Dict, Any
 
 from hengline.common import get_timestamp_by_type
 from hengline.task.task_common import TaskCommonBorg
-from hengline.task.task_queue import Task
+from hengline.task.task_queue import Task, TaskStatus
 
 
 class TaskBase(TaskCommonBorg):
@@ -26,7 +26,11 @@ class TaskBase(TaskCommonBorg):
             self.history_tasks[key] = value
 
     def get_history_task(self, key):
-        return self.history_tasks.get(key)
+        task = self.history_tasks.get(key)
+        if not task:
+            task = next((v.get(key) for k, v in self.cache_query_tasks.items()), None)
+
+        return task
 
     """添加任务到优先队列"""
 
@@ -137,10 +141,10 @@ class TaskBase(TaskCommonBorg):
         queue_position = 1
 
         # 检查任务状态的一致性
-        if current_status == "queued":
+        if TaskStatus.is_queued(current_status):
             # 检查是否在running_tasks中
             if task_id in self.running_tasks:
-                current_status = "running"
+                current_status = TaskStatus.RUNNING.value
             else:
                 # 使用任务类型计数器估算队列位置
                 # 注意：这是一个估算值，但避免了遍历整个队列

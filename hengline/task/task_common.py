@@ -8,7 +8,7 @@ from cachetools import LRUCache
 from flask import json
 
 from hengline.logger import info, debug, error, warning
-from hengline.task.task_queue import Task
+from hengline.task.task_queue import Task, TaskStatus
 from hengline.utils.config_utils import get_task_config, get_comfyui_config
 from hengline.utils.file_utils import file_exists
 from hengline.utils.log_utils import print_log_exception
@@ -40,7 +40,7 @@ class TaskCommonBorg:
         "image_to_video": 0
     }
 
-    cache_query_tasks = LRUCache(task_config.get("task_cache_size", 1024) >> 1)  # 用于查询的缓存, 之前的历史记录  {date: [Task]}
+    cache_query_tasks: Dict[str, Dict[str, Task]] = LRUCache(task_config.get("task_cache_size", 1024))  # 用于查询的缓存, 之前的历史记录  {date: {task_id: Task}}
     cache_init_tasks: Dict[str, Task] = {}  # 用于缓存需要初始化处理的任务  {task_id: Task}
 
     task_max_retry = task_config.get('task_max_retry', 3)  # 最大执行次数
@@ -144,7 +144,7 @@ class TaskCommonBorg:
     def _select_history_task(self, task: Task):
         """从队列中选择任务"""
         # 检查是否未完成（状态为queued、failed或running）
-        if task.status not in ['queued', 'failed', 'running']:
+        if TaskStatus.is_success(task.status):
             return
 
         # 获取今天的日期
@@ -156,7 +156,7 @@ class TaskCommonBorg:
             return
 
         # 检查重试次数是否未超过最大重试次数
-        if task.status == "failed" and task.execution_count > self.task_max_retry:
+        if TaskStatus.is_failed(task.status) and task.execution_count > self.task_max_retry:
             warning(f"任务 {task.task_id} 重试次数已超过{self.task_max_retry}次，跳过处理")
             return
 
@@ -187,7 +187,7 @@ class TaskCommonBorg:
             task.output_filenames = task_data['output_filenames']
 
         # 恢复任务状态
-        task.status = task_data.get('status', 'queued')
+        task.status = task_data.get('status', TaskStatus.QUEUED.value)
 
         # 恢复任务消息
         if 'task_msg' in task_data:

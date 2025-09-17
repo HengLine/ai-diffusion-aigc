@@ -1,9 +1,9 @@
-from urllib.parse import quote, unquote
-
 from flask import Blueprint, jsonify, url_for, request
 
-from hengline.task.task_manage import task_queue_manager
+from hengline.common import get_name_by_type
 from hengline.logger import debug
+from hengline.task.task_manage import task_queue_manager
+from hengline.task.task_queue import TaskStatus
 
 # 创建任务队列管理的蓝图
 task_queue_bp = Blueprint('task_queue', __name__)
@@ -36,7 +36,7 @@ def get_task_queue_status():
         all_tasks = task_queue_manager.get_all_tasks(date=date)
 
         # 过滤未完成任务（状态为queued或running）
-        unfinished_tasks = [task for task in all_tasks if task['status'] in ['queued', 'running', 'failed']]
+        unfinished_tasks = [task for task in all_tasks if not TaskStatus.is_success(task['status'])]
 
         # 如果提供了任务类型参数，则进一步过滤
         if task_type and task_type != 'all':
@@ -59,6 +59,7 @@ def get_task_queue_status():
 
 
 @task_queue_bp.route('/api/task_queue/all_tasks', methods=['GET'])
+# @auto_serialize
 def get_all_tasks():
     """
     获取所有任务历史记录的API端点
@@ -141,7 +142,7 @@ def get_task_result(task_id):
             }), 404
 
         # 从task_history中获取原始任务对象，以获取完整的参数信息
-        task = task_queue_manager.history_tasks.get(task_id)
+        task = task_queue_manager.get_history_task(task_id)
         prompt = task.params.get("prompt", "") if task and task.params else ""
         negative_prompt = task.params.get("negative_prompt", "") if task and task.params else ""
 
@@ -154,19 +155,6 @@ def get_task_result(task_id):
         elif task and hasattr(task, 'output_filename') and task.output_filename:
             # 向后兼容：如果只有单个输出文件
             result_filenames = task.output_filename
-        
-        # 如果没有保存输出文件名，尝试使用旧的命名方式
-        if not result_filenames:
-            # 根据任务类型确定扩展名
-            extensions = {
-                'text_to_image': 'png',
-                'image_to_image': 'png',
-                'text_to_video': 'mp4',
-                'image_to_video': 'mp4'
-            }
-
-            extension = extensions.get(task_status['task_type'], 'png')
-            result_filenames = f"{task_status['task_id']}.{extension}"
 
         # 构建完整的结果URL列表
         result_urls = [url_for('serve_output', filename=filename, _external=True) for filename in result_filenames]
@@ -176,7 +164,7 @@ def get_task_result(task_id):
             'success': True,
             'data': {
                 'task_id': task_status['task_id'],
-                'task_type': task_status['task_type'],
+                'task_type': get_name_by_type(task_status['task_type']),
                 'status': task_status['status'],
                 'timestamp': task_status['timestamp'],
                 'start_time': task_status.get('start_time'),

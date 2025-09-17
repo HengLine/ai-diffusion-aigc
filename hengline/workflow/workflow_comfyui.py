@@ -10,7 +10,6 @@ import threading
 import time
 from typing import Dict, Any, Optional, Callable
 
-import aiohttp
 import requests
 
 from hengline.logger import debug, error, warning, info
@@ -45,7 +44,6 @@ class ComfyUIApi:
             return response.status_code == 200
         except Exception as e:
             error(f"检查ComfyUI服务器状态失败: {str(e)}")
-            print_log_exception()
             return False
 
     def _upload_image(self, image_path: str, subfolder: str = "haengline") -> Optional[str]:
@@ -153,38 +151,6 @@ class ComfyUIApi:
             print_log_exception()
 
         return {'success': False, 'message': '工作流提交失败，发生异常'}
-
-    async def async_execute_workflow(self, workflow: Dict[str, Any]) -> dict[str, Any]:
-        """
-        异步执行工作流并返回prompt_id
-
-        Args:
-            workflow: 工作流数据
-
-        Returns:
-            Optional[str]: 提交成功返回prompt_id，失败返回None
-        """
-        try:
-            debug("正在异步提交工作流到ComfyUI服务器...")
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                        f"{self.api_url}/prompt",
-                        json={"prompt": workflow},
-                        timeout=60
-                ) as response:
-                    if response.status == 200:
-                        return response.json()
-                    else:
-                        error(f"发送工作流到ComfyUI失败，状态码: {response.status}")
-                        return ""
-        except aiohttp.ClientError as e:
-            error(f"发送工作流到ComfyUI时发生请求异常: {str(e)}")
-            return ""
-        except Exception as e:
-            error(f"工作流异步提交过程中发生错误: {str(e)}")
-            print_log_exception()
-
-        return None
 
     def wait_for_workflow_completion(self, prompt_id: str) -> bool:
         """等待工作流完成并返回状态 - 同步版本（向后兼容）
@@ -495,6 +461,7 @@ class ComfyUIApi:
             error(f"获取工作流输出时出错: {str(e)}")
             print_log_exception()
             return False, []
+
 
 # 全局ComfyUIApi实例，方便其他模块直接使用
 comfyui_api = ComfyUIApi()

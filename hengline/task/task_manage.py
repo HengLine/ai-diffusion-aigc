@@ -16,7 +16,7 @@ from hengline.logger import error, debug
 from hengline.task.task_base import TaskBase
 # 导入邮件发送模块
 from hengline.task.task_history import task_history
-from hengline.task.task_queue import Task
+from hengline.task.task_queue import Task, TaskStatus
 from hengline.utils.log_utils import print_log_exception
 
 
@@ -76,7 +76,7 @@ class TaskQueueManager(TaskBase):
                 # 更新时间戳
                 task.timestamp = time.time()
                 # 重置任务状态为排队中
-                task.status = "queued"
+                task.status = TaskStatus.QUEUED.value
                 # 重置执行时间
                 task.start_time = None
                 task.end_time = None
@@ -125,8 +125,8 @@ class TaskQueueManager(TaskBase):
 
         return estimated_waiting_time + avg_duration
 
-    def update_task_status(self, task_id: str, status: str, task_msg: str = None, output_filename: str = None,
-                           output_filenames: list = None):
+    def update_task_status(self, task_id: str, status: TaskStatus, task_msg: str = None,
+                           output_filename: str = None, output_filenames: list = None, prompt_id:str =  None):
         """
         更新指定任务的状态
         
@@ -144,11 +144,14 @@ class TaskQueueManager(TaskBase):
 
         with self._get_task_lock(task_id):
             old_status = task.status
-            task.status = status
+            task.status = status.value
 
             # 更新任务消息
             if task_msg:
                 task.task_msg = task_msg
+
+            if prompt_id:
+                task.prompt_id = prompt_id
 
             # 更新输出文件名
             if output_filename:
@@ -159,16 +162,16 @@ class TaskQueueManager(TaskBase):
                 task.output_filenames = output_filenames
 
             # 根据状态更新时间信息
-            if status == "running" and old_status != "running":
+            if TaskStatus.is_running(status.value) and not TaskStatus.is_running(old_status):
                 task.start_time = time.time()
-            elif status in ["completed", "failed"] and old_status != status:
+            elif TaskStatus.is_finished(status.value) and old_status != status.value:
                 task.end_time = time.time()
 
             # 如果任务完成，从running_tasks中移除
-            if status in ["completed", "failed"] and task_id in self.running_tasks:
+            if TaskStatus.is_finished(status.value) and task_id in self.running_tasks:
                 del self.running_tasks[task_id]
 
-            debug(f"更新任务状态成功: {task_id}, 状态从 {old_status} 变为 {status}")
+            debug(f"更新任务状态成功: {task_id}, 状态从 {old_status} 变为 {status.value}")
 
         # 异步保存任务历史
         task_history.async_save_task_history()
@@ -196,7 +199,7 @@ class TaskQueueManager(TaskBase):
             if date == datetime.now().strftime('%Y-%m-%d'):
                 history_tasks = list(self.history_tasks.values())
             else:
-                history_tasks = list(task_history.get_before_history_task(date))
+                history_tasks = list(task_history.get_before_history_task(date).values())
 
             # 创建任务信息列表
             all_tasks = []
@@ -210,10 +213,10 @@ class TaskQueueManager(TaskBase):
 
                 # 确定任务状态和估算队列位置
                 if task.task_id in running_task_ids:
-                    current_status = "running"
+                    current_status = TaskStatus.RUNNING.value
                     queue_position = None
-                elif task.status == "queued":
-                    current_status = "queued"
+                elif TaskStatus.is_queued(task.status):
+                    current_status = TaskStatus.QUEUED.value
                     # 使用任务类型计数器估算队列位置
                     task_type = task.task_type
                     if task_type in task_type_counters_copy:
