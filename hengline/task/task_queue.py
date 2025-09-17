@@ -26,14 +26,13 @@ class Task:
             self.timestamp = float(timestamp) if timestamp is not None else time.time()
         except (ValueError, TypeError):
             self.timestamp = time.time()
-        self.params = params  # 任务参数
+        self.params: Dict[str, Any] = params  # 任务参数
         self.prompt_id = None  # 任务关联的，提交任务生成的prompt_id
         self.callback = callback  # 任务完成后的回调函数
         self.start_time = None  # 任务开始执行时间
         self.end_time = None  # 任务结束时间
         self.task_lock = task_lock  # 使用传入的任务锁
         self.status: str = TaskStatus.QUEUED.value  # 任务状态: queued, running, completed, failed
-        self.output_filename = None  # 任务输出文件名（向后兼容）
         self.output_filenames = []  # 任务输出文件名列表，支持多个输出文件
         self.task_msg = None  # 任务消息，用于存储错误或状态信息
         self.execution_count = 0  # 任务执行次数，默认为0

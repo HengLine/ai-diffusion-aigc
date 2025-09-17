@@ -28,7 +28,7 @@ class WorkflowStatusChecker:
         self.task_timeout_seconds = get_task_config().get('task_timeout_seconds', 1800)  # 默认超时时间
         self.max_consecutive_failures = get_task_config().get('task_max_retry', 5)  # 连续失败次数上限
 
-    def check_workflow_status_async(self, prompt_id: str, api_url: str,
+    def check_workflow_status_async(self, prompt_id: str, api_url: str, output_name: str,
                                     on_complete: Callable[[str, bool], None],
                                     on_timeout: Callable[[str], None],
                                     check_interval: int = None,
@@ -65,6 +65,7 @@ class WorkflowStatusChecker:
             'api_url': api_url,
             'start_time': time.time(),
             'check_interval': check_interval,
+            'output_name': output_name,
             'timeout_seconds': timeout_seconds,
             'on_complete': on_complete,
             'on_timeout': on_timeout,
@@ -107,6 +108,7 @@ class WorkflowStatusChecker:
         prompt_id = task_info['prompt_id']
         api_url = task_info['api_url']
         start_time = task_info['start_time']
+        output_name = task_info['output_name']
         timeout_seconds = task_info['timeout_seconds']
         on_complete = task_info['on_complete']
         on_timeout = task_info['on_timeout']
@@ -120,7 +122,7 @@ class WorkflowStatusChecker:
 
             # 执行超时回调
             try:
-                on_timeout(prompt_id)
+                on_timeout(task_id, prompt_id)
             except Exception as e:
                 error(f"执行超时回调时出错: {str(e)}")
                 print_log_exception()
@@ -173,7 +175,8 @@ class WorkflowStatusChecker:
 
                         # 执行完成回调，标记为成功
                         try:
-                            on_complete(prompt_id, True)
+                            msg = f"工作流处理完成，任务ID: {task_id}"
+                            on_complete(task_id, prompt_id, True, output_name, msg)
                         except Exception as e:
                             error(f"执行完成回调时出错: {str(e)}")
                             print_log_exception()
@@ -189,7 +192,7 @@ class WorkflowStatusChecker:
 
                         # 执行完成回调，标记为失败
                         try:
-                            on_complete(prompt_id, False)
+                            on_complete(task_id, prompt_id, False, output_name, f"工作流执行出错，任务ID: {task_id}, 错误: {prompt_data['error']}")
                         except Exception as e:
                             error(f"执行完成回调时出错: {str(e)}")
                             print_log_exception()
@@ -251,7 +254,7 @@ class WorkflowStatusChecker:
 
                 # 执行完成回调，标记为失败
                 try:
-                    on_complete(prompt_id, False, "ComfyUI服务连接失败，服务器可能已宕机")
+                    on_complete(task_id, prompt_id, False, output_name, "ComfyUI服务连接失败，服务器可能已宕机")
                 except Exception as e:
                     error(f"执行完成回调时出错: {str(e)}")
                     print_log_exception()
@@ -286,7 +289,7 @@ class WorkflowStatusChecker:
 
                 # 执行完成回调，标记为失败
                 try:
-                    on_complete(prompt_id, False)
+                    on_complete(task_id, prompt_id, False, output_name, "检查工作流状态失败，可能连接有问题，请检查ComfyUI服务是否正常运行")
                 except Exception as e:
                     error(f"执行完成回调时出错: {str(e)}")
                     print_log_exception()

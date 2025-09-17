@@ -9,11 +9,15 @@ from flask import json
 
 from hengline.logger import info, debug, error, warning
 from hengline.task.task_queue import Task, TaskStatus
-from hengline.utils.config_utils import get_task_config, get_comfyui_config
+from hengline.utils.config_utils import get_task_config, get_comfyui_config, get_output_folder
 from hengline.utils.file_utils import file_exists
 from hengline.utils.log_utils import print_log_exception
 
-
+"""
+@Description:
+@Author: HengLine
+@Time: 2025/9/17 21:11
+"""
 class TaskCommonBorg:
     """
         Borg模式 - 共享状态而不是实例
@@ -47,6 +51,7 @@ class TaskCommonBorg:
     task_max_concurrent = task_config.get('task_max_concurrent', 3)  # 最大并发任务数
     task_timeout_seconds = task_config.get('task_timeout_seconds', 1800)
     comfyui_api_url = get_comfyui_config().get('api_url', 'http://127.0.0.1:8188')
+    output_dir = get_output_folder()
 
     def __init__(self):
         # 使用锁确保线程安全的属性分配
@@ -177,10 +182,6 @@ class TaskCommonBorg:
         )
         if 'prompt_id' in task_data:
             task.prompt_id = task_data['prompt_id']
-
-        # 恢复输出文件名
-        if 'output_filename' in task_data:
-            task.output_filename = task_data['output_filename']
 
         # 恢复输出文件名列表
         if 'output_filenames' in task_data:

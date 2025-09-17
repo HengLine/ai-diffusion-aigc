@@ -1,5 +1,8 @@
 # 导入asyncio用于处理协程
+from typing import Any
+
 from hengline.logger import debug, error
+from hengline.utils.config_utils import get_workflow_preset
 from hengline.utils.log_utils import print_log_exception
 
 
@@ -20,9 +23,50 @@ def get_timestamp_by_type() -> dict[str, float]:
     return {
         "text_to_image": 100,  # 默认平均文生图任务时长（秒）
         "image_to_image": 120,  # 默认平均图生图任务时长（秒）
-        "text_to_video": 500,  # 默认平均文生视频任务时长（秒）
-        "image_to_video": 600  # 默认平均图生视频任务时长（秒）
+        "text_to_video": 600,  # 默认平均文生视频任务时长（秒）
+        "image_to_video": 720  # 默认平均图生视频任务时长（秒）
     }
+
+
+"""获取各类型任务的平均执行时间（秒）"""
+
+
+def estimated_waiting_time(task_type: str, waiting_tasks: int, params: dict[str, Any]) -> float:
+    """根据任务类型和平均执行时间估算等待时间"""
+    # 获取该类型任务的平均执行时间
+    avg_duration = get_timestamp_by_type().get(task_type, 100)  # 默认任务执行时间（秒）
+
+    # 预估等待时间 = 前面等待的任务数 * 该类型任务的平均执行时间
+    estimated_time_sec = waiting_tasks * avg_duration
+
+    if not params:
+        params = get_workflow_preset(task_type)
+
+    if params:
+        steps = int(params['steps'])
+        width = int(params['width'])
+        height = int(params['height'])
+        batch_size = int(params['batch_size'])
+
+        if task_type in ['text_to_video', 'image_to_video']:
+            length = int(params['length'])
+            device = str(params['device'])
+            # 对于图像生成任务，考虑分辨率、步数、批量大小等因素
+            if device.lower() == 'cpu':  # CPU
+                estimated_time_sec = estimated_time_sec * 5  # 假设CPU比GPU慢5倍
+            elif device.lower() == 'gpu':  # GPU
+                estimated_time_sec = estimated_time_sec * 1  # GPU基准
+            else:  # 其他设备
+                estimated_time_sec = estimated_time_sec * 1.5  # 假设其他设备比GPU慢1.5倍
+
+            if length:
+                estimated_time_sec = estimated_time_sec * (length / 5)  # 假设基础是5秒
+
+        estimated_time_sec = estimated_time_sec * (steps / 20)  # 假设基础是20步
+        estimated_time_sec = estimated_time_sec * (batch_size / 1)  # 假设基础是1张
+        estimated_time_sec = estimated_time_sec * (width / 512) * (height / 512)  # 假设基础是1024x1024
+
+    return estimated_time_sec
 
 
 def update_average_duration(self, task_type: str, duration: float):

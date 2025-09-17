@@ -98,7 +98,6 @@ class TaskHistoryManager(TaskBase):
                         'timestamp': task.timestamp,
                         'params': task.params,
                         'status': task.status,
-                        'output_filename': task.output_filename,
                         'output_filenames': task.output_filenames,
                         'execution_count': task.execution_count
                     }

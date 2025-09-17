@@ -3,17 +3,16 @@
 """
 运行ComfyUI工作流的主脚本
 """
-import asyncio
 import json
 import os
 import sys
+import weakref
 from typing import Dict, Any
 
 import requests
 
 from hengline.logger import debug, info, error, warning
-from hengline.task.task_manage import task_queue_manager
-from hengline.task.task_queue import TaskStatus
+from hengline.task.task_callback import task_callback_handler
 from hengline.utils.config_utils import get_task_config
 from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.workflow_comfyui import comfyui_api
@@ -120,7 +119,7 @@ class ComfyUIRunner:
                 return {"success": False, "message": "解析API响应JSON失败"}
 
             # 等待工作流完成 - 使用新的异步检查但保持同步接口
-            workflow_completed = comfyui_api.wait_for_workflow_completion(prompt_id)
+            workflow_completed = comfyui_api.wait_for_workflow_completion(prompt_id, output_filename)
             if not workflow_completed:
                 error(f"工作流执行失败: 等待工作流完成超时或连接失败")
                 return {"success": False, "message": "工作流执行失败: 等待工作流完成超时或连接失败"}
@@ -217,67 +216,16 @@ class ComfyUIRunner:
                 return ""
 
             if on_complete:
-                on_complete(task_id, prompt_id)
-
-            # 4. 启动定时器，等待工作流完成
-
-            # 5. 定义工作流完成处理函数
-            def handle_workflow_completion(prompt_id, success):
-                if success:
-                    output_path = os.path.join(self.output_dir, output_name)
-
-                    # 获取工作流输出
-                    outputs_success, file_paths = comfyui_api.get_workflow_outputs(prompt_id, output_path)
-                    if outputs_success:
-                        debug(f"工作流执行成功，输出文件: {file_paths}")
-
-                        # 当工作流真正完成时，更新任务状态为completed
-                        if task_id:
-                            task_queue_manager.update_task_status(task_id, TaskStatus.SUCCESS,
-                                                                  "工作流执行完成", file_paths)
-
-                        # if on_complete:
-                        #     on_complete(file_paths, task_id, prompt_id)
-                    else:
-                        error_msg = "工作流执行成功但获取输出失败"
-                        error(error_msg)
-
-                        # 更新任务状态为failed
-                        if task_id:
-                            task_queue_manager.update_task_status(task_id, TaskStatus.FAILED, error_msg)
-
-                        if on_error:
-                            on_error(task_id, error_msg)
-
-                else:
-                    error_msg = "工作流执行失败"
-                    error(error_msg)
-
-                    # 更新任务状态为failed
-                    if task_id:
-                        task_queue_manager.update_task_status(task_id, TaskStatus.FAILED, error_msg)
-
-                    if on_error:
-                        on_error(task_id, error_msg)
-
-            # 定义工作流超时处理函数
-            def handle_workflow_timeout(prompt_id):
-                error_msg = f"工作流执行超时，prompt_id: {prompt_id}"
-                error(error_msg)
-
-                # 更新任务状态为failed
-                if task_id:
-                    task_queue_manager.update_task_status(task_id, TaskStatus.FAILED, error_msg)
-
-                if on_error:
-                    on_error(task_id, error_msg)
+                on_complete(task_id, prompt_id)  # 初始调用，表示已提交
 
             # 6. 异步检查工作流状态 asyncio.run(
             workflow_status_checker.check_workflow_status_async(
                 api_url=self.api_url,
-                on_complete=handle_workflow_completion,
+                output_name=output_name,
+                # on_complete=weakref.WeakMethod(task_callback_handler.handle_workflow_completion),
+                on_complete=task_callback_handler.handle_workflow_completion,
                 prompt_id=prompt_id,
-                on_timeout=handle_workflow_timeout,
+                on_timeout=task_callback_handler.handle_workflow_timeout,
                 task_id=task_id
             )
 
@@ -291,37 +239,3 @@ class ComfyUIRunner:
             if on_error:
                 on_error(task_id, error_msg)
             return ""
-
-    def timer_get_outputs(self, prompt_id, output_path, timeout=30):
-        """
-        定时获取工作流输出，直到成功或超时
-
-        Args:
-            prompt_id: 工作流的prompt_id
-            output_path: 输出文件路径
-            timeout: 超时时间，单位秒，默认300秒
-
-        Returns:
-            tuple: (bool, list) 第一个元素表示是否成功，第二个元素是输出文件路径列表
-        """
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                # 使用事件循环运行协程函数
-                result = loop.run_until_complete(
-                    asyncio.wait_for(
-                        comfyui_api.get_workflow_outputs(prompt_id, output_path),
-                        timeout=timeout
-                    )
-                )
-                return result
-            except asyncio.TimeoutError:
-                error(f"获取工作流输出超时({timeout}秒)，prompt_id: {prompt_id}")
-                return False, []
-            finally:
-                loop.close()
-        except Exception as e:
-            error(f"获取工作流输出失败: {str(e)}")
-            print_log_exception()
-            return False, []

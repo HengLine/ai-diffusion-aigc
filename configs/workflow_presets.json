@@ -1,25 +1,25 @@
 {
   "text_to_image": {
     "default": {
-      "width": 1024,
-      "height": 768,
-      "steps": 30,
+      "width": 512,
+      "height": 512,
+      "steps": 20,
       "cfg": 7.5,
       "denoise": 0.75,
       "prompt": "a beautiful sunset over a mountain range",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
-      "batch_size": 2,
+      "batch_size": 1,
       "seed": -1
     },
     "setting": {}
   },
   "image_to_image": {
     "default": {
-      "width": 1024,
-      "height": 768,
-      "steps": 30,
+      "width": 512,
+      "height": 512,
+      "steps": 20,
       "cfg": 6.5,
-      "batch_size": 2,
+      "batch_size": 1,
       "prompt": "The sunrise over the sea of clouds reflects on the mountain peaks",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
       "seed": -1,
@@ -29,11 +29,11 @@
   },
   "image_to_video": {
     "default": {
-      "width": 768,
+      "width": 512,
       "height": 512,
       "length": 8,
       "batch_size": 1,
-      "steps": 30,
+      "steps": 20,
       "shift": 8,
       "device": "default",
       "fps": 16,
@@ -47,10 +47,10 @@
   },
   "text_to_video": {
     "default": {
-      "width": 768,
+      "width": 512,
       "height": 512,
       "length": 8,
-      "steps": 30,
+      "steps": 20,
       "fps": 16,
       "device": "default",
       "shift": 8,

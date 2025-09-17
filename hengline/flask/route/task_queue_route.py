@@ -147,14 +147,7 @@ def get_task_result(task_id):
         negative_prompt = task.params.get("negative_prompt", "") if task and task.params else ""
 
         # 构建结果URL列表
-        result_filenames = []
-
-        # 优先使用多个输出文件（如果有）
-        if task and hasattr(task, 'output_filenames') and task.output_filenames:
-            result_filenames = task.output_filenames
-        elif task and hasattr(task, 'output_filename') and task.output_filename:
-            # 向后兼容：如果只有单个输出文件
-            result_filenames = task.output_filename
+        result_filenames = task.output_filenames if task and task.output_filenames else []
 
         # 构建完整的结果URL列表
         result_urls = [url_for('serve_output', filename=filename, _external=True) for filename in result_filenames]
@@ -173,9 +166,7 @@ def get_task_result(task_id):
                 'queue_position': task_status.get('queue_position'),
                 'prompt': prompt,
                 'negative_prompt': negative_prompt,
-                'filename': result_filenames[0] if result_filenames else None,  # 向后兼容
                 'filenames': result_filenames,
-                'result_url': result_urls[0] if result_urls else None,  # 向后兼容
                 'result_urls': result_urls,  # 返回URL列表，支持多个输出文件
                 'total_results': len(result_urls)  # 添加结果总数字段
             }

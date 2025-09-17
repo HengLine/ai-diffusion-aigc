@@ -207,32 +207,25 @@ class TaskMonitor(TaskBase):
                             # 任务执行成功，但需要等待实际工作流完成
                             # 不立即设置为completed状态
                             task.status = TaskStatus.RUNNING.value
-                            task.task_msg = "任务已提交到工作流服务器，正在处理..."
+                            queue_position, waiting_str = self.estimate_waiting_time(task.task_type, None)
+                            task.task_msg = "任务已提交到工作流服务器，预计等待时间: " + waiting_str
 
                             # 保存输出文件名（如果有）
-                            if result and isinstance(result, dict):
-                                # 处理多个输出文件
-                                if 'output_paths' in result:
-                                    # 从output_paths中提取文件名列表
-                                    task.output_filenames = [os.path.basename(path) for path in result['output_paths']]
-                                    # 设置第一个输出文件为默认输出文件名（向后兼容）
-                                    if task.output_filenames:
-                                        task.output_filename = task.output_filenames[0]
-                                elif 'filenames' in result:
-                                    task.output_filenames = result['filenames']
-                                    # 设置第一个输出文件为默认输出文件名（向后兼容）
-                                    if task.output_filenames:
-                                        task.output_filename = task.output_filenames[0]
-                                # 处理单个输出文件（向后兼容）
-                                elif 'output_path' in result:
-                                    # 从output_path中提取文件名
-                                    task.output_filename = os.path.basename(result['output_path'])
-                                    # 同时添加到文件名列表中
-                                    task.output_filenames = [task.output_filename]
-                                elif 'filename' in result:
-                                    task.output_filename = result['filename']
-                                    # 同时添加到文件名列表中
-                                    task.output_filenames = [task.output_filename]
+                            # if result and isinstance(result, dict):
+                            #     if 'output_paths' in result:
+                            #         task.output_filenames = [os.path.basename(path) for path in result['output_paths']]
+                            #         if task.output_filenames:
+                            #             task.output_filename = task.output_filenames[0]
+                            #     elif 'filenames' in result:
+                            #         task.output_filenames = result['filenames']
+                            #         if task.output_filenames:
+                            #             task.output_filename = task.output_filenames[0]
+                            #     elif 'output_path' in result:
+                            #         task.output_filename = os.path.basename(result['output_path'])
+                            #         task.output_filenames = [task.output_filename]
+                            #     elif 'filename' in result:
+                            #         task.output_filename = result['filename']
+                            #         task.output_filenames = [task.output_filename]
 
                         # 从运行中任务列表移除
                         if task.task_id in self.running_tasks and not TaskStatus.is_running(task.status):

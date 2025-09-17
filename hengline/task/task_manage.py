@@ -11,9 +11,9 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, Tuple, List, Callable
 
-from hengline.common import get_timestamp_by_type
-from hengline.logger import error, debug
+from hengline.logger import error, debug, info, warning
 from hengline.task.task_base import TaskBase
+from hengline.task.task_email import async_send_failure_email
 # 导入邮件发送模块
 from hengline.task.task_history import task_history
 from hengline.task.task_queue import Task, TaskStatus
@@ -30,7 +30,6 @@ class TaskQueueManager(TaskBase):
         
         """
         self.lock = threading.Lock()  # 用于线程同步的主锁
-
 
     def enqueue_task(self, task_id: str, task_type: str, params: Dict[str, Any], callback: Callable) -> Tuple[str, int, float]:
         """
@@ -53,6 +52,7 @@ class TaskQueueManager(TaskBase):
 
         with task_lock:
             # 再次检查任务ID是否存在
+
             if not task_id or task_id not in self.history_tasks:
                 task_id = str(uuid.uuid4())
                 task_lock = self._get_task_lock(task_id)  # 为新任务创建并获取锁
@@ -64,15 +64,19 @@ class TaskQueueManager(TaskBase):
                     timestamp=time.time(),
                     params=params,
                     task_lock=task_lock,
-                    callback=callback      # (task_type, params, task_id)
+                    callback=callback  # (task_type, params, task_id)
                 )
                 debug(f"新任务已加入队列: {task_id}, 类型: {task_type}")
 
             else:
                 # 如果task_id已存在，则更新现有任务
-                task = task_history.tasks[task_id]
+                task = self.history_tasks[task_id]
+                if callback:
+                    task.callback = callback
+                    # task.callback = workflow_manager.execute_common
                 # 更新任务参数
-                task.params.update(params)
+                if params:
+                    task.params.update(params)
                 # 更新时间戳
                 task.timestamp = time.time()
                 # 重置任务状态为排队中
@@ -80,16 +84,15 @@ class TaskQueueManager(TaskBase):
                 # 重置执行时间
                 task.start_time = None
                 task.end_time = None
-                debug(f"任务已更新并重新加入队列: {task_id}, 类型: {task_type}")
+
+            debug(f"任务已更新并重新加入队列: {task_id}, 类型: {task_type}")
+
+            # 计算预估等待时间
+            queue_position, waiting_str = self.estimate_waiting_time(task_type, task.params)
+            task.task_msg = f"任务排队等待执行。预计等待时间：{waiting_str}"
 
             # 将任务加入队列
             self.add_queue_task(task)
-
-            # 计算队列中的位置（包括正在运行的任务）
-            queue_position = len(self.running_tasks) + self.task_queue.qsize()
-
-            # 计算预估等待时间
-            waiting_time = self._estimate_waiting_time(task_type, queue_position)
 
             # 将任务添加到历史记录
             self.add_history_task(task_id, task)
@@ -97,44 +100,81 @@ class TaskQueueManager(TaskBase):
             # 异步保存任务历史
             task_history.async_save_task_history()
 
-            return task_id, queue_position, waiting_time
+            return task_id, queue_position, waiting_str
 
-    def _estimate_waiting_time(self, task_type: str, queue_position: int) -> float:
-        """
-        预估任务等待时间
-        
+    def requeue_task(self, task_id: str, task_type: str, reason: str, callback: Callable):
+        """将任务重新加入队列
+
         Args:
+            task_id: 任务ID
             task_type: 任务类型
-            queue_position: 任务在队列中的位置
-        
-        Returns:
-            float: 预估等待时间（秒）
+            reason: 重新加入队列的原因
         """
-        # 获取该类型任务的平均执行时间
-        avg_duration = get_timestamp_by_type().get(task_type, 100)  # 默认任务执行时间（秒）
+        try:
+            # 检查任务是否存在于历史记录中
+            if task_id not in self.history_tasks:
+                warning(f"任务 {task_id} 不存在于历史记录中，无法重新加入队列")
+                return task_id, None, None
 
-        # 如果队列位置小于等于最大并发数，无需等待
-        if queue_position <= self.task_max_concurrent:
-            return avg_duration
+            # 设置任务消息
+            # task.task_msg = reason
+            info(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
+            return self.enqueue_task(task_id, task_type, {}, callback)
 
-        # 计算前面有多少个任务在等待
-        waiting_tasks = queue_position - self.task_max_concurrent
+        except Exception as e:
+            error(f"将任务 {task_id} 重新加入队列时发生异常: {str(e)}")
+            print_log_exception()
 
-        # 预估等待时间 = 前面等待的任务数 * 该类型任务的平均执行时间
-        estimated_waiting_time = waiting_tasks * avg_duration
+    def mark_task_as_final_failure(self, task_id: str, task_type: str, execution_count: int):
+        """将任务标记为最终失败
 
-        return estimated_waiting_time + avg_duration
+        Args:
+            task_id: 任务ID
+            task_type: 任务类型
+            execution_count: 已执行次数
+        """
+        try:
+            with self._get_task_lock(task_id):
+                # 检查任务是否存在于历史记录中
+                if task_id not in self.history_tasks:
+                    warning(f"任务 {task_id} 不存在于历史记录中，无法标记为失败")
+                    return
+
+                # 获取任务对象
+                task = self.history_tasks[task_id]
+
+                # 更新任务状态为failed
+                task.status = TaskStatus.FAILED.value
+
+                # 设置失败消息
+                failure_reason = task.task_msg if task.task_msg else "未知原因"
+                task.task_msg = f"任务执行失败，重试超过{self.task_max_retry}次，原因：{failure_reason}"
+
+                # 设置结束时间（如果还没有）
+                if not task.end_time:
+                    task.end_time = time.time()
+
+                # 保存任务历史
+                task_history.async_save_task_history()
+
+                warning(f"任务 {task_id} ({task_type}) 已标记为最终失败，执行次数: {execution_count}")
+
+                # 异步发送邮件通知
+                async_send_failure_email(task_id, task_type, task.task_msg, self.task_max_retry)
+
+        except Exception as e:
+            error(f"将任务 {task_id} 标记为失败时发生异常: {str(e)}")
+            print_log_exception()
 
     def update_task_status(self, task_id: str, status: TaskStatus, task_msg: str = None,
-                           output_filename: str = None, output_filenames: list = None, prompt_id:str =  None):
+                           output_filenames: list = None, prompt_id: str = None):
         """
         更新指定任务的状态
-        
+
         Args:
             task_id: 任务ID
             status: 新的任务状态
             task_msg: 可选的任务消息
-            output_filename: 可选的输出文件名
             output_filenames: 可选的输出文件名列表
         """
         task = self.get_history_task(task_id)
@@ -152,10 +192,6 @@ class TaskQueueManager(TaskBase):
 
             if prompt_id:
                 task.prompt_id = prompt_id
-
-            # 更新输出文件名
-            if output_filename:
-                task.output_filename = output_filename
 
             # 更新输出文件名列表
             if output_filenames:
@@ -179,13 +215,13 @@ class TaskQueueManager(TaskBase):
     def get_all_tasks(self, date=None):
         """
         获取所有任务历史记录，可选按日期筛选 - 优化版本
-        
+
         Args:
             date: 可选的日期字符串，格式为'YYYY-MM-DD'
-        
+
         Returns:
             List[Dict[str, Any]]: 任务的状态信息列表
-        
+
         注意：根据用户建议，此查询接口不需要加锁，提高响应速度
         """
         try:

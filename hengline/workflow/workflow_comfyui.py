@@ -152,7 +152,7 @@ class ComfyUIApi:
 
         return {'success': False, 'message': '工作流提交失败，发生异常'}
 
-    def wait_for_workflow_completion(self, prompt_id: str) -> bool:
+    def wait_for_workflow_completion(self, prompt_id: str, output_filename: str) -> bool:
         """等待工作流完成并返回状态 - 同步版本（向后兼容）
         
         这个方法会阻塞当前线程，直到工作流完成或超时
@@ -163,15 +163,15 @@ class ComfyUIApi:
         completion_event = threading.Event()
         result = False  # 使用列表作为可变对象来存储结果
 
-        def on_complete(prompt_id, success):
+        def on_complete(task_id, prompt_id, success, output_name, on_msg):
             result = success
             completion_event.set()
 
-        def on_timeout(prompt_id):
+        def on_timeout(task_id, prompt_id):
             completion_event.set()
 
         # 调用异步方法进行状态检查
-        task_id = self.async_wait_for_workflow_completion(prompt_id, on_complete, on_timeout)
+        task_id = self.async_wait_for_workflow_completion(prompt_id, output_filename, on_complete, on_timeout)
 
         # 等待工作流完成或超时
         max_wait_time = get_task_config().get('task_timeout_seconds', 1800)
@@ -185,7 +185,7 @@ class ComfyUIApi:
 
         return result
 
-    def async_wait_for_workflow_completion(self, prompt_id: str,
+    def async_wait_for_workflow_completion(self, prompt_id: str, output_filename: str,
                                            on_complete: Callable[[str, bool], None],
                                            on_timeout: Optional[Callable[[str], None]] = None) -> str:
         """异步等待工作流完成
@@ -212,6 +212,7 @@ class ComfyUIApi:
         # 调用工作流状态检查器
         task_id = workflow_status_checker.check_workflow_status_async(
             prompt_id=prompt_id,
+            output_name=output_filename,
             api_url=self.api_url,
             on_complete=on_complete,
             on_timeout=on_timeout,
@@ -220,7 +221,7 @@ class ComfyUIApi:
 
         return task_id
 
-    def _get_workflow_outputs(self, prompt_id: str, output_path: str) -> tuple[bool, list[str]]:
+    def _get_workflow_outputs(self, prompt_id: str, output_path: str) -> tuple[bool, dict[str, str]]:
         """
         获取工作流的输出结果
         
@@ -239,7 +240,7 @@ class ComfyUIApi:
 
             if response.status_code != 200:
                 error(f"[ComfyUI API] 获取历史记录失败: 状态码={response.status_code}, 响应内容={response.text}")
-                return False, []
+                return False, {}
 
             # 尝试解析JSON
             try:
@@ -247,21 +248,21 @@ class ComfyUIApi:
             except json.JSONDecodeError as json_err:
                 error(f"[ComfyUI API] 解析历史记录JSON失败: {str(json_err)}")
                 error(f"[ComfyUI API] 响应内容: {response.text[:500]}...")  # 只显示部分内容
-                return False, []
+                return False, {}
 
             if not isinstance(history, dict) or prompt_id not in history:
                 error(f"[ComfyUI API] 历史记录格式不正确或找不到指定的prompt_id: {prompt_id}")
-                return False, []
+                return False, {}
 
             prompt_data = history[prompt_id]
             if not isinstance(prompt_data, dict) or "outputs" not in prompt_data:
                 error(f"[ComfyUI API] 找不到工作流输出，prompt_data格式: {type(prompt_data)}")
-                return False, []
+                return False, {}
 
             outputs = prompt_data["outputs"]
             if not isinstance(outputs, dict):
                 error(f"[ComfyUI API] outputs不是字典类型，而是: {type(outputs)}")
-                return False, []
+                return False, {}
 
             debug(f"[ComfyUI API] 找到 {len(outputs)} 个输出节点")
 
@@ -273,11 +274,11 @@ class ComfyUIApi:
                     debug(f"[ComfyUI API] 创建输出目录: {output_dir}")
                 except Exception as mkdir_err:
                     error(f"[ComfyUI API] 创建输出目录失败: {str(mkdir_err)}")
-                    return False, []
+                    return False, {}
 
             # 查找图像或视频输出
             found_output = False
-            saved_file_paths = []
+            saved_file_paths = dict[str, str]()  # 保存的文件路径
             all_output_types = ['images', 'videos', 'gifs']
 
             # 生成基本文件名（不带扩展名）和扩展名
@@ -359,7 +360,7 @@ class ComfyUIApi:
                                                 debug(f"[ComfyUI API] {output_type}保存成功: {save_path}")
                                                 found_output = True
                                                 success = True
-                                                saved_file_paths.append(save_path)
+                                                saved_file_paths[unique_filename] = save_path
                                             except PermissionError:
                                                 error(
                                                     f"[ComfyUI API] 没有写入权限，无法保存{output_type}到: {save_path}")
@@ -399,11 +400,11 @@ class ComfyUIApi:
                 for node_id, node_output in outputs.items():
                     if isinstance(node_output, dict):
                         error(f"[ComfyUI API] 节点 {node_id} 输出内容: {list(node_output.keys())}")
-                return False, []
+                return False, {}
         except Exception as e:
             error(f"[ComfyUI API] 获取工作流输出时出错: {str(e)}")
             print_log_exception()
-            return False, []
+            return False, {}
 
     def get_workflow_outputs(self, prompt_id: str, output_path: str) -> tuple[bool, list[str]]:
         """
@@ -423,19 +424,21 @@ class ComfyUIApi:
             # 验证返回的文件路径列表是否有效
             if success and saved_file_paths:
                 # 确保所有文件路径都存在
-                valid_file_paths = []
-                for file_path in saved_file_paths:
+                valid_file_names = []
+                for file_name, file_path in saved_file_paths.items():
                     if os.path.exists(file_path):
-                        valid_file_paths.append(file_path)
+                        valid_file_names.append(file_name)
                     else:
                         warning(f"保存的文件路径不存在: {file_path}")
 
                 # 如果没有有效的文件路径，则返回失败
-                if not valid_file_paths:
+                if not valid_file_names:
                     error(f"没有找到有效的输出文件")
                     return False, []
 
-                return True, valid_file_paths
+                return True, valid_file_names
+
+
             elif success and not saved_file_paths:
                 # 如果返回成功但文件路径列表为空，尝试检查默认路径
                 warning(f"ComfyUIApi返回成功但文件路径列表为空，尝试检查默认路径")

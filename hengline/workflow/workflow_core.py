@@ -73,7 +73,7 @@ class WorkflowManager:
             task_params['seed'] = random.randint(0, 2 ** 50 - 1)
 
         # 将任务加入队列，获取task_id
-        task_id, queue_position, waiting_time = task_queue_manager.enqueue_task(
+        task_id, queue_position, waiting_str = task_queue_manager.enqueue_task(
             None,
             task_type,
             task_params,
@@ -81,8 +81,6 @@ class WorkflowManager:
         )
 
         # 立即返回任务信息，不等待任务完成
-        minutes, seconds = divmod(int(waiting_time), 60)
-        waiting_str = f"{minutes}分{seconds}秒" if minutes > 0 else f"{seconds}秒"
         return {
             'success': True,
             'message': f'任务已成功提交，您可以在"我的任务"中查看进度。',
@@ -160,12 +158,13 @@ class WorkflowManager:
             # 异步运行工作流并设置回调函数
             def on_completion(on_task_id, on_prompt_id):
                 info(f"{on_task_id}任务提交成功，prompt_id: {on_prompt_id}")
-                # task_queue_manager.history_tasks[on_task_id].prompt_id = on_prompt_id
-                task_queue_manager.update_task_status(on_task_id, TaskStatus.RUNNING, "任务正在运行，请稍候...", prompt_id=on_prompt_id)
+                task_queue_manager.update_task_status(on_task_id, TaskStatus.RUNNING, task_msg="任务正在运行，请稍候...", prompt_id=on_prompt_id)
+
 
             def on_error(on_task_id, error_message):
                 error(f"{on_task_id}任务提交失败: {error_message}")
-                task_queue_manager.update_task_status(on_task_id, TaskStatus.FAILED, error_message)
+                task_queue_manager.update_task_status(on_task_id, TaskStatus.FAILED, task_msg=error_message)
+
 
             prompt_id = self.runner.async_run_workflow(
                 updated_workflow,

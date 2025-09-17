@@ -34,9 +34,16 @@ def save_uploaded_file(file, upload_folder):
 
 def generate_output_filename(task_type):
     """生成输出文件名"""
-    return f"{task_type}_{int(time.time())}_{uuid.uuid4().hex[:8]}.png"
+    name = f"{task_type}_{int(time.time())}_{uuid.uuid4().hex[:8]}"
+    if task_type in ['text_to_video', 'image_to_video']:
+        name = name + ".mp4"
+    elif task_type in ['image_to_image', 'image_to_image_v2']:
+        name = name + ".png"
 
-def is_valid_image_file( file_path: str) -> bool:
+    return name
+
+
+def is_valid_image_file(file_path: str) -> bool:
     """
     检查文件是否为有效的图片文件
 
@@ -50,6 +57,7 @@ def is_valid_image_file( file_path: str) -> bool:
     valid_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff']
     _, ext = os.path.splitext(file_path.lower())
     return ext in valid_extensions
+
 
 def file_exists(file_path):
     """检查文件是否存在"""

@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
 
-from hengline.common import get_timestamp_by_type
+from hengline.common import get_timestamp_by_type, estimated_waiting_time
 from hengline.task.task_common import TaskCommonBorg
 from hengline.task.task_queue import Task, TaskStatus
 
@@ -9,6 +9,9 @@ class TaskBase(TaskCommonBorg):
     """
     基于Borg模式的共享基类
     """
+
+    def __init__(self):
+        super().__init__()
 
     """添加任务到运行中缓存"""
 
@@ -76,49 +79,53 @@ class TaskBase(TaskCommonBorg):
         total_tasks = running_count + queued_count
 
         # 计算队列位置
-        position = 1
-        task_default_time = get_timestamp_by_type()  # 用于获取默认等待时间
-        task_type_default_time = get_timestamp_by_type().get(task_type, 100)  # 默认等待时间，单位秒
-
-        # 计算预计等待时间（基于平均执行时间）
-        avg_duration = task_type_default_time
-        if task_type and task_type in task_default_time:
-            avg_duration = task_default_time[task_type] / 60  # 转换为分钟
-        else:
-            # 如果没有指定任务类型或任务类型不存在，使用所有类型的平均值
-            avg_durations = list(task_default_time.values())
-            if avg_durations:
-                avg_duration = sum(avg_durations) / len(avg_durations) / 60  # 转换为分钟
-
-        # 计算预计等待时间
-        estimated_time = queued_count * avg_duration
+        queue_position, waiting_str = self.estimate_waiting_time(task_type, None)
 
         # 计算进度
         progress = 0
         if total_tasks > 0:
-            progress = min(100, int((position / total_tasks) * 100))
-
-        # 计算历史任务总数
-        total_history_tasks = len(self.history_tasks)
+            progress = min(100, int((queue_position / total_tasks) * 100))
 
         # 返回兼容测试文件的格式 - 修复缩进问题，确保总是返回字典
         return {
-            "total_tasks": total_tasks,
+            "total_tasks": max(total_tasks, total_tasks),
             "in_queue": queued_count,
             "running_tasks": running_count,
-            "position": position,
-            "estimated_time": round(task_type_default_time / 60, 1) if estimated_time < 1 else round(estimated_time, 1),
+            "position": queue_position,
             "progress": progress,
+            "estimated_time": waiting_str,
             "running_tasks_count": running_count,  # 保留原始字段以保持兼容性
             "queued_tasks_count": queued_count,  # 保留原始字段以保持兼容性
             "max_concurrent_tasks": self.task_max_concurrent,
-            "average_task_durations": task_type_default_time,
-
-            # 兼容测试文件的字段
-            "queued_tasks": queued_count,  # 兼容test_get_queue_status.py
-            "total_history_tasks": total_history_tasks,  # 兼容test_get_queue_status.py
-            "avg_execution_time": task_type_default_time  # 兼容check_queue.py
+            "average_task_durations": get_timestamp_by_type()
         }
+
+    def estimate_waiting_time(self, task_type: str, params: dict[str, Any] = None) -> (int, str):
+        """
+        预估任务等待时间
+
+        Args:
+            task_type: 任务类型
+            queue_position: 任务在队列中的位置
+
+        Returns:
+            float: 预估等待时间（秒）
+        """
+
+        # 计算队列中的位置（包括正在运行的任务）
+        queue_position = len(self.running_tasks) + self.task_queue.qsize()
+
+        # 计算前面有多少个任务在等待
+        waiting_tasks = max(queue_position - self.task_max_concurrent, 1)
+
+        # 计算预估等待时间
+        waiting_time = estimated_waiting_time(task_type, waiting_tasks, params)
+
+        minutes, seconds = divmod(int(waiting_time), 60)
+
+        waiting_str = f"{minutes}分{seconds}秒" if minutes > 0 else f"{seconds}秒"
+
+        return queue_position, waiting_str
 
     def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
         """
