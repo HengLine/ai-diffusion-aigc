@@ -3,12 +3,13 @@
 任务监控器模块
 用于定期检查任务状态并处理失败重试
 """
-
+import functools
 import os
 import threading
 import time
 import uuid
-from typing import Callable
+import weakref
+from typing import Callable, Dict, Any
 
 # 导入自定义日志模块
 from hengline.logger import error, debug, warning, info
@@ -293,7 +294,8 @@ class TaskMonitor(TaskBase):
                         # 使用事件循环运行协程函数
                         result = loop.run_until_complete(
                             asyncio.wait_for(
-                                task.callback(task_type=task.task_type, params=task.params, task_id=task.task_id),
+                                # task.callback(task.task_type, task.params, task.task_id),
+                                task_monitor.callback_with_complete(task, task.callback),
                                 timeout=timeout - 10  # 留出一点时间处理超时逻辑
                             )
                         )
@@ -306,7 +308,6 @@ class TaskMonitor(TaskBase):
                 else:
                     # 对于普通函数，直接调用
                     result = task.callback()
-                    # result = task.callback(task_type=task.task_type, params=task.params, task_id=task.task_id),
                     task_completed = True
             except Exception as e:
                 error(f"任务执行异常: {task.task_id}, 错误: {str(e)}")
@@ -340,6 +341,30 @@ class TaskMonitor(TaskBase):
         timeout_thread = threading.Thread(target=timeout_check_thread_func)
         timeout_thread.daemon = True
         timeout_thread.start()
+
+    @staticmethod
+    def callback_with_complete(task: Task, execute_workflow: Callable):
+
+        # 执行完成回调，标记为失败
+        try:
+            callback_with_workflow = functools.partial(
+                execute_workflow,
+                task.task_type,
+                task.params,
+                task.task_id
+            )
+
+            weak_callback = weakref.ref(callback_with_workflow)
+            # 调用弱引用回调
+            if weak_callback() is not None:
+                return weak_callback()()
+            else:
+                warning("callback_with_workflow() 对象已被垃圾回收")
+        except Exception as e:
+            error(f"callback_with_workflow 执行完成回调时出错: {str(e)}")
+            print_log_exception()
+
+        return {'success': False, 'message': '执行工作流时出错'}
 
 
 # 全局任务监控器实例

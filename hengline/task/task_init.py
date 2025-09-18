@@ -14,7 +14,6 @@ import sys
 import threading
 import time
 import uuid
-import weakref
 from threading import Lock
 
 from hengline.task.task_base import TaskBase
@@ -48,7 +47,6 @@ class StartupTaskListener(TaskBase):
         self._init_instance_id = None  # 生成一个简短的实例ID
         self._init_process_id = os.getpid()  # 获取当前进程ID
         self._task_init_lock = threading.Lock()  # 添加线程锁以防止并发执行
-        self.workflow_callback = weakref.WeakMethod(workflow_manager.execute_common)
 
     def start(self):
         """启动监听器，处理历史任务"""
@@ -102,11 +100,11 @@ class StartupTaskListener(TaskBase):
             # 根据不同状态进行处理
             if TaskStatus.is_queued(task.status):
                 # 排队中的任务，直接加入队列
-                task_queue_manager.requeue_task(task.task_id, task.task_type, "排队中的任务重新加入队列", self.workflow_callback)
+                task_queue_manager.requeue_task(task.task_id, task.task_type, "排队中的任务重新加入队列", workflow_manager.execute_common)
             elif TaskStatus.is_failed(task.status):
                 # 失败的任务，根据重试次数决定是否重新加入队列
                 if task.execution_count <= self.task_max_retry:
-                    task_queue_manager.requeue_task(task.task_id, task.task_type, f"失败任务重新加入队列，当前重试次数: {task.execution_count}", self.workflow_callback)
+                    task_queue_manager.requeue_task(task.task_id, task.task_type, f"失败任务重新加入队列，当前重试次数: {task.execution_count}", workflow_manager.execute_common)
                 else:
                     warning(f"任务 {task.task_id} 重试次数已达上限，不再重新加入队列")
                     # 标记为最终失败
@@ -136,7 +134,7 @@ class StartupTaskListener(TaskBase):
             # 检查任务是否有开始时间
             if not task.start_time:
                 warning(f"任务 {task_id} 状态为运行中，但没有开始时间，将其视为排队中任务")
-                task_queue_manager.requeue_task(task_id, task.task_type, "运行中任务但无开始时间，重新加入队列", self.workflow_callback)
+                task_queue_manager.requeue_task(task_id, task.task_type, "运行中任务但无开始时间，重新加入队列", workflow_manager.execute_common)
                 return
 
             # 计算任务已运行时间
@@ -165,7 +163,7 @@ class StartupTaskListener(TaskBase):
             # 如果没有prompt_id，则重新加入队列
             if not task.prompt_id:
                 debug(f"任务 {task_id} 没有prompt_id，重新加入队列")
-                task_queue_manager.requeue_task(task_id, task.task_type, "任务可能没提交，重新执行一次", self.workflow_callback)
+                task_queue_manager.requeue_task(task_id, task.task_type, "任务可能没提交，重新执行一次", workflow_manager.execute_common)
                 time.sleep(1)  # 短暂等待，避免过快重试
 
             # 计算剩余超时时间（基于最大运行时间）
@@ -178,8 +176,6 @@ class StartupTaskListener(TaskBase):
                 prompt_id=task.prompt_id,
                 output_name=generate_output_filename(task_type),
                 api_url=self.comfyui_api_url,
-                # on_complete=weakref.WeakMethod(task_callback_handler.handle_workflow_completion),
-                # on_timeout=weakref.WeakMethod(task_callback_handler.handle_workflow_timeout),
                 on_complete=task_callback_handler.handle_workflow_completion,
                 on_timeout=task_callback_handler.handle_workflow_timeout,
                 timeout_seconds=timeout_seconds,
@@ -190,7 +186,7 @@ class StartupTaskListener(TaskBase):
             print_log_exception()
             # 发生异常时，尝试将任务重新加入队列
             try:
-                task_queue_manager.requeue_task(task_id, task_type, "查询状态异常，重新加入队列", self.workflow_callback)
+                task_queue_manager.requeue_task(task_id, task_type, "查询状态异常，重新加入队列", workflow_manager.execute_common)
             except:
                 pass
 

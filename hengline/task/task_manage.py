@@ -31,7 +31,7 @@ class TaskQueueManager(TaskBase):
         """
         self.lock = threading.Lock()  # 用于线程同步的主锁
 
-    def enqueue_task(self, task_id: str, task_type: str, params: Dict[str, Any], callback: Callable) -> Tuple[str, int, float]:
+    def enqueue_task(self, task_id: str, task_type: str, params: Dict[str, Any], callback: Callable) -> tuple[str, int, float]:
         """
         将任务加入队列（仅对队列操作部分加锁）
 
@@ -102,7 +102,7 @@ class TaskQueueManager(TaskBase):
 
             return task_id, queue_position, waiting_str
 
-    def requeue_task(self, task_id: str, task_type: str, reason: str, callback: Callable):
+    def requeue_task(self, task_id: str, task_type: str, reason: str, callback: Callable = None) -> tuple[str, int, float] | tuple[str, None, None] | None:
         """将任务重新加入队列
 
         Args:
@@ -116,16 +116,18 @@ class TaskQueueManager(TaskBase):
                 warning(f"任务 {task_id} 不存在于历史记录中，无法重新加入队列")
                 return task_id, None, None
 
+            if not callback:
+                callback = self.history_tasks[task_id].callback
+                # callback = workflow_manager.execute_common
+
             # 设置任务消息
             # task.task_msg = reason
             info(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
-            # return task_queue_manager.enqueue_task(task_id, task_type, {}, weakref.WeakMethod(workflow_manager.execute_common))
             return task_queue_manager.enqueue_task(task_id, task_type, {}, callback)
 
         except Exception as e:
             error(f"将任务 {task_id} 重新加入队列时发生异常: {str(e)}")
             print_log_exception()
-
 
     def mark_task_as_final_failure(self, task_id: str, task_type: str, execution_count: int):
         """将任务标记为最终失败

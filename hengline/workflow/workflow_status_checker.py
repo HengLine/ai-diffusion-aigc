@@ -309,14 +309,14 @@ class WorkflowStatusChecker:
             if weak_callback() is not None:
                 weak_callback()()
             else:
-                warning("weak_callback(on_complete) 对象已被垃圾回收")
+                warning("weak_callback_complete 对象已被垃圾回收")
 
             # 移除任务
             with self.checking_tasks_lock:
                 self.checking_tasks.pop(task_id, None)
 
         except Exception as e:
-            error(f"执行完成回调时出错: {str(e)}")
+            error(f"weak_callback_complete 执行完成回调时出错: {str(e)}")
             print_log_exception()
 
     def cancel_check(self, task_id: str) -> bool:

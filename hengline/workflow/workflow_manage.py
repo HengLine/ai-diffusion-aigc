@@ -3,9 +3,12 @@
 """
 工作流工具模块，包含WorkflowManager类和配置加载功能
 """
+import functools
 import os
 import random
-from typing import Dict, Any
+import weakref
+from logging import warning
+from typing import Dict, Any, Callable
 
 from hengline.logger import info, error, debug
 from hengline.task.task_manage import task_queue_manager
@@ -90,8 +93,7 @@ class WorkflowManager:
             'waiting_time': waiting_str
         }
 
-    # async def _execute_common(self, task_type, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
-    async def _execute_common(self, **kwargs) -> Dict[str, Any]:
+    async def _execute_common(self, task_type, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
         """
         执行文本到图像的工作流（异步版本）
 
@@ -102,10 +104,7 @@ class WorkflowManager:
         Returns:
             Dict[str, Any]: 工作流执行结果
         """
-        task_id = kwargs.get('task_id')
         try:
-            task_type = kwargs.get('task_type')
-            params = kwargs.get('params')
             info(f"开始执行{task_type}（{task_id}）工作流...")
             if not self.init_runner():
                 return {'success': False, 'message': '无法初始化工作流运行器'}
@@ -191,8 +190,7 @@ class WorkflowManager:
             print_log_exception()
             return {"success": False, "message": f"执行{task_id}工作流时出错: {str(e)}"}
 
-    # async def execute_common(self, task_type, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
-    async def execute_common(self, **kwargs) -> Dict[str, Any]:
+    async def execute_common(self, task_type, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
         """
         执行文本到图像的工作流（同步版本）
         Args:
@@ -201,8 +199,7 @@ class WorkflowManager:
         Returns:
             Dict[str, Any]: 工作流执行结果
         """
-        # return await self._execute_common(task_type, params, task_id)
-        return await self._execute_common(**kwargs)
+        return await self._execute_common(task_type, params, task_id)
 
 
 workflow_manager = WorkflowManager()
