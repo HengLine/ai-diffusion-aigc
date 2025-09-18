@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, Tuple, List, Callable
 
-from hengline.logger import error, debug, info, warning
+from hengline.logger import error, debug, warning, info
 from hengline.task.task_base import TaskBase
 from hengline.task.task_email import async_send_failure_email
 # 导入邮件发送模块
@@ -34,7 +34,7 @@ class TaskQueueManager(TaskBase):
     def enqueue_task(self, task_id: str, task_type: str, params: Dict[str, Any], callback: Callable) -> Tuple[str, int, float]:
         """
         将任务加入队列（仅对队列操作部分加锁）
-        
+
         Args:
             task_type: 任务类型
             params: 任务参数
@@ -119,11 +119,13 @@ class TaskQueueManager(TaskBase):
             # 设置任务消息
             # task.task_msg = reason
             info(f"任务 {task_id} ({task_type}) 已重新加入队列: {reason}")
-            return self.enqueue_task(task_id, task_type, {}, callback)
+            # return task_queue_manager.enqueue_task(task_id, task_type, {}, weakref.WeakMethod(workflow_manager.execute_common))
+            return task_queue_manager.enqueue_task(task_id, task_type, {}, callback)
 
         except Exception as e:
             error(f"将任务 {task_id} 重新加入队列时发生异常: {str(e)}")
             print_log_exception()
+
 
     def mark_task_as_final_failure(self, task_id: str, task_type: str, execution_count: int):
         """将任务标记为最终失败

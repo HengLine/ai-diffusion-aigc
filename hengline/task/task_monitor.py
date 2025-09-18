@@ -150,8 +150,6 @@ class TaskMonitor(TaskBase):
                 error(f"处理队列任务时发生错误: {str(e)}")
                 print_log_exception()
 
-
-
     def _execute_task(self, task: Task, timeout: int = 1800):
         """执行单个任务 - 异步版本"""
         task_lock = self._get_task_lock(task.task_id)
@@ -169,6 +167,14 @@ class TaskMonitor(TaskBase):
                             task.task_msg = f"任务执行异常: {str(exception)}"
                             task.end_time = time.time()
                         # 检查任务是否遇到连接异常
+                        elif result is None:
+                            # 任务未返回结果，可能是执行过程中出错
+                            task.status = TaskStatus.FAILED.value
+                            task.task_msg = f"任务执行未返回结果: {task.task_id}"
+                            task.end_time = time.time()
+
+                            async_send_failure_email(task.task_id, task.task_type, task.task_msg, task.execution_count)
+
                         elif result and isinstance(result, dict) and result.get(TaskStatus.QUEUED.value):
                             # 从配置中获取最大重试次数（默认为3）
                             # 检查是否超过最大重试次数
@@ -189,14 +195,6 @@ class TaskMonitor(TaskBase):
 
                                 # 将任务重新加入队列
                                 self.add_queue_task(task)
-
-                        elif result is None:
-                            # 任务未返回结果，可能是执行过程中出错
-                            task.status = TaskStatus.FAILED.value
-                            task.task_msg = f"任务执行未返回结果: {task.task_id}"
-                            task.end_time = time.time()
-
-                            async_send_failure_email(task.task_id, task.task_type, task.task_msg, task.execution_count)
 
                         elif isinstance(result, dict) and not result.get('success', True):
                             # 任务返回结果但标记为失败
@@ -265,7 +263,6 @@ class TaskMonitor(TaskBase):
                 # 直接异步保存任务历史，避免阻塞
                 task_history.async_save_task_history()
 
-
     @staticmethod
     def _execute_callback_async(task: Task, timeout: int = 1800, completion_callback: Callable = None):
         """
@@ -294,19 +291,22 @@ class TaskMonitor(TaskBase):
                     asyncio.set_event_loop(loop)
                     try:
                         # 使用事件循环运行协程函数
-                        result =  loop.run_until_complete(
+                        result = loop.run_until_complete(
                             asyncio.wait_for(
-                                task.callback(task.task_type, task.params, task.task_id),
+                                task.callback(task_type=task.task_type, params=task.params, task_id=task.task_id),
                                 timeout=timeout - 10  # 留出一点时间处理超时逻辑
                             )
                         )
+                        task_completed = True
                     except asyncio.TimeoutError:
+                        task_completed = True
                         raise TimeoutError(f"任务执行超时({timeout}秒)")
                     finally:
                         loop.close()
                 else:
                     # 对于普通函数，直接调用
-                    result = task.callback(task.params)
+                    result = task.callback()
+                    # result = task.callback(task_type=task.task_type, params=task.params, task_id=task.task_id),
                     task_completed = True
             except Exception as e:
                 error(f"任务执行异常: {task.task_id}, 错误: {str(e)}")

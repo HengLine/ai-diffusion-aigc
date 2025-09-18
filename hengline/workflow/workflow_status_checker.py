@@ -4,14 +4,15 @@
 工作流状态检查器模块
 用于异步定时检查ComfyUI工作流的执行状态
 """
-
+import functools
 import threading
 import time
+import weakref
 from typing import Callable
 
 import requests
 
-from hengline.logger import debug, error
+from hengline.logger import debug, error, warning
 from hengline.utils.config_utils import get_task_config
 from hengline.utils.log_utils import print_log_exception
 
@@ -122,7 +123,19 @@ class WorkflowStatusChecker:
 
             # 执行超时回调
             try:
-                on_timeout(task_id, prompt_id)
+                callback_with_args = functools.partial(
+                    on_timeout,
+                    task_id,
+                    prompt_id
+                )
+
+                weak_callback = weakref.ref(callback_with_args)
+                # 调用弱引用回调
+                if weak_callback() is not None:
+                    weak_callback()()
+                else:
+                    warning("weak_callback(on_timeout) 对象已被垃圾回收")
+
             except Exception as e:
                 error(f"执行超时回调时出错: {str(e)}")
                 print_log_exception()
@@ -174,16 +187,8 @@ class WorkflowStatusChecker:
                             f"工作流处理完成，任务ID: {task_id}, prompt_id: {prompt_id}, 输出: {prompt_data['outputs']}")
 
                         # 执行完成回调，标记为成功
-                        try:
-                            msg = f"工作流处理完成，任务ID: {task_id}"
-                            on_complete(task_id, prompt_id, True, output_name, msg)
-                        except Exception as e:
-                            error(f"执行完成回调时出错: {str(e)}")
-                            print_log_exception()
-
-                        # 移除任务
-                        with self.checking_tasks_lock:
-                            self.checking_tasks.pop(task_id, None)
+                        msg = f"工作流处理完成，任务ID: {task_id}"
+                        self.callback_with_complete(task_id, prompt_id, True, output_name, msg, on_complete)
 
                         return
                     elif "error" in prompt_data:
@@ -191,16 +196,8 @@ class WorkflowStatusChecker:
                         debug(f"工作流执行出错，任务ID: {task_id}, prompt_id: {prompt_id}, 错误: {prompt_data['error']}")
 
                         # 执行完成回调，标记为失败
-                        try:
-                            on_complete(task_id, prompt_id, False, output_name, f"工作流执行出错，任务ID: {task_id}, 错误: {prompt_data['error']}")
-                        except Exception as e:
-                            error(f"执行完成回调时出错: {str(e)}")
-                            print_log_exception()
-
-                        # 移除任务
-                        with self.checking_tasks_lock:
-                            self.checking_tasks.pop(task_id, None)
-
+                        self.callback_with_complete(task_id, prompt_id, False, output_name
+                                                    , f"工作流执行出错，任务ID: {task_id}, 错误: {prompt_data['error']}", on_complete)
                         return
                     else:
                         # 工作流仍在执行中，增加检查间隔但继续检查
@@ -253,15 +250,8 @@ class WorkflowStatusChecker:
                 error(f"连续{max_consecutive_failures}次连接ComfyUI服务失败，确认服务器已宕机")
 
                 # 执行完成回调，标记为失败
-                try:
-                    on_complete(task_id, prompt_id, False, output_name, "ComfyUI服务连接失败，服务器可能已宕机")
-                except Exception as e:
-                    error(f"执行完成回调时出错: {str(e)}")
-                    print_log_exception()
-
-                # 移除任务
-                with self.checking_tasks_lock:
-                    self.checking_tasks.pop(task_id, None)
+                self.callback_with_complete(task_id, prompt_id, False, output_name
+                                            , "ComfyUI服务连接失败，服务器可能已宕机", on_complete)
 
                 return
 
@@ -288,16 +278,8 @@ class WorkflowStatusChecker:
                 error(f"连续{max_consecutive_failures}次检查工作流状态失败，认为连接失败")
 
                 # 执行完成回调，标记为失败
-                try:
-                    on_complete(task_id, prompt_id, False, output_name, "检查工作流状态失败，可能连接有问题，请检查ComfyUI服务是否正常运行")
-                except Exception as e:
-                    error(f"执行完成回调时出错: {str(e)}")
-                    print_log_exception()
-
-                # 移除任务
-                with self.checking_tasks_lock:
-                    self.checking_tasks.pop(task_id, None)
-
+                self.callback_with_complete(task_id, prompt_id, False, output_name
+                                            , "检查工作流状态失败，可能连接有问题，请检查ComfyUI服务是否正常运行", on_complete)
                 return
 
             # 增加检查间隔但继续检查
@@ -309,13 +291,41 @@ class WorkflowStatusChecker:
 
             self._schedule_check(task_id)
 
+    def callback_with_complete(self, task_id: str, prompt_id: str, success: bool, output_name: str, msg: str, on_complete):
+
+        # 执行完成回调，标记为失败
+        try:
+            callback_with_args = functools.partial(
+                on_complete,
+                task_id,
+                prompt_id,
+                success,
+                output_name,
+                msg
+            )
+
+            weak_callback = weakref.ref(callback_with_args)
+            # 调用弱引用回调
+            if weak_callback() is not None:
+                weak_callback()()
+            else:
+                warning("weak_callback(on_complete) 对象已被垃圾回收")
+
+            # 移除任务
+            with self.checking_tasks_lock:
+                self.checking_tasks.pop(task_id, None)
+
+        except Exception as e:
+            error(f"执行完成回调时出错: {str(e)}")
+            print_log_exception()
+
     def cancel_check(self, task_id: str) -> bool:
         """
         取消工作流状态检查
-        
+
         Args:
             task_id: 任务ID
-        
+
         Returns:
             bool: 是否成功取消
         """
@@ -331,7 +341,7 @@ class WorkflowStatusChecker:
     def get_checking_tasks_count(self) -> int:
         """
         获取当前正在检查的任务数量
-        
+
         Returns:
             int: 任务数量
         """

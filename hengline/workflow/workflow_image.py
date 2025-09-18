@@ -11,7 +11,7 @@ from typing import Dict, Any, Coroutine
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # 导入需要的模块
-from hengline.workflow.workflow_core import WorkflowManager
+from hengline.workflow.workflow_manage import WorkflowManager
 
 
 class WorkflowImageManager(WorkflowManager):

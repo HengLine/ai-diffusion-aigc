@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 # 导入需要的模块
 from hengline.logger import info
-from hengline.workflow.workflow_core import WorkflowManager
+from hengline.workflow.workflow_manage import WorkflowManager
 
 
 class WorkflowVideoManager(WorkflowManager):

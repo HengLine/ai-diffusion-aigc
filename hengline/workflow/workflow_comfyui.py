@@ -214,8 +214,8 @@ class ComfyUIApi:
             prompt_id=prompt_id,
             output_name=output_filename,
             api_url=self.api_url,
-            on_complete=on_complete,
-            on_timeout=on_timeout,
+            # on_complete=on_complete,
+            # on_timeout=on_timeout,
             check_interval=5  # 初始检查间隔为5秒
         )
 

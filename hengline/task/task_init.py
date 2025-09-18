@@ -23,7 +23,7 @@ from hengline.task.task_history import task_history
 from hengline.task.task_queue import Task, TaskStatus
 from hengline.utils.file_utils import generate_output_filename
 from hengline.utils.log_utils import print_log_exception
-from hengline.workflow.workflow_core import workflow_manager
+from hengline.workflow.workflow_manage import workflow_manager
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -151,7 +151,7 @@ class StartupTaskListener(TaskBase):
                 task.end_time = current_time
 
                 # 从运行中任务列表移除
-                with task_queue_manager.lock:
+                with self._running_tasks_lock:
                     if task_id in self.running_tasks:
                         del self.running_tasks[task_id]
 

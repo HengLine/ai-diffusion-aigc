@@ -6,6 +6,7 @@
 """
 import os
 import time
+import weakref
 
 from hengline.logger import debug, warning, error, info
 from hengline.task.task_base import TaskBase
@@ -14,7 +15,6 @@ from hengline.task.task_history import task_history
 from hengline.task.task_manage import task_queue_manager
 from hengline.task.task_queue import TaskStatus, Task
 from hengline.utils.log_utils import print_log_exception
-from hengline.workflow.workflow_comfyui import comfyui_api
 
 
 class TaskCallbackHandler(TaskBase):
@@ -44,9 +44,9 @@ class TaskCallbackHandler(TaskBase):
         # 定义超时回调函数
 
     def handle_workflow_timeout(self, task_id, prompt_id):
-        error_msg = f"工作流执行超时，prompt_id: {prompt_id}"
-        error(error_msg)
         try:
+            error_msg = f"工作流执行超时，prompt_id: {prompt_id}"
+            error(error_msg)
             with self._get_task_lock(task_id):
                 if task_id not in self.history_tasks:
                     return
@@ -73,7 +73,7 @@ class TaskCallbackHandler(TaskBase):
                     async_send_failure_email(task_id, task.task_type, task.task_msg, task.execution_count)
 
                 # 从运行中任务列表移除
-                with task_queue_manager.lock:
+                with self._running_tasks_lock:
                     if task_id in self.running_tasks:
                         del self.running_tasks[task_id]
 
@@ -86,8 +86,10 @@ class TaskCallbackHandler(TaskBase):
             print_log_exception()
 
     # 5. 定义工作流完成处理函数
-    def handle_workflow_completion(self, task_id, prompt_id, success, output_name, msg=""):
+    # 支持弱引用传参
+    def handle_workflow_completion(self, task_id, prompt_id, success, output_name, msg, **kwargs):
         try:
+            # msg = kwargs.get("msg", "")
             with self._get_task_lock(task_id):
                 if task_id not in self.history_tasks:
                     error(f"任务 {task_id} 不存在于历史任务中，无法处理完成回调")
@@ -96,8 +98,9 @@ class TaskCallbackHandler(TaskBase):
                 task = self.history_tasks[task_id]
                 if success:
                     # 任务完成
+                    from hengline.workflow.workflow_comfyui import comfyui_api
                     task.status = TaskStatus.SUCCESS.value
-                    task.task_msg = f"任务执行成功，工作流已完成: {prompt_id}"
+                    task.task_msg = f"任务执行成功，工作流已完成：{msg}"
                     # 获取工作流输出
                     output_path = os.path.join(self.output_dir, output_name)
                     output_success, file_names = comfyui_api.get_workflow_outputs(prompt_id, output_path)
@@ -118,17 +121,17 @@ class TaskCallbackHandler(TaskBase):
                         task.end_time = None  # 清除结束时间
 
                         # 将任务重新加入队列
-                        # task_queue_manager.requeue_task(task_id, task.task_type, task.task_msg,
-                        #                                 weakref.WeakMethod(workflow_manager.execute_common))
+                        from hengline.workflow.workflow_manage import workflow_manager
+                        task_queue_manager.requeue_task(task_id, task.task_type, task.task_msg, weakref.WeakMethod(workflow_manager.execute_common))
 
                     else:
-                        self.on_error(task, f"任务执行失败，重试超过{self.task_max_retry}次，{msg}")
+                        self.on_error(task, f"任务执行失败：已重试超过{self.task_max_retry}次，{msg}")
 
                         # 发送失败邮件
                         async_send_failure_email(task_id, task.task_type, task.task_msg, task.execution_count)
 
                 # 从运行中任务列表移除
-                with task_queue_manager.lock:
+                with self._running_tasks_lock:
                     if task_id in self.running_tasks:
                         del self.running_tasks[task_id]
 
