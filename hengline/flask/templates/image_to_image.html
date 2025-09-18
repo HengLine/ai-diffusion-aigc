@@ -769,7 +769,7 @@
                         const formattedTime = new Date(task.timestamp).toLocaleString('zh-CN');
                         let resultHtml = '';
                         
-                        if (task.status === 'success' && task.result) {
+                        if (task.status === 'success') {
                             resultHtml = '<button class="view-result-btn" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>';
                         }
                         

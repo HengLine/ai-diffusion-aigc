@@ -3,12 +3,9 @@
 """
 工作流工具模块，包含WorkflowManager类和配置加载功能
 """
-import functools
 import os
 import random
-import weakref
-from logging import warning
-from typing import Dict, Any, Callable
+from typing import Dict, Any
 
 from hengline.logger import info, error, debug
 from hengline.task.task_manage import task_queue_manager

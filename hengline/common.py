@@ -53,18 +53,18 @@ def estimated_waiting_time(task_type: str, waiting_tasks: int, params: dict[str,
             device = str(params['device'])
             # 对于图像生成任务，考虑分辨率、步数、批量大小等因素
             if device.lower() == 'cpu':  # CPU
-                estimated_time_sec = estimated_time_sec * 5  # 假设CPU比GPU慢5倍
+                estimated_time_sec *=  5  # 假设CPU比GPU慢5倍
             elif device.lower() == 'gpu':  # GPU
-                estimated_time_sec = estimated_time_sec * 1  # GPU基准
+                estimated_time_sec *= 1  # GPU基准
             else:  # 其他设备
-                estimated_time_sec = estimated_time_sec * 1.5  # 假设其他设备比GPU慢1.5倍
+                estimated_time_sec *= 1.5  # 假设其他设备比GPU慢1.5倍
 
             if length:
-                estimated_time_sec = estimated_time_sec * (length / 5)  # 假设基础是5秒
+                estimated_time_sec *= (length / 5)  # 假设基础是5秒
 
-        estimated_time_sec = estimated_time_sec * (steps / 20)  # 假设基础是20步
-        estimated_time_sec = estimated_time_sec * (batch_size / 1)  # 假设基础是1张
-        estimated_time_sec = estimated_time_sec * (width / 512) * (height / 512)  # 假设基础是1024x1024
+        estimated_time_sec *= (steps / 20)  # 假设基础是20步
+        estimated_time_sec *= (batch_size / 1)  # 假设基础是1张
+        estimated_time_sec *= (width / 512) * (height / 512)  # 假设基础是1024x1024
 
     return estimated_time_sec
 

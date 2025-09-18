@@ -9,7 +9,7 @@ import threading
 import time
 import uuid
 import weakref
-from typing import Callable, Dict, Any
+from typing import Callable
 
 # 导入自定义日志模块
 from hengline.logger import error, debug, warning, info

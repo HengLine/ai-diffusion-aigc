@@ -183,11 +183,16 @@ class WorkflowStatusChecker:
 
                     # 检查工作流是否完成
                     if "outputs" in prompt_data:
-                        debug(
-                            f"工作流处理完成，任务ID: {task_id}, prompt_id: {prompt_id}, 输出: {prompt_data['outputs']}")
+                        # {'9': {'images': [{'filename': 'ComfyUI_00055_.png', 'subfolder': '', 'type': 'output'}]}}
+                        debug(f"工作流处理完成，任务ID: {task_id}, prompt_id: {prompt_id}, 输出: {prompt_data['outputs']}")
+
+                        file_num = 0
+                        for value in prompt_data['outputs'].values():
+                            images_list = value.get('images', [])
+                            file_num += len(images_list)
 
                         # 执行完成回调，标记为成功
-                        msg = f"工作流处理完成，任务ID: {task_id}"
+                        msg = f"共生成 {file_num} 个 文件 "
                         self.callback_with_complete(task_id, prompt_id, True, output_name, msg, on_complete)
 
                         return
