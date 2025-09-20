@@ -87,7 +87,7 @@
             "inputs": {
                 "clip_name": "t5xxl_fp16.safetensors",
                 "type": "wan",
-                "device": "default"
+                "device": "gpu"
             },
             "class_type": "CLIPLoader",
             "_meta": {
@@ -573,7 +573,7 @@
                         "widgets_values": [
                             "t5xxl_fp16.safetensors",
                             "wan",
-                            "default"
+                            "gpu"
                         ]
                     },
                     {

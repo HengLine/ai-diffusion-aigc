@@ -198,8 +198,23 @@
             
             <div class="form-group">
                 <label for="comfyui_api_url">ComfyUI API URL <span style="color: red;">*</span></label>
-                <input type="text" id="comfyui_api_url" name="comfyui_api_url" 
-                       value="{{ comfyui_api_url }}" placeholder="例如：http://127.0.0.1:8188" required>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <input type="text" id="comfyui_api_url" name="comfyui_api_url" 
+                           value="{{ comfyui_api_url }}" placeholder="例如：http://127.0.0.1:8188" required style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        所在设备环境：
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="comfyui_device" value="gpu" {% if comfyui_device == 'gpu' %}checked{% endif %}>
+                            GPU
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="comfyui_device" value="cpu" {% if comfyui_device == 'cpu' %}checked{% endif %}>
+                            CPU
+                        </label>
+                        <span style="color: red; font-size: 0.8rem; font-style: italic; font-weight: 400; line-height: 1.2; margin-bottom: 0.5rem;">
+                            *（对于5秒的视频，CPU比GPU慢大约 50-200 倍）</span>
+                    </div>
+                </div>
             </div>
             
             <div class="info-box" style="margin-top: 2rem;">
@@ -412,7 +427,7 @@
                     <div class="form-group">
                         <label for="ttv_fps">帧率 <span style="color: red;">*</span></label>
                         <input type="number" id="ttv_fps" name="settings[text_to_video][fps]" 
-                               value="{{ settings.text_to_video.fps }}" min="1" max="120" step="1">
+                               value="{{ settings.text_to_video.fps }}" min="1" max="120" step="2">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">每秒显示的帧数，值越高视频越流畅速度越慢，建议值: 16</small>
                     </div>
                     {#<div class="form-group">

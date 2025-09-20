@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # 导入工作流管理器
 # 导入配置工具
 from hengline.utils.config_utils import get_config, get_comfyui_api_url, get_settings_config, \
-    reload_config, get_user_configs
+    reload_config, get_user_configs, get_comfyui_config
 
 # 创建Blueprint
 config_bp = Blueprint('config', __name__)
@@ -53,9 +53,11 @@ def configure():
         current_config['settings']['user'] = user_config
 
         # 保存ComfyUI配置
-        from hengline.utils.config_utils import get_comfyui_config
         comfyui_config = get_comfyui_config()
         comfyui_config['api_url'] = comfyui_api_url
+        # 获取设备选择值
+        comfyui_device = request.form.get('comfyui_device', 'gpu')
+        comfyui_config['device'] = comfyui_device
         current_config['settings']['comfyui'] = comfyui_config
 
         # 模型参数配置将通过各个任务类型的设置函数进行更新
@@ -112,6 +114,8 @@ def configure():
         # 处理文生图参数
         from hengline.utils.config_utils import get_task_settings
         text_to_image_params = get_task_settings('text_to_image')
+        # 添加设备参数
+        text_to_image_params['device'] = comfyui_device
         text_to_image_params['width'] = int(
             request.form.get('settings[text_to_image][width]', text_to_image_params.get('width', 1024)))
         text_to_image_params['height'] = int(
@@ -131,6 +135,8 @@ def configure():
 
         # 处理图生图参数
         image_to_image_params = get_task_settings('image_to_image')
+        # 添加设备参数
+        image_to_image_params['device'] = comfyui_device
         image_to_image_params['width'] = int(
             request.form.get('settings[image_to_image][width]', image_to_image_params.get('width', 1024)))
         image_to_image_params['height'] = int(
@@ -153,6 +159,8 @@ def configure():
 
         # 处理文生视频参数
         text_to_video_params = get_task_settings('text_to_video')
+        # 添加设备参数
+        text_to_video_params['device'] = comfyui_device
         text_to_video_params['width'] = int(
             request.form.get('settings[text_to_video][width]', text_to_video_params.get('width', 576)))
         text_to_video_params['height'] = int(
@@ -178,6 +186,8 @@ def configure():
 
         # 处理图生视频参数
         image_to_video_params = get_task_settings('image_to_video')
+        # 添加设备参数
+        image_to_video_params['device'] = comfyui_device
         image_to_video_params['width'] = int(
             request.form.get('settings[image_to_video][width]', image_to_video_params.get('width', 512)))
         image_to_video_params['height'] = int(
@@ -239,7 +249,9 @@ def configure():
         return redirect(url_for('config.configure'))
 
     # 从配置工具获取当前配置
-    comfyui_api_url = get_comfyui_api_url()
+    comfyui_config = get_comfyui_config()
+    comfyui_api_url = comfyui_config.get('api_url', 'http://127.0.0.1:8188')
+    comfyui_device = comfyui_config.get('device', 'gpu')
     user_config = get_user_configs()
     user_email = user_config.get('email', '')
     user_nickname = user_config.get('nickname', '')
@@ -258,6 +270,7 @@ def configure():
 
     return render_template('config.html',
                            comfyui_api_url=comfyui_api_url,
+                           comfyui_device=comfyui_device,
                            user_email=user_email,
                            user_nickname=user_nickname,
                            user_organization=user_organization,

@@ -209,23 +209,6 @@ class TaskMonitor(TaskBase):
                             queue_position, waiting_str = self.estimate_waiting_time(task.task_type, None)
                             task.task_msg = "任务已提交到工作流服务器，预计等待时间: " + waiting_str
 
-                            # 保存输出文件名（如果有）
-                            # if result and isinstance(result, dict):
-                            #     if 'output_paths' in result:
-                            #         task.output_filenames = [os.path.basename(path) for path in result['output_paths']]
-                            #         if task.output_filenames:
-                            #             task.output_filename = task.output_filenames[0]
-                            #     elif 'filenames' in result:
-                            #         task.output_filenames = result['filenames']
-                            #         if task.output_filenames:
-                            #             task.output_filename = task.output_filenames[0]
-                            #     elif 'output_path' in result:
-                            #         task.output_filename = os.path.basename(result['output_path'])
-                            #         task.output_filenames = [task.output_filename]
-                            #     elif 'filename' in result:
-                            #         task.output_filename = result['filename']
-                            #         task.output_filenames = [task.output_filename]
-
                         # 从运行中任务列表移除
                         if task.task_id in self.running_tasks and not TaskStatus.is_running(task.status):
                             del self.running_tasks[task.task_id]

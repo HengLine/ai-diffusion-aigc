@@ -200,7 +200,7 @@ class ComfyUIRunner:
             # 3. 发送工作流到ComfyUI API
             rssult = comfyui_api.execute_workflow(workflow)
             if rssult is None or not rssult.get("success", False):
-                error_msg = f"提交工作流失败: {rssult.get('message', '未知错误') if rssult else '无响应'}"
+                error_msg = f"{rssult.get('message', '未知错误') if rssult else '无响应'}"
                 error(error_msg)
                 if on_error:
                     on_error(task_id, error_msg)

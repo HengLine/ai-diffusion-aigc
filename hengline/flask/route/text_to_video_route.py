@@ -74,6 +74,7 @@ def api_text_to_video():
             height=data.get('height'),
             steps=data.get('steps'),
             cfg=data.get('cfg'),
+            fps=data.get('fps'),
             batch_size=data.get('batch_size')
         )
 
