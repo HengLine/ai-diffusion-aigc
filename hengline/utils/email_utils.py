@@ -10,7 +10,7 @@ from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from hengline.logger import info, error, warning
+from hengline.logger import debug, info, error, warning
 from hengline.utils.config_utils import get_email_config, get_user_configs
 from hengline.utils.env_utils import get_env_var
 
@@ -43,7 +43,7 @@ class EmailSender:
         # 然后从配置文件获取（非敏感信息）
         email_config = get_email_config()
         if not get_email_config().get('enabled', False):
-            warning("邮件发送功能已禁用")
+            debug("邮件发送功能已禁用")
             return
 
         if not self.smtp_server:
@@ -75,7 +75,7 @@ class EmailSender:
             bool: 连接是否成功
         """
         if not get_email_config().get('enabled', False):
-            warning("邮件发送功能已禁用")
+            debug("邮件发送功能已禁用")
             return False
 
         try:

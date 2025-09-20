@@ -268,7 +268,7 @@ function getStatusText(status) {
     const statusTexts = {
         'queued': '排队中',
         'running': '运行中',
-        'completed': '已完成',
+        'success': '已完成',
         'failed': '失败'
     };
     return statusTexts[status] || status;
@@ -360,7 +360,7 @@ function loadTaskList() {
                                 <div class="task-info">执行时长: ${duration}</div>
                             </div>
                             <div class="task-actions">
-                                ${task.status === 'completed' ? 
+                                ${task.status === 'success' ? 
                                     '<button class="view-result-button" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>' : 
                                     ''
                                 }

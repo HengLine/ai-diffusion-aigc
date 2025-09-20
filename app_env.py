@@ -33,7 +33,7 @@ PROJECT_ROOT = "."
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 
-VENV_DIR = os.path.join(PROJECT_ROOT, "venv")  # 虚拟环境目录
+VENV_DIR = os.path.join(PROJECT_ROOT, ".venv")  # 虚拟环境目录
 REQUIREMENTS_FILE = os.path.join(PROJECT_ROOT, "requirements.txt")  # 依赖文件
 
 
@@ -326,9 +326,9 @@ class AppBaseEnv:
     def main(self, max_retries=3):
         """主函数 - 协调整个启动流程"""
         print_large_ascii()
-        info("================================================")
-        info("          欢迎使用 HengLine AIGC 创意平台          ")
-        info("================================================")
+        info("==================================================================")
+        info("                   欢迎使用 HengLine AIGC 创意平台                   ")
+        info("==================================================================")
         debug(f"当前工作目录: {os.getcwd()}")
         debug(f"项目根目录: {PROJECT_ROOT}")
         debug(f"将使用的虚拟环境: {VENV_DIR}")

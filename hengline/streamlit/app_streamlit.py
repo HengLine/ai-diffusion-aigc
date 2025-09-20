@@ -15,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 # 导入自定义日志模块
 from hengline.logger import debug
 # 导入启动任务监听器
-from hengline.core.task_init import StartupTaskListener
+from hengline.task.task_init import StartupTaskListener
 # 导入配置工具
 from hengline.utils.config_utils import get_paths_config, get_comfyui_api_url, save_comfyui_config
 

@@ -24,7 +24,7 @@
     "user": {
       "email": "haeng2030@gmail.com",
       "nickname": "haeng",
-      "organization": "HengLine"
+      "organization": "Hengline"
     },
     "email": {
       "enabled": false,
@@ -37,16 +37,15 @@
     },
     "comfyui": {
       "api_url": "http://127.0.0.1:8188",
-      "auto_start_server": false
+      "device": "gpu"
     },
-    "common": {
-    },
+    "common": {},
     "task": {
+      "task_queue_size": 2048,
       "task_max_concurrent": 2,
       "task_cache_enabled": true,
       "task_cache_size": 1024,
       "task_max_retry": 3,
-      "task_max_runtime_hours": 2,
       "task_timeout_seconds": 7200,
       "task_view_timeout_seconds": 180,
       "task_view_max_retries": 3
