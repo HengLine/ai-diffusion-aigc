@@ -175,6 +175,11 @@
     <div class="config-status">
         <p>✅ 系统通过API连接到ComfyUI服务</p>
         <p>API地址: {{ config.settings.comfyui.api_url }}</p>
+        {% if config.settings.comfyui.device == 'gpu' %}
+            <p>✅（<span style="color: green; ">GPU</span> 环境）</p>
+        {% else %}
+            <p>💥（<span style="color: red; ">CPU</span> 环境）</p>
+        {% endif %}
         <a href="{{ url_for('config.configure') }}" class="config-link">管理配置</a>
     </div>
 

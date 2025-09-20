@@ -87,7 +87,7 @@ function updateQueueStatus() {
                     
                     // 确保显示状态信息
                     queueStatus.innerHTML = `
-                        <p>当前位置/总任务: ${position}/${total}</p>
+                        <p>当前位置/等待任务: ${position}/${total}</p>
                         <p>预计等待时间: ${estimatedTime} </p>
                         <p>执行中任务: ${queueData.running_tasks || 0}</p>
                         <p>总任务数: ${queueData.total_tasks || 0}</p>

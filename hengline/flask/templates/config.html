@@ -425,9 +425,9 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
-                        <label for="ttv_fps">帧率 <span style="color: red;">*</span></label>
-                        <input type="number" id="ttv_fps" name="settings[text_to_video][fps]" 
-                               value="{{ settings.text_to_video.fps }}" min="1" max="120" step="2">
+                        <label for="fps">帧率 <span style="color: red;">*</span></label>
+                        <input type="number" id="fps" name="settings[text_to_video][fps]"
+                               value="{{ settings.text_to_video.fps }}" min="4" max="64" step="2">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">每秒显示的帧数，值越高视频越流畅速度越慢，建议值: 16</small>
                     </div>
                     {#<div class="form-group">
@@ -510,9 +510,9 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
-                        <label for="itv_fps">帧率 <span style="color: red;">*</span></label>
-                        <input type="number" id="itv_fps" name="settings[image_to_video][fps]" 
-                               value="{{ settings.image_to_video.fps }}" min="1" max="120" step="1">
+                        <label for="fps">帧率 <span style="color: red;">*</span></label>
+                        <input type="number" id="fps" name="settings[image_to_video][fps]"
+                               value="{{ settings.image_to_video.fps }}" min="4" max="64" step="2">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">每秒显示的帧数，值越高视频越流畅，建议值: 16</small>
                     </div>
                     {#<div class="form-group">
@@ -591,8 +591,7 @@
 
     <!-- 引入公共组件 -->
     {% include 'components/notification.html' %}
-    {% include 'components/task_queue_status.html' %}
-    
+
     <!-- 引入任务模态框 -->
     {% include 'components/task_modal.html' %}
     

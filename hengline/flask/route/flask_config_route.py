@@ -56,7 +56,7 @@ def configure():
         comfyui_config = get_comfyui_config()
         comfyui_config['api_url'] = comfyui_api_url
         # 获取设备选择值
-        comfyui_device = request.form.get('comfyui_device', 'gpu')
+        comfyui_device = request.form.get('comfyui_device', 'gpu').islower()
         comfyui_config['device'] = comfyui_device
         current_config['settings']['comfyui'] = comfyui_config
 
@@ -160,7 +160,7 @@ def configure():
         # 处理文生视频参数
         text_to_video_params = get_task_settings('text_to_video')
         # 添加设备参数
-        text_to_video_params['device'] = comfyui_device
+        text_to_video_params['device'] = 'default' if comfyui_device == 'gpu' else comfyui_device
         text_to_video_params['width'] = int(
             request.form.get('settings[text_to_video][width]', text_to_video_params.get('width', 576)))
         text_to_video_params['height'] = int(
@@ -187,7 +187,7 @@ def configure():
         # 处理图生视频参数
         image_to_video_params = get_task_settings('image_to_video')
         # 添加设备参数
-        image_to_video_params['device'] = comfyui_device
+        image_to_video_params['device'] = 'default' if comfyui_device == 'gpu' else comfyui_device
         image_to_video_params['width'] = int(
             request.form.get('settings[image_to_video][width]', image_to_video_params.get('width', 512)))
         image_to_video_params['height'] = int(
