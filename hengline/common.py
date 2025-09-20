@@ -21,16 +21,14 @@ def get_name_by_type(task_type: str):
 
 def get_timestamp_by_type() -> dict[str, float]:
     return {
-        "text_to_image": 100,  # 默认平均文生图任务时长（秒）
-        "image_to_image": 120,  # 默认平均图生图任务时长（秒）
-        "text_to_video": 600,  # 默认平均文生视频任务时长（秒）
-        "image_to_video": 720  # 默认平均图生视频任务时长（秒）
+        "text_to_image": 10,  # 默认平均文生图任务时长（秒）
+        "image_to_image": 20,  # 默认平均图生图任务时长（秒）
+        "text_to_video": 300,  # 默认平均文生视频任务时长（秒）
+        "image_to_video": 400  # 默认平均图生视频任务时长（秒）
     }
 
 
 """获取各类型任务的平均执行时间（秒）"""
-
-
 def estimated_waiting_time(task_type: str, waiting_tasks: int, params: dict[str, Any]) -> float:
     """根据任务类型和平均执行时间估算等待时间"""
     # 获取该类型任务的平均执行时间
@@ -49,18 +47,21 @@ def estimated_waiting_time(task_type: str, waiting_tasks: int, params: dict[str,
         batch_size = int(params['batch_size'])
 
         if task_type in ['text_to_video', 'image_to_video']:
+            fps = int(params['fps'])
             length = int(params['length'])
             device = str(params['device'])
             # 对于图像生成任务，考虑分辨率、步数、批量大小等因素
-            if device.lower() == 'cpu':  # CPU
-                estimated_time_sec *=  5  # 假设CPU比GPU慢5倍
-            elif device.lower() == 'gpu':  # GPU
-                estimated_time_sec *= 1  # GPU基准
-            else:  # 其他设备
-                estimated_time_sec *= 1.5  # 假设其他设备比GPU慢1.5倍
-
+            if device and device.lower() == 'cpu':  # CPU
+                estimated_time_sec *=  100  # 假设CPU比GPU慢100倍
             if length:
                 estimated_time_sec *= (length / 5)  # 假设基础是5秒
+            if fps:
+                estimated_time_sec *= (fps / 16)  # 假设基础是16fps
+
+        else:  # text_to_image 或 image_to_image
+            device = str(params['device'])
+            if device and device.lower() == 'cpu':  # CPU
+                estimated_time_sec *=  20  # 假设CPU比GPU慢20倍
 
         estimated_time_sec *= (steps / 20)  # 假设基础是20步
         estimated_time_sec *= (batch_size / 1)  # 假设基础是1张

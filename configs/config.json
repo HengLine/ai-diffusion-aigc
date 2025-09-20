@@ -24,7 +24,7 @@
     "user": {
       "email": "haeng2030@gmail.com",
       "nickname": "haeng",
-      "organization": "HengLine"
+      "organization": "Hengline"
     },
     "email": {
       "enabled": false,
@@ -37,10 +37,9 @@
     },
     "comfyui": {
       "api_url": "http://127.0.0.1:8188",
-      "auto_start_server": false
+      "device": "gpu"
     },
-    "common": {
-    },
+    "common": {},
     "task": {
       "task_queue_size": 2048,
       "task_max_concurrent": 2,
