@@ -11,17 +11,14 @@ from typing import Dict, Any
 import requests
 
 from hengline.logger import debug, info, error, warning
-from hengline.task.task_callback import task_callback_handler
 from hengline.utils.config_utils import get_task_config
-from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.workflow_comfyui import comfyui_api
-from hengline.workflow.workflow_status_checker import workflow_status_checker
 
 # 添加scripts目录到Python路径
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
-class ComfyUIRunner:
+class ComfyUIRunnerManager:
     """ComfyUI工作流运行器类"""
 
     def __init__(self, output_dir: str, api_url: str = "http://127.0.0.1:8188"):
@@ -162,80 +159,3 @@ class ComfyUIRunner:
             import traceback
             debug(f"异常详情: {traceback.format_exc()}")
             return {"success": False, "message": f"工作流运行失败: {str(e)}"}
-
-    def async_run_workflow(self, workflow, output_name, on_complete=None, on_error=None, task_id=None):
-        """
-        异步运行工作流
-        
-        Args:
-            workflow: 工作流数据
-            output_name: 输出文件路径
-            on_complete: 工作流完成时的回调函数
-            on_error: 工作流出错时的回调函数
-            task_id: 可选的外部任务ID，如果不提供则内部生成
-        
-        Returns:
-            str: 任务ID
-        """
-        try:
-            # 1. 检查ComfyUI服务器状态
-            if not comfyui_api.check_server_status():
-                error_msg = "ComfyUI服务器未运行"
-                error(error_msg)
-                if on_error:
-                    on_error(task_id, error_msg)
-                return ""
-
-            # 2. 确保workflow是字典格式
-            if isinstance(workflow, str):
-                try:
-                    workflow = json.loads(workflow)
-                except json.JSONDecodeError:
-                    error_msg = "工作流格式无效，无法解析为JSON"
-                    error(error_msg)
-                    if on_error:
-                        on_error(task_id, error_msg)
-                    return ""
-
-            # 3. 发送工作流到ComfyUI API
-            rssult = comfyui_api.execute_workflow(workflow)
-            if rssult is None or not rssult.get("success", False):
-                error_msg = f"{rssult.get('message', '未知错误') if rssult else '无响应'}"
-                error(error_msg)
-                if on_error:
-                    on_error(task_id, error_msg)
-                return ""
-
-            prompt_id = rssult.get("prompt_id")
-            if not prompt_id:
-                error_msg = "无法获取prompt_id"
-                error(error_msg)
-                if on_error:
-                    on_error(task_id, error_msg)
-                return ""
-
-            if on_complete:
-                on_complete(task_id, prompt_id)  # 初始调用，表示已提交
-
-            # 6. 异步检查工作流状态 asyncio.run(
-            workflow_status_checker.check_workflow_status_async(
-                api_url=self.api_url,
-                output_name=output_name,
-                # on_complete=weakref.WeakMethod(task_callback_handler.handle_workflow_completion),
-                # on_timeout=weakref.WeakMethod(task_callback_handler.handle_workflow_timeout),
-                on_complete=task_callback_handler.handle_workflow_completion,
-                on_timeout=task_callback_handler.handle_workflow_timeout,
-                prompt_id=prompt_id,
-                task_id=task_id
-            )
-
-            debug(f"已注册工作流状态检查，prompt_id: {prompt_id}")
-            return prompt_id
-
-        except Exception as e:
-            error_msg = f"工作流运行失败: {str(e)}"
-            print_log_exception()
-            error(error_msg)
-            if on_error:
-                on_error(task_id, error_msg)
-            return ""

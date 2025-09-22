@@ -3,7 +3,9 @@ import os
 import sys
 import time
 
-from flask import Blueprint, render_template, request, flash, jsonify
+from flask import Blueprint, render_template, request, jsonify
+
+from hengline.utils.log_utils import print_log_exception
 
 # 添加项目路径到系统路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -49,6 +51,7 @@ def api_text_to_image():
             data = request.get_json()
         except Exception as e:
             error(f"[{request_id}] JSON数据解析失败: {str(e)}")
+            print_log_exception()
             # 尝试直接读取原始请求体，用于调试
             try:
                 raw_data = request.get_data().decode('utf-8')
@@ -149,6 +152,7 @@ def api_text_to_image():
             }), 500
     except Exception as e:
         error(f"[{request_id}] 处理请求时发生异常")
+        print_log_exception()
         return jsonify({
             'success': False,
             'message': f'处理请求时发生错误: {str(e)}'

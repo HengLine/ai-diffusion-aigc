@@ -6,13 +6,15 @@
 import os
 import sys
 import time
+
 from flask import Blueprint, render_template, request, jsonify
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入WorkflowManager
 from hengline.workflow.workflow_video import workflow_video_manager
 # 从配置工具获取页面显示的参数（setting节点优先于default节点）
-from hengline.utils.config_utils import get_workflow_preset, get_paths_config
+from hengline.utils.config_utils import get_workflow_preset
 # 配置日志
 from hengline.logger import warning, error, debug
 
@@ -72,6 +74,7 @@ def api_text_to_video():
             height=data.get('height'),
             steps=data.get('steps'),
             cfg=data.get('cfg'),
+            fps=data.get('fps'),
             batch_size=data.get('batch_size')
         )
 
@@ -112,5 +115,3 @@ def api_text_to_video():
             'success': False,
             'message': f'服务器内部错误: {str(e)}'
         }), 500
-
-

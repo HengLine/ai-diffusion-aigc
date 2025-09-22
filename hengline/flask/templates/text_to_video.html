@@ -469,10 +469,19 @@
                 <div class="slider-container">
                     <label for="lengthSlider">视频时长（秒）</label>
                     <div class="slider-input-group">
-                        <input type="range" id="lengthSlider" class="slider" min="2" max="30" step="1" value="{{ default_params.length or 5 }}">
-                        <input type="number" id="length" name="length" min="2" max="30" step="1" value="{{ default_params.length or 5 }}" class="slider-value">
+                        <input type="range" id="lengthSlider" class="slider" min="2" max="20" step="1" value="{{ default_params.length or 5 }}">
+                        <input type="number" id="length" name="length" min="2" max="20" step="1" value="{{ default_params.length or 5 }}" class="slider-value">
                     </div>
-                    <p class="parameter-description">视频时长(秒)，建议值：5-15</p>
+                    <p class="parameter-description">视频时长(秒)，建议值：5-10</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="fpsSlider">视频帧率 (FPS)</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="fpsSlider" class="slider" min="4" max="64" step="2" value="{{ default_params.fps or 24 }}">
+                        <input type="number" id="fps" name="fps" min="4" max="64" step="2" value="{{ default_params.fps or 24 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">视频帧率，值越高视频越流畅，但生成时间越长，建议值：16-32</p>
                 </div>
                 
                 <div class="slider-container">
@@ -496,7 +505,7 @@
         
         <div class="progress-info">
             <p><strong>视频生成中...</strong></p>
-            <p>视频生成可能需要较长时间，请保持页面打开不要刷新。</p>
+            <p>视频生成可能需要较长时间，建议尽量使用GPU环境，CPU环境可能需要数小时。</p>
         </div>
         
         <!-- 任务队列状态显示区域 -->
@@ -563,6 +572,7 @@
             setupSliderSync('widthSlider', 'width');
             setupSliderSync('heightSlider', 'height');
             setupSliderSync('lengthSlider', 'length');
+            setupSliderSync('fpsSlider', 'fps');
             setupSliderSync('batchSizeSlider', 'batch_size');
             
             // 设置参数折叠功能
@@ -593,6 +603,7 @@
                     steps: document.getElementById('steps').value,
                     cfg: document.getElementById('cfg').value,
                     denoise: document.getElementById('denoise').value,
+                    fps: document.getElementById('fps').value,
                     batch_size: document.getElementById('batch_size').value
                 };
                 

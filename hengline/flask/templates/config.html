@@ -198,8 +198,23 @@
             
             <div class="form-group">
                 <label for="comfyui_api_url">ComfyUI API URL <span style="color: red;">*</span></label>
-                <input type="text" id="comfyui_api_url" name="comfyui_api_url" 
-                       value="{{ comfyui_api_url }}" placeholder="例如：http://127.0.0.1:8188" required>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <input type="text" id="comfyui_api_url" name="comfyui_api_url" 
+                           value="{{ comfyui_api_url }}" placeholder="例如：http://127.0.0.1:8188" required style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        所在设备环境：
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="comfyui_device" value="gpu" {% if comfyui_device == 'gpu' %}checked{% endif %}>
+                            GPU
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="comfyui_device" value="cpu" {% if comfyui_device == 'cpu' %}checked{% endif %}>
+                            CPU
+                        </label>
+                        <span style="color: red; font-size: 0.8rem; font-style: italic; font-weight: 400; line-height: 1.2; margin-bottom: 0.5rem;">
+                            *（对于5秒的视频，CPU比GPU慢大约 50-200 倍）</span>
+                    </div>
+                </div>
             </div>
             
             <div class="info-box" style="margin-top: 2rem;">
@@ -410,9 +425,9 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
-                        <label for="ttv_fps">帧率 <span style="color: red;">*</span></label>
-                        <input type="number" id="ttv_fps" name="settings[text_to_video][fps]" 
-                               value="{{ settings.text_to_video.fps }}" min="1" max="120" step="1">
+                        <label for="fps">帧率 <span style="color: red;">*</span></label>
+                        <input type="number" id="fps" name="settings[text_to_video][fps]"
+                               value="{{ settings.text_to_video.fps }}" min="4" max="64" step="2">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">每秒显示的帧数，值越高视频越流畅速度越慢，建议值: 16</small>
                     </div>
                     {#<div class="form-group">
@@ -495,9 +510,9 @@
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
-                        <label for="itv_fps">帧率 <span style="color: red;">*</span></label>
-                        <input type="number" id="itv_fps" name="settings[image_to_video][fps]" 
-                               value="{{ settings.image_to_video.fps }}" min="1" max="120" step="1">
+                        <label for="fps">帧率 <span style="color: red;">*</span></label>
+                        <input type="number" id="fps" name="settings[image_to_video][fps]"
+                               value="{{ settings.image_to_video.fps }}" min="4" max="64" step="2">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">每秒显示的帧数，值越高视频越流畅，建议值: 16</small>
                     </div>
                     {#<div class="form-group">
@@ -576,8 +591,7 @@
 
     <!-- 引入公共组件 -->
     {% include 'components/notification.html' %}
-    {% include 'components/task_queue_status.html' %}
-    
+
     <!-- 引入任务模态框 -->
     {% include 'components/task_modal.html' %}
     
@@ -605,6 +619,118 @@
             evt.currentTarget.style.backgroundColor = "#4a6fa5";
             evt.currentTarget.style.color = "white";
         }
+        
+        // 检查URL可用性（增强版）
+        async function checkUrlAvailability(url) {
+            try {
+                // 为了避免CORS问题，设置超时时间为5秒
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                // 首先检查基本连接性
+                const connectResponse = await fetch(url, {
+                    method: 'HEAD',
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': '*/*'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // 检查基本连接是否成功
+                if (!(connectResponse.ok || connectResponse.redirected)) {
+                    return false;
+                }
+                
+                // 重置控制器，准备下一步检查
+                const apiController = new AbortController();
+                const apiTimeoutId = setTimeout(() => apiController.abort(), 5000);
+                
+                // 尝试访问ComfyUI的API端点以验证它是否为有效的ComfyUI服务
+                // 先尝试获取ComfyUI常见的API端点信息
+                try {
+                    // 检查/workflow API，这是ComfyUI提供的常见端点
+                    const apiResponse = await fetch(url + '/workflow', {
+                        method: 'GET',
+                        mode: 'cors',
+                        credentials: 'omit',
+                        signal: apiController.signal,
+                        headers: {
+                            'Accept': '*/*'
+                        }
+                    });
+                    
+                    clearTimeout(apiTimeoutId);
+                    
+                    // 检查响应是否表明这是一个有效的ComfyUI API
+                    // 这里我们检查是否是JSON响应，并且是否包含ComfyUI特有的结构
+                    const contentType = apiResponse.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        try {
+                            const data = await apiResponse.json();
+                            // ComfyUI的/workflow端点通常返回包含nodes和links的对象
+                            if (typeof data === 'object' && data !== null) {
+                                return true;
+                            }
+                        } catch (jsonError) {
+                            // 如果JSON解析失败，继续尝试其他检查方式
+                            console.log('JSON解析失败，但URL仍然可达');
+                        }
+                    }
+                } catch (apiError) {
+                    console.log('API端点检查失败，但URL仍然可达');
+                }
+                
+                // 如果上面的API检查失败，但URL本身是可达的，我们也认为它可能是一个有效的ComfyUI服务
+                // 因为不同版本的ComfyUI可能有不同的API端点结构
+                return true;
+            } catch (error) {
+                console.error('URL可用性检查失败:', error);
+                return false;
+            }
+        }
+        
+        // 为表单添加提交事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            const configForm = document.querySelector('form');
+            
+            if (configForm) {
+                configForm.addEventListener('submit', async function(e) {
+                    // 获取ComfyUI API URL的值
+                    const comfyuiApiUrl = document.getElementById('comfyui_api_url').value.trim();
+                    
+                    // 简单验证URL格式
+                    if (comfyuiApiUrl && comfyuiApiUrl.startsWith('http')) {
+                        // 显示加载状态
+                        showLoading(true);
+                        
+                        try {
+                            // 检查URL可用性
+                            const isAvailable = await checkUrlAvailability(comfyuiApiUrl);
+                            
+                            // 隐藏加载状态
+                            showLoading(false);
+                            
+                            if (!isAvailable) {
+                                // URL不可用，显示弹框提示并阻止表单提交
+                                e.preventDefault();
+                                showNotification('ComfyUI API URL不可用，请检查地址是否正确！', 'error');
+                            }
+                        } catch (error) {
+                            // 隐藏加载状态
+                            showLoading(false);
+                            console.error('检查URL可用性时发生错误:', error);
+                            
+                            // 默认允许提交，因为网络错误可能是临时的
+                            showNotification('URL可用性检查过程中发生错误，将继续提交配置...', 'warning');
+                        }
+                    }
+                });
+            }
+        });
         
         // 参数说明功能
         document.addEventListener('DOMContentLoaded', function() {
