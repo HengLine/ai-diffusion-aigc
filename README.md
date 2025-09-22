@@ -16,7 +16,7 @@
 ### 技术架构
 
 - **底层框架**：基于ComfyUI工作流引擎，提供强大的模型编排能力
-- **支持模型**：集成SD (Stable Diffusion)、SVD (Stable Video Diffusion)、Flux、Wan等多种先进生成模型
+- **支持模型**：集成SD (Stable Diffusion)、SVD (Stable Video Diffusion)、Flux、Wan2等多种先进生成模型
 - **双界面设计**：同时提供Streamlit和Flask两种Web界面，满足不同使用习惯
 - **模块化设计**：采用组件化架构，易于扩展新功能和场景
 - **任务队列**：支持异步任务处理和重试机制，提高系统稳定性
@@ -28,11 +28,11 @@
 │   ├── core/        # 核心队列处理
 │   ├── flask/       # Flask应用相关代码
 │   ├── streamlit/   # Streamlit界面组件
+│   ├── task/        # 任务管理
 │   └── utils/       # 工具函数库
 │   └── workflow/    # 工作流处理
 ├── workflows/       # ComfyUI工作流配置文件
 ├── configs/         # 系统配置文件
-├── imgs/            # 效果图和示例图片
 ├── start_app.py     # Streamlit应用启动脚本
 ├── start_flask.py   # Flask应用启动脚本
 └── requirements.txt # 项目依赖文件
@@ -115,7 +115,7 @@
 
    > 启动脚本将自动：
    > - 检查Python环境
-   > - 创建/激活虚拟环境（./venv）
+   > - 创建/激活虚拟环境（.venv）
    > - 安装项目依赖
    > - 启动相应的Web服务
    
@@ -138,7 +138,7 @@
 
 ### 启动应用
 
-#### 方法一：使用Streamlit界面
+#### 方法一：使用Streamlit界面（调试）
 
 1. 运行启动脚本：
    ```bash
@@ -151,7 +151,7 @@
 
 4. 在Web界面中，配置相关参数后即可使用各项功能。
 
-#### 方法二：使用Flask界面
+#### 方法二：使用Flask界面（推荐）
 
 1. 运行启动脚本：
    ```bash
@@ -191,7 +191,7 @@
 
 
 
-### Flask界面效果图（推荐）
+### Flask界面效果图
 
 <img src="./imgs/image-20250911201329323.png" alt="image-20250911201329323" style="zoom:50%;" />
 
@@ -268,7 +268,7 @@
 
 #### 图生视频效果
 
-暂未出结果
+暂未调试
 
 
 

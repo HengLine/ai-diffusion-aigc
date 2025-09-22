@@ -61,7 +61,7 @@ def estimated_waiting_time(task_type: str, waiting_tasks: int, params: dict[str,
         else:  # text_to_image 或 image_to_image
             device = str(params['device'])
             if device and device.lower() == 'cpu':  # CPU
-                estimated_time_sec *=  20  # 假设CPU比GPU慢20倍
+                estimated_time_sec *=  50  # 假设CPU比GPU慢50倍
 
         estimated_time_sec *= (steps / 20)  # 假设基础是20步
         estimated_time_sec *= (batch_size / 1)  # 假设基础是1张
