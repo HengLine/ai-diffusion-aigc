@@ -34,6 +34,7 @@ from route.text_to_image_route import text_to_image_bp
 from route.image_to_image_route import image_to_image_bp
 from route.image_to_video_route import image_to_video_bp
 from route.text_to_video_route import text_to_video_bp
+from route.text_to_audio_route import text_to_audio_bp
 from route.task_queue_route import task_queue_bp
 from route.flask_config_route import config_bp
 
@@ -82,6 +83,7 @@ app.register_blueprint(text_to_image_bp)
 app.register_blueprint(image_to_image_bp)
 app.register_blueprint(image_to_video_bp)
 app.register_blueprint(text_to_video_bp)
+app.register_blueprint(text_to_audio_bp)
 app.register_blueprint(task_queue_bp)
 
 

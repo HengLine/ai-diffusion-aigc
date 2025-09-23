@@ -87,6 +87,12 @@
    >    - /**vae**/[wan2.2_vae.safetensors](https://hf-mirror.com/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors)（1.3G）
    >    - **/diffusion_models** / [wan2.2_ti2v_5B_fp16.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors)（9.3G）
 
+   > 
+   >
+   > 4. **文生音频**（共约5G）：
+   >    - /**text_encoders**/[t5-base.safetensors](https://huggingface.co/ComfyUI-Wiki/t5-base/resolve/main/t5-base.safetensors)（850M）
+   >    - /**checkpoints**/[stable-audio-open-1.0.safetensors](https://huggingface.co/Comfy-Org/stable-audio-open-1.0_repackaged/resolve/main/stable-audio-open-1.0.safetensors)（4.5G）
+
 4. 启动 ComfyUI 
 
    ```python

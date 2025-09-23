@@ -1,4 +1,17 @@
 {
+  "text_to_audio": {
+    "default": {
+      "steps": 20,
+      "device": "gpu",
+      "cfg": 5.8,
+      "seconds": 20,
+      "prompt": "soft piano music with a calm melody",
+      "negative_prompt": "low quality, distorted, noisy, unpleasant",
+      "batch_size": 1,
+      "seed": -1
+    },
+    "setting": {}
+  },
   "text_to_image": {
     "default": {
       "width": 512,

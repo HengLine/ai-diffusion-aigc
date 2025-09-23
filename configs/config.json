@@ -13,7 +13,8 @@
     "text_to_image": "workflows/text_to_image.json",
     "image_to_image": "workflows/image_to_image.json",
     "image_to_video": "workflows/image_to_video.json",
-    "text_to_video": "workflows/text_to_video.json"
+    "text_to_video": "workflows/text_to_video.json",
+    "text_to_audio": "workflows/text_to_audio.json"
   },
   "paths": {
     "temp_folder": "uploads",
