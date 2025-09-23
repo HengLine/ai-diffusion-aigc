@@ -254,7 +254,7 @@
             </div>
             
             <!-- 文生图 Tab 内容 -->
-            <div id="textToImage" class="tab-content" style="display: block;">
+            <div id="textToImage" class="tab-content" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3 style="margin-top: 0; margin-bottom: 0;">文生图参数</h3>
                     <button type="button" id="resetTextToImage" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
@@ -282,7 +282,7 @@
                     <div class="form-group">
                         <label for="tti_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="tti_cfg" name="settings[text_to_image][cfg]" 
-                               value="{{ settings.text_to_image.cfg }}" min="1" max="100" step="0.5">
+                               value="{{ settings.text_to_image.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
@@ -338,7 +338,7 @@
                     <div class="form-group">
                         <label for="tta_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="tta_cfg" name="settings[text_to_audio][cfg]" 
-                               value="{{ settings.text_to_audio.cfg }}" min="1" max="100" step="0.1">
+                               value="{{ settings.text_to_audio.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 5.0-7.0</small>
                     </div>
                     <div class="form-group">
@@ -405,7 +405,7 @@
                     <div class="form-group">
                         <label for="iti_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="iti_cfg" name="settings[image_to_image][cfg]" 
-                               value="{{ settings.image_to_image.cfg }}" min="1" max="100" step="0.5">
+                               value="{{ settings.image_to_image.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
@@ -479,7 +479,7 @@
                      <div class="form-group">
                         <label for="ttv_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="ttv_cfg" name="settings[text_to_video][cfg]"
-                               value="{{ settings.text_to_video.cfg }}" min="1" max="100" step="0.5">
+                               value="{{ settings.text_to_video.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
@@ -564,7 +564,7 @@
                     <div class="form-group">
                         <label for="itv_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
                         <input type="number" id="itv_cfg" name="settings[image_to_video][cfg]"
-                               value="{{ settings.image_to_video.cfg }}" min="1" max="100" step="0.5">
+                               value="{{ settings.image_to_video.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
                     </div>
                     <div class="form-group">
@@ -621,36 +621,335 @@
     </div>
 
     <script>
-        // 恢复初始值功能
+        // 自定义确认对话框函数 - 美化样式，确定按钮居中显示
+        function showConfirmDialog(message) {
+            return new Promise((resolve) => {
+                // 检查对话框容器是否存在，不存在则创建
+                let dialogContainer = document.getElementById('customConfirmDialog');
+                if (dialogContainer) {
+                    document.body.removeChild(dialogContainer);
+                }
+                
+                // 创建对话框容器
+                dialogContainer = document.createElement('div');
+                dialogContainer.id = 'customConfirmDialog';
+                dialogContainer.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                `;
+                
+                // 创建对话框主体
+                const dialogBox = document.createElement('div');
+                dialogBox.style.cssText = `
+                    background-color: white;
+                    border-radius: 12px;
+                    padding: 30px;
+                    width: 90%;
+                    max-width: 400px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                    text-align: center;
+                `;
+                
+                // 分析消息文本，提取主消息和警告信息
+                let mainMessage = message;
+                let hasWarning = false;
+                
+                // 检查消息是否包含警告文本
+                if (message.includes('当前设置将会丢失。')) {
+                    // 提取主消息（去除警告部分）
+                    mainMessage = message.replace('当前设置将会丢失。', '').trim();
+                    hasWarning = true;
+                }
+                
+                // 创建消息文本
+                const messageElement = document.createElement('p');
+                messageElement.style.cssText = `
+                    margin-bottom: 10px;
+                    font-size: 16px;
+                    color: #333;
+                    line-height: 1.6;
+                `;
+                messageElement.textContent = mainMessage;
+                
+                // 创建警告文本（如果存在）
+                let warningElement;
+                if (hasWarning) {
+                    warningElement = document.createElement('p');
+                    warningElement.style.cssText = `
+                        margin-bottom: 25px;
+                        font-size: 14px;
+                        color: #e67700;
+                        font-weight: 500;
+                    `;
+                    warningElement.textContent = '当前设置将会丢失。';
+                }
+                
+                // 创建按钮容器（确保按钮居中并显示在一行）
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = `
+                    display: flex;
+                    justify-content: center;
+                    gap: 15px;
+                `;
+                
+                // 创建确认按钮
+                const confirmButton = document.createElement('button');
+                confirmButton.textContent = '确定';
+                confirmButton.style.cssText = `
+                    background-color: #4a6fa5;
+                    color: white;
+                    border: none;
+                    padding: 12px 36px;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    min-width: 120px;
+                `;
+                
+                // 确认按钮悬停效果
+                confirmButton.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = '#3a5a85';
+                    this.style.transform = 'translateY(-2px)';
+                });
+                
+                confirmButton.addEventListener('mouseout', function() {
+                    this.style.backgroundColor = '#4a6fa5';
+                    this.style.transform = 'translateY(0)';
+                });
+                
+                // 确认按钮点击事件
+                confirmButton.addEventListener('click', function() {
+                    document.body.removeChild(dialogContainer);
+                    resolve(true);
+                });
+                
+                // 创建取消按钮
+                const cancelButton = document.createElement('button');
+                cancelButton.textContent = '取消';
+                cancelButton.style.cssText = `
+                    background-color: #f5f5f5;
+                    color: #666;
+                    border: 1px solid #ddd;
+                    padding: 10px 32px;
+                    border-radius: 8px;
+                    font-size: 15px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    min-width: 100px;
+                `;
+                
+                // 取消按钮悬停效果
+                cancelButton.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = '#e9e9e9';
+                });
+                
+                cancelButton.addEventListener('mouseout', function() {
+                    this.style.backgroundColor = '#f5f5f5';
+                });
+                
+                // 取消按钮点击事件
+                cancelButton.addEventListener('click', function() {
+                    document.body.removeChild(dialogContainer);
+                    resolve(false);
+                });
+                
+                // 组装对话框
+                buttonContainer.appendChild(confirmButton);
+                buttonContainer.appendChild(cancelButton);
+                dialogBox.appendChild(messageElement);
+                
+                // 如果有警告文本，添加到对话框
+                if (hasWarning && warningElement) {
+                    dialogBox.appendChild(warningElement);
+                }
+                
+                dialogBox.appendChild(buttonContainer);
+                dialogContainer.appendChild(dialogBox);
+                
+                // 添加到页面
+                document.body.appendChild(dialogContainer);
+                
+                // 添加动画效果
+                setTimeout(() => {
+                    dialogBox.style.opacity = '1';
+                }, 10);
+                
+                // 按ESC键关闭对话框
+                function handleEscKey(event) {
+                    if (event.key === 'Escape') {
+                        document.body.removeChild(dialogContainer);
+                        resolve(false);
+                        document.removeEventListener('keydown', handleEscKey);
+                    }
+                }
+                
+                document.addEventListener('keydown', handleEscKey);
+            });
+        }
+        
+        // 恢复初始值功能 - 使用AJAX请求避免页面刷新
         document.getElementById('resetTextToImage').addEventListener('click', async function() {
-            if (await showConfirmDialog('确定要恢复到【文生图】参数的初始值吗？当前设置将会丢失。')) {
-                window.location.href = '/config/reset/text_to_image';
+            const confirmed = await showConfirmDialog('确定要恢复到【文生图】参数的初始值吗？当前设置将会丢失。');
+            if (confirmed) {
+                // 显示加载状态
+                showLoading(true);
+                
+                try {
+                    const response = await fetch('/config/reset/text_to_image', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // 刷新当前页面但保持在原位
+                        location.reload(false);
+                    } else {
+                        showAutoCloseNotification('恢复初始值失败，请重试！', 'error');
+                    }
+                } catch (error) {
+                    console.error('恢复初始值时发生错误:', error);
+                    showAutoCloseNotification('恢复初始值时发生网络错误，请重试！', 'error');
+                } finally {
+                    // 隐藏加载状态
+                    showLoading(false);
+                }
             }
         });
         
         document.getElementById('resetImageToImage').addEventListener('click', async function() {
-            if (await showConfirmDialog('确定要恢复到【图生图】参数的初始值吗？当前设置将会丢失。')) {
-                window.location.href = '/config/reset/image_to_image';
+            const confirmed = await showConfirmDialog('确定要恢复到【图生图】参数的初始值吗？当前设置将会丢失。');
+            if (confirmed) {
+                // 显示加载状态
+                showLoading(true);
+                
+                try {
+                    const response = await fetch('/config/reset/image_to_image', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // 刷新当前页面但保持在原位
+                        location.reload(false);
+                    } else {
+                        showAutoCloseNotification('恢复初始值失败，请重试！', 'error');
+                    }
+                } catch (error) {
+                    console.error('恢复初始值时发生错误:', error);
+                    showAutoCloseNotification('恢复初始值时发生网络错误，请重试！', 'error');
+                } finally {
+                    // 隐藏加载状态
+                    showLoading(false);
+                }
             }
         });
         
         document.getElementById('resetTextToVideo').addEventListener('click', async function() {
-            if (await showConfirmDialog('确定要恢复到【文生视频】参数的初始值吗？当前设置将会丢失。')) {
-                window.location.href = '/config/reset/text_to_video';
+            const confirmed = await showConfirmDialog('确定要恢复到【文生视频】参数的初始值吗？当前设置将会丢失。');
+            if (confirmed) {
+                // 显示加载状态
+                showLoading(true);
+                
+                try {
+                    const response = await fetch('/config/reset/text_to_video', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // 刷新当前页面但保持在原位
+                        location.reload(false);
+                    } else {
+                        showAutoCloseNotification('恢复初始值失败，请重试！', 'error');
+                    }
+                } catch (error) {
+                    console.error('恢复初始值时发生错误:', error);
+                    showAutoCloseNotification('恢复初始值时发生网络错误，请重试！', 'error');
+                } finally {
+                    // 隐藏加载状态
+                    showLoading(false);
+                }
             }
         });
         
         document.getElementById('resetImageToVideo').addEventListener('click', async function() {
-            if (await showConfirmDialog('确定要恢复到【图生视频】参数的初始值吗？当前设置将会丢失。')) {
-                window.location.href = '/config/reset/image_to_video';
+            const confirmed = await showConfirmDialog('确定要恢复到【图生视频】参数的初始值吗？当前设置将会丢失。');
+            if (confirmed) {
+                // 显示加载状态
+                showLoading(true);
+                
+                try {
+                    const response = await fetch('/config/reset/image_to_video', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // 刷新当前页面但保持在原位
+                        location.reload(false);
+                    } else {
+                        showAutoCloseNotification('恢复初始值失败，请重试！', 'error');
+                    }
+                } catch (error) {
+                    console.error('恢复初始值时发生错误:', error);
+                    showAutoCloseNotification('恢复初始值时发生网络错误，请重试！', 'error');
+                } finally {
+                    // 隐藏加载状态
+                    showLoading(false);
+                }
             }
         });
         
         document.getElementById('resetTextToAudio').addEventListener('click', async function() {
-            if (await showConfirmDialog('确定要恢复到【文生音频】参数的初始值吗？当前设置将会丢失。')) {
-                window.location.href = '/config/reset/text_to_audio';
+            const confirmed = await showConfirmDialog('确定要恢复到【文生音频】参数的初始值吗？当前设置将会丢失。');
+            if (confirmed) {
+                // 显示加载状态
+                showLoading(true);
+                
+                try {
+                    const response = await fetch('/config/reset/text_to_audio', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // 刷新当前页面但保持在原位
+                        location.reload(false);
+                    } else {
+                        showAutoCloseNotification('恢复初始值失败，请重试！', 'error');
+                    }
+                } catch (error) {
+                    console.error('恢复初始值时发生错误:', error);
+                    showAutoCloseNotification('恢复初始值时发生网络错误，请重试！', 'error');
+                } finally {
+                    // 隐藏加载状态
+                    showLoading(false);
+                }
             }
         });
+        
+
     </script>
 
     <!-- 引入公共组件 -->
@@ -680,9 +979,154 @@
             
             // 显示当前 tab 内容并设置按钮样式
             document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.style.backgroundColor = "#4a6fa5";
-            evt.currentTarget.style.color = "white";
+            if (evt) {
+                evt.currentTarget.style.backgroundColor = "#4a6fa5";
+                evt.currentTarget.style.color = "white";
+            } else {
+                // 如果没有事件对象，手动触发对应按钮的点击事件
+                const buttons = document.querySelectorAll('.tab-btn');
+                for (let i = 0; i < buttons.length; i++) {
+                    if (buttons[i].getAttribute('onclick').includes(tabName)) {
+                        buttons[i].style.backgroundColor = "#4a6fa5";
+                        buttons[i].style.color = "white";
+                        break;
+                    }
+                }
+            }
+            
+            // 记住当前选中的tab
+            localStorage.setItem('lastActiveTab', tabName);
         }
+        
+        // 页面加载时恢复之前的tab
+        document.addEventListener('DOMContentLoaded', function() {
+            // 首先检查URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            
+            let activeTab = 'textToImage'; // 默认tab
+            
+            // 优先级：URL参数 > localStorage > 默认值
+            if (tabParam && document.getElementById(tabParam)) {
+                activeTab = tabParam;
+            } else if (localStorage.getItem('lastActiveTab')) {
+                const lastTab = localStorage.getItem('lastActiveTab');
+                if (document.getElementById(lastTab)) {
+                    activeTab = lastTab;
+                }
+            }
+            
+            // 隐藏所有tab内容，确保不会同时显示多个tab
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].style.display = "none";
+            }
+            
+            // 打开选中的tab
+            openTab(null, activeTab);
+            
+            // 处理所有cfg参数输入框，限制小数位数
+            const cfgInputs = document.querySelectorAll('input[name$="[cfg]"]');
+            cfgInputs.forEach(input => {
+                // 设置初始值的小数位数
+                if (input.value) {
+                    input.value = parseFloat(input.value).toFixed(2);
+                }
+                
+                // 记录用户是否正在输入中
+                let isTyping = false;
+                let lastInputTime = 0;
+                
+                // 添加keydown事件监听器，更好地支持键盘输入
+                input.addEventListener('keydown', function() {
+                    isTyping = true;
+                    lastInputTime = Date.now();
+                });
+                
+                // 添加input事件监听器，改进的小数位数处理
+                input.addEventListener('input', function() {
+                    // 允许空值
+                    if (!this.value) {
+                        return;
+                    }
+                    
+                    // 处理纯小数点输入
+                    if (this.value === '.') {
+                        this.value = '0.';
+                        return;
+                    }
+                    
+                    // 验证是否是有效的数字格式
+                    if (!/^\d*\.?\d*$/.test(this.value)) {
+                        // 保留有效部分
+                        this.value = this.value.replace(/[^\d.]/g, '');
+                        // 确保只有一个小数点
+                        const parts = this.value.split('.');
+                        if (parts.length > 2) {
+                            this.value = parts[0] + '.' + parts.slice(1).join('');
+                        }
+                    }
+                    
+                    // 检查是否是用户直接输入或增减按钮操作
+                    const now = Date.now();
+                    // 如果用户正在输入或最近有键盘输入，不立即格式化
+                    if (isTyping || (now - lastInputTime < 500)) {
+                        // 保留原始输入值，但最多保留2位小数
+                        const value = parseFloat(this.value);
+                        if (!isNaN(value)) {
+                            // 提取小数点后的部分
+                            const decimalPart = this.value.split('.')[1];
+                            if (decimalPart && decimalPart.length > 2) {
+                                // 只保留2位小数
+                                this.value = value.toFixed(2);
+                            }
+                        }
+                    } else {
+                        // 自动格式化显示为2位小数
+                        const value = parseFloat(this.value);
+                        if (!isNaN(value)) {
+                            this.value = value.toFixed(2);
+                        }
+                    }
+                });
+                
+                // 添加blur事件监听器，最终确定保留2位小数
+                input.addEventListener('blur', function() {
+                    if (this.value && !isNaN(parseFloat(this.value))) {
+                        this.value = parseFloat(this.value).toFixed(2);
+                        isTyping = false;
+                    }
+                });
+                
+                // 添加focus事件监听器，允许编辑完整值
+                input.addEventListener('focus', function() {
+                    isTyping = true;
+                });
+                
+                // 添加鼠标离开事件监听器
+                input.addEventListener('mouseleave', function() {
+                    // 延迟确认，让用户有时间使用增减按钮
+                    setTimeout(() => {
+                        if (this.value && !isNaN(parseFloat(this.value))) {
+                            this.value = parseFloat(this.value).toFixed(2);
+                        }
+                    }, 100);
+                });
+            });
+            
+            // 在表单提交前对所有cfg参数进行处理
+            const configForm = document.querySelector('form');
+            if (configForm) {
+                configForm.addEventListener('submit', function() {
+                    const cfgInputs = document.querySelectorAll('input[name$="[cfg]"]');
+                    cfgInputs.forEach(input => {
+                        if (input.value && !isNaN(parseFloat(input.value))) {
+                            input.value = parseFloat(input.value).toFixed(2);
+                        }
+                    });
+                });
+            }
+        });
         
         // 检查URL可用性（增强版）
         async function checkUrlAvailability(url) {

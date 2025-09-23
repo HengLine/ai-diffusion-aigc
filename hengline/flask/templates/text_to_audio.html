@@ -415,10 +415,16 @@
                 <div class="slider-container">
                     <label for="cfgSlider">提示引导强度（CFG Scale）</label>
                     <div class="slider-input-group">
-                        <input type="range" id="cfgSlider" class="slider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
-                        <input type="number" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                        <input type="range" id="cfgSlider" class="slider" min="1" max="30" step="0.01" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" id="cfg" name="cfg" min="1" max="30" step="0.01" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">值越高，越严格遵循提示词，建议值：5.0-10.0</p>
+                    <div class="parameter-description">
+                        <li>1-3：非常弱的提示引导，图像更“自由”，可能偏离提示，但风格更自然、有创意。实验性创作、抽象艺术、想获得意外效果时</li>
+                        <li>4 ~ 7推荐范围（平衡点）：提示有明显影响，同时保留自然细节和多样性。大多数通用场景，如人物、风景、插画等</li>
+                        <li>8 ~ 12：强烈遵循提示，细节更贴合文字，但可能出现过度锐化、不自然或伪影。需要精确控制构图、文字、物体位置的场景</li>
+                        <li>13 ~ 20+：极强引导，极易产生“过拟合”：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
+                    </div>
                 </div>
                 </div>
             </div>
@@ -476,47 +482,10 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 参数折叠/展开功能
-            function setupParameterFolding() {
-                const parameterGroups = document.querySelectorAll('.parameter-group');
-                parameterGroups.forEach(group => {
-                    const header = group.querySelector('h3');
-                    header.addEventListener('click', () => {
-                        group.classList.toggle('collapsed');
-                    });
-                });
-            }
-            
-            // 同步滑块和输入框的值
-            function setupSliderSync(sliderId, inputId) {
-                const slider = document.getElementById(sliderId);
-                const input = document.getElementById(inputId);
-                
-                if (slider && input) {
-                    // 当滑块值变化时更新输入框
-                    slider.addEventListener('input', function() {
-                        input.value = this.value;
-                    });
-                    
-                    // 当输入框值变化时更新滑块
-                    input.addEventListener('input', function() {
-                        // 确保值在有效范围内
-                        const min = parseFloat(this.min);
-                        const max = parseFloat(this.max);
-                        const step = parseFloat(this.step);
-                        let value = parseFloat(this.value);
-                        
-                        if (isNaN(value)) value = min;
-                        if (value < min) value = min;
-                        if (value > max) value = max;
-                        
-                        // 根据步长调整值
-                        value = Math.round(value / step) * step;
-                        
-                        this.value = value;
-                        slider.value = value;
-                    });
-                }
+            // 初始化数字输入框
+            const form = document.querySelector('form');
+            if (form) {
+                initNumberInputs(form);
             }
             
             // 设置所有滑块的同步
@@ -529,12 +498,23 @@
             setupParameterFolding();
             
             // 表单提交处理
-            const form = document.querySelector('form');
             const promptTextarea = document.getElementById('prompt');
             const generateButton = document.getElementById('generateButton');
             const progressInfo = document.querySelector('.progress-info');
             
+            // 表单提交前的处理
             form.addEventListener('submit', function(e) {
+                // 先不阻止默认行为，让浏览器正常验证
+                // 但需要处理所有数字输入框的值
+                const numberInputs = document.querySelectorAll('input[type="number"]');
+                numberInputs.forEach(input => {
+                    if (input.value && !isNaN(parseFloat(input.value))) {
+                        const step = parseFloat(input.step) || 1;
+                        const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+                        input.value = parseFloat(input.value).toFixed(decimalPlaces);
+                    }
+                });
+                
                 e.preventDefault();
                 
                 // 表单验证
@@ -587,13 +567,13 @@
             });
             
             // 启动任务队列状态轮询
-        if (typeof startQueueStatusPolling === 'function') {
-            startQueueStatusPolling();
-        } else {
-            console.warn('startQueueStatusPolling function not available');
-        }
+            if (typeof startQueueStatusPolling === 'function') {
+                startQueueStatusPolling();
+            } else {
+                console.warn('startQueueStatusPolling function not available');
+            }
         });
-    </script>
+        </script>
     
     <!-- 引入页脚组件 -->
     {% include 'components/footer.html' %}

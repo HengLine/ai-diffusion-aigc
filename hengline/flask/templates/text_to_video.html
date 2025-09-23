@@ -415,8 +415,8 @@
                 <div class="slider-container">
                     <label for="cfgSlider">提示引导强度（CFG Scale）</label>
                     <div class="slider-input-group">
-                        <input type="range" id="cfgSlider" class="slider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
-                        <input type="number" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                        <input type="range" id="cfgSlider" class="slider" min="1" max="30" step="0.01" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" id="cfg" name="cfg" min="1" max="30" step="0.01" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">值越高，越严格遵循提示词，建议值：5.0-10.0</p>
                     <div class="parameter-description">
@@ -522,47 +522,10 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 参数折叠/展开功能
-            function setupParameterFolding() {
-                const parameterGroups = document.querySelectorAll('.parameter-group');
-                parameterGroups.forEach(group => {
-                    const header = group.querySelector('h3');
-                    header.addEventListener('click', () => {
-                        group.classList.toggle('collapsed');
-                    });
-                });
-            }
-            
-            // 同步滑块和输入框的值
-            function setupSliderSync(sliderId, inputId) {
-                const slider = document.getElementById(sliderId);
-                const input = document.getElementById(inputId);
-                
-                if (slider && input) {
-                    // 当滑块值变化时更新输入框
-                    slider.addEventListener('input', function() {
-                        input.value = this.value;
-                    });
-                    
-                    // 当输入框值变化时更新滑块
-                    input.addEventListener('input', function() {
-                        // 确保值在有效范围内
-                        const min = parseFloat(this.min);
-                        const max = parseFloat(this.max);
-                        const step = parseFloat(this.step);
-                        let value = parseFloat(this.value);
-                        
-                        if (isNaN(value)) value = min;
-                        if (value < min) value = min;
-                        if (value > max) value = max;
-                        
-                        // 根据步长调整值
-                        value = Math.round(value / step) * step;
-                        
-                        this.value = value;
-                        slider.value = value;
-                    });
-                }
+            // 初始化数字输入框
+            const form = document.querySelector('form');
+            if (form) {
+                initNumberInputs(form);
             }
             
             // 设置所有滑块的同步
@@ -579,7 +542,6 @@
             setupParameterFolding();
             
             // 表单提交处理
-            const form = document.querySelector('form');
             const promptTextarea = document.getElementById('prompt');
             const generateButton = document.getElementById('generateButton');
             const progressInfo = document.querySelector('.progress-info');
