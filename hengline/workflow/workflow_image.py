@@ -28,7 +28,7 @@ class WorkflowImageManager(WorkflowManager):
         Returns:
             Dict[str, Any]: 工作流执行结果
         """
-        return self._execute_common(self, "text_to_image", params, task_id)
+        return self._execute_common("text_to_image", params, task_id)
 
     def execute_image_to_image(self, params: Dict[str, Any], task_id: str) -> Coroutine[Any, Any, dict[str, Any]]:
         """
@@ -41,7 +41,7 @@ class WorkflowImageManager(WorkflowManager):
         Returns:
             Dict[str, Any]: 工作流执行结果
         """
-        return self._execute_common(self, "image_to_image", params, task_id)
+        return self._execute_common("image_to_image", params, task_id)
 
     def process_text_to_image(self, prompt: str, negative_prompt: str = "", **kwargs) -> Dict[str, Any]:
         """

@@ -187,12 +187,27 @@ class WorkflowStatusChecker:
                         debug(f"工作流处理完成，任务ID: {task_id}, prompt_id: {prompt_id}, 输出: {prompt_data['outputs']}")
 
                         file_num = 0
+                        file_name = '图像文件'
                         for value in prompt_data['outputs'].values():
-                            images_list = value.get('images', [])
-                            file_num += len(images_list)
+                            if value.contains('images'):
+                                images_list = value.get('images', [])
+                                file_num += len(images_list)
+                                file_name = '图像文件'
+                            elif value.contains('video'):
+                                videos_list = value.get('video', [])
+                                file_num += len(videos_list)
+                                file_name = '视频文件'
+                            elif value.contains('audio'):
+                                audios_list = value.get('audio', [])
+                                file_num += len(audios_list)
+                                file_name = '音频文件'
+                            else:
+                                files_list = value.get('files', [])
+                                file_num += len(files_list)
+                                file_name = '文件'
 
                         # 执行完成回调，标记为成功
-                        msg = f"共生成 {file_num} 个 文件 "
+                        msg = f"共生成 {file_num} 个 ${file_name} "
                         self.callback_with_complete(task_id, prompt_id, True, output_name, msg, on_complete)
 
                         return

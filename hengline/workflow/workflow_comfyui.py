@@ -276,10 +276,10 @@ class ComfyUIApi:
                     error(f"[ComfyUI API] 创建输出目录失败: {str(mkdir_err)}")
                     return False, {}
 
-            # 查找图像或视频输出
+            # 查找图像、视频、GIF或音频输出
             found_output = False
             saved_file_paths = dict[str, str]()  # 保存的文件路径
-            all_output_types = ['images', 'videos', 'gifs']
+            all_output_types = ['images', 'videos', 'gifs', 'audio']
 
             # 生成基本文件名（不带扩展名）和扩展名
             base_name, ext = os.path.splitext(os.path.basename(output_path))

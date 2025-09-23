@@ -463,11 +463,6 @@
             </div>
         </form>
         
-        <div class="progress-info">
-            <p><strong>音频生成中...</strong></p>
-            <p>音频生成可能需要较长时间，建议尽量使用GPU环境，CPU环境可能需要数分钟。</p>
-        </div>
-        
         <!-- 任务队列状态显示区域 -->
         {% include 'components/task_queue_status.html' %}
 
@@ -534,16 +529,14 @@
                 };
                 
                 // 显示加载状态
-                showLoading(true);
                 generateButton.disabled = true;
                 generateButton.textContent = '生成中...';
-                progressInfo.classList.add('show');
-                
+                loadingIndicator.style.display = 'block';
+
                 // 使用ajaxRequest发送JSON格式数据
                 ajaxRequest('/api/text_to_audio', { method: 'POST', body: formData })
                     .then(function(data) {
                         // 提交成功处理
-                        showLoading(false);
                         if (data && data.success) {
                             showNotification('任务已提交到队列，请在"我的任务"中查看进度', 'success');
                         } else {
@@ -556,7 +549,6 @@
                     })
                     .catch(function(error) {
                         // 提交失败处理
-                        showLoading(false);
                         showNotification('提交失败: ' + error.message, 'error');
                         
                         // 恢复按钮状态

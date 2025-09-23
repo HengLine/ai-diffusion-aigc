@@ -5,7 +5,7 @@
 """
 import os
 import sys
-from typing import Dict, Any
+from typing import Dict, Any, Coroutine
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -17,8 +17,8 @@ from hengline.workflow.workflow_manage import WorkflowManager
 
 class WorkflowAudioManager(WorkflowManager):
     """工作流音频管理器类，用于处理各种AI音频生成任务"""
-    
-    def execute_text_to_audio(self, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
+
+    def execute_text_to_audio(self, params: Dict[str, Any], task_id: str) -> Coroutine[Any, Any, dict[str, Any]]:
         """
         执行文本到音频的工作流（异步版本）
         
@@ -30,7 +30,7 @@ class WorkflowAudioManager(WorkflowManager):
             Dict[str, Any]: 工作流执行结果
         """
         info(f"执行文生音频工作流...")
-        return self._execute_common("text_to_audio", None, params, task_id)
+        return self._execute_common("text_to_audio", params, task_id)
 
     def process_text_to_audio(self, prompt: str, negative_prompt: str = "", **kwargs) -> Dict[str, Any]:
         """

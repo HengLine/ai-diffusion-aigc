@@ -15,6 +15,8 @@ def get_name_by_type(task_type: str):
         return '图片生视频'
     elif task_type == 'text_to_video':
         return '文本生视频'
+    elif task_type == 'text_to_audio':
+        return '文本生音频'
     else:
         return '未知任务类型'
 
@@ -24,7 +26,8 @@ def get_timestamp_by_type() -> dict[str, float]:
         "text_to_image": 10,  # 默认平均文生图任务时长（秒）
         "image_to_image": 20,  # 默认平均图生图任务时长（秒）
         "text_to_video": 300,  # 默认平均文生视频任务时长（秒）
-        "image_to_video": 400  # 默认平均图生视频任务时长（秒）
+        "image_to_video": 400,  # 默认平均图生视频任务时长（秒）
+        "text_to_audio": 10,  # 默认平均文生音频任务时长（秒）
     }
 
 
@@ -74,7 +77,7 @@ def estimated_waiting_time(task_type: str, waiting_tasks: int, params: dict[str,
     return estimated_time_sec
 
 
-def update_average_duration(self, task_type: str, duration: float):
+def update_average_duration(task_type: str, duration: float):
     """异步更新任务类型的平均执行时间，避免阻塞主流程"""
     try:
         # 使用简单移动平均，权重为0.8（旧值）和0.2（新值）

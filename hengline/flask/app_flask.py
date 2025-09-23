@@ -115,9 +115,10 @@ def result():
         flash('结果文件不存在！', 'error')
         return redirect(url_for('index'))
 
-    # 根据文件类型判断是图像还是视频
+    # 根据文件类型判断是图像、视频还是音频
     file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
     is_video = file_ext in ['mp4', 'webm', 'ogg']
+    is_audio = file_ext in ['mp3', 'wav', 'ogg', 'flac', 'aac']
 
     # 获取当前时间
     current_time = datetime.datetime.now()
@@ -126,6 +127,7 @@ def result():
                            filename=filename,
                            task_type=task_type,
                            is_video=is_video,
+                           is_audio=is_audio,
                            current_time=current_time)
 
 
