@@ -724,14 +724,18 @@
                                                 <p><strong>生成时间:</strong> ${endTime}</p>
                                                 <p class="result-counter"><strong>当前结果:</strong> 1/${resultCount}</p>
                                             </div>
-                                            <div class="result-content">
-                                                <audio controls style="width: 100%;">
-                                                    <source src="${mainResultUrl}" type="audio/mpeg">
-                                                    您的浏览器不支持音频播放
-                                                </audio>
+                                            <div class="result-carousel">
+                                                <button class="carousel-button prev-button" onclick="showPreviousResult('${taskId}', this)">&lt;</button>
+                                                <div class="carousel-container">
+                                                    <audio id="result-audio-${taskId}" controls style="width: 100%;">
+                                                        <source src="${mainResultUrl}" type="audio/mpeg">
+                                                        您的浏览器不支持音频播放
+                                                    </audio>
+                                                </div>
+                                                <button class="carousel-button next-button" onclick="showNextResult('${taskId}', this)">&gt;</button>
                                             </div>
                                             <div class="result-actions">
-                                                <a href="${mainResultUrl}" class="download-button" download>下载音频</a>
+                                                <a id="download-link-${taskId}" href="${mainResultUrl}" class="download-button" download>下载音频</a>
                                             </div>
                                         </div>
                                     </div>
@@ -783,7 +787,7 @@
                                 }
                             });
                             
-                            // 如果是图像任务，初始化轮播数据
+                            // 初始化轮播数据（图像和音频任务）
                             if (!taskType.includes('video')) {
                                 try {
                                     // 初始化轮播数据
@@ -973,6 +977,18 @@
             const image = modal.querySelector('[id^="result-image-"]');
             if (image && currentResult.url) {
                 image.src = currentResult.url;
+            }
+            
+            // 更新音频 - 使用taskId查找元素
+            const audio = modal.querySelector('[id^="result-audio-"]');
+            if (audio && currentResult.url) {
+                // 获取source元素
+                const source = audio.querySelector('source');
+                if (source) {
+                    source.src = currentResult.url;
+                    // 触发音频元素加载新资源
+                    audio.load();
+                }
             }
             
             // 更新下载链接 - 使用taskId查找元素

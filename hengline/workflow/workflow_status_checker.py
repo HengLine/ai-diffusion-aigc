@@ -189,25 +189,25 @@ class WorkflowStatusChecker:
                         file_num = 0
                         file_name = '图像文件'
                         for value in prompt_data['outputs'].values():
-                            if value.contains('images'):
+                            if 'images' in value:
                                 images_list = value.get('images', [])
                                 file_num += len(images_list)
                                 file_name = '图像文件'
-                            elif value.contains('video'):
+                            elif 'video' in value:
                                 videos_list = value.get('video', [])
                                 file_num += len(videos_list)
                                 file_name = '视频文件'
-                            elif value.contains('audio'):
+                            elif 'audio' in value:
                                 audios_list = value.get('audio', [])
                                 file_num += len(audios_list)
                                 file_name = '音频文件'
                             else:
-                                files_list = value.get('files', [])
+                                files_list = value.get('text', [])
                                 file_num += len(files_list)
-                                file_name = '文件'
+                                file_name = '文本'
 
                         # 执行完成回调，标记为成功
-                        msg = f"共生成 {file_num} 个 ${file_name} "
+                        msg = f"共生成 {file_num} 个 {file_name} "
                         self.callback_with_complete(task_id, prompt_id, True, output_name, msg, on_complete)
 
                         return
