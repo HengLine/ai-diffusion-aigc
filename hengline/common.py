@@ -41,31 +41,35 @@ def estimated_waiting_time(task_type: str, waiting_tasks: int, params: dict[str,
         params = get_workflow_preset(task_type)
 
     if params:
-        steps = int(params['steps'])
-        width = int(params['width'])
-        height = int(params['height'])
-        batch_size = int(params['batch_size'])
-
-        if task_type in ['text_to_video', 'image_to_video']:
-            fps = int(params['fps'])
-            length = int(params['length'])
-            device = str(params['device'])
-            # 对于图像生成任务，考虑分辨率、步数、批量大小等因素
-            if device and device.lower() == 'cpu':  # CPU
-                estimated_time_sec *=  100  # 假设CPU比GPU慢100倍
-            if length:
-                estimated_time_sec *= (length / 5)  # 假设基础是5秒
-            if fps:
-                estimated_time_sec *= (fps / 16)  # 假设基础是16fps
-
-        else:  # text_to_image 或 image_to_image
-            device = str(params['device'])
-            if device and device.lower() == 'cpu':  # CPU
-                estimated_time_sec *=  50  # 假设CPU比GPU慢50倍
-
+        steps = int(params.get('steps', 20))
+        batch_size = int(params.get('batch_size', 1))
         estimated_time_sec *= (steps / 20)  # 假设基础是20步
         estimated_time_sec *= (batch_size / 1)  # 假设基础是1张
-        estimated_time_sec *= (width / 512) * (height / 512)  # 假设基础是1024x1024
+
+        device = str(params.get('device', 'gpu'))
+        if device and device.lower() == 'cpu':  # CPU
+            estimated_time_sec *= 50  # 假设CPU比GPU慢50倍
+
+        if task_type == 'text_to_audio':
+            seconds = int(params.get('seconds', 10))
+            estimated_time_sec *= (seconds / 10)  # 假设基础是5秒
+
+        else:
+            width = int(params.get('width', 512))
+            height = int(params.get('height', 512))
+            estimated_time_sec *= (width / 512) * (height / 512)  # 假设基础是1024x1024
+
+            if task_type in ['text_to_video', 'image_to_video']:
+                fps = int(params.get('fps', 16))
+                length = int(params.get('length', 5))  # 视频长度，单位秒
+                # 对于图像生成任务，考虑分辨率、步数、批量大小等因素
+                if device and device.lower() == 'cpu':  # CPU
+                    estimated_time_sec *=  2  # 假设CPU比GPU慢100倍
+                if length:
+                    estimated_time_sec *= (length / 5)  # 假设基础是5秒
+                if fps:
+                    estimated_time_sec *= (fps / 16)  # 假设基础是16fps
+
 
     return estimated_time_sec
 

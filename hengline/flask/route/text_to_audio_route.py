@@ -71,9 +71,7 @@ def api_text_to_audio():
             negative_prompt,
             steps=data.get('steps'),
             cfg=data.get('cfg'),
-            duration=data.get('duration'),
-            sample_rate=data.get('sample_rate'),
-            bitrate=data.get('bitrate'),
+            seconds=data.get('seconds'),
             batch_size=data.get('batch_size')
         )
 
