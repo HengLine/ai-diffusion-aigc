@@ -19,6 +19,10 @@ from hengline.task.task_history import task_history
 from hengline.task.task_queue import Task, TaskStatus
 from hengline.utils.log_utils import print_log_exception
 
+# 延迟导入SocketIO路由模块函数，避免循环依赖
+import hengline.flask.route.socketio_route
+
+
 
 class TaskMonitor(TaskBase):
     """任务监控器类"""
@@ -78,6 +82,68 @@ class TaskMonitor(TaskBase):
                 self._monitor_thread.join(timeout=5)
 
             debug("任务队列管理器已关闭，已保存所有排队任务到历史记录")
+            
+    def get_queue_status(self):
+        """获取当前任务队列状态
+        
+        Returns:
+            dict: 包含队列状态信息的字典
+        """
+        with self._task_monitor_lock:
+            # 计算排队中的任务数
+            queued_count = self.task_queue.qsize()
+            
+            # 获取运行中的任务数
+            running_count = len(self.running_tasks)
+            
+            # 计算未完成的任务总数
+            unfinished_count = queued_count + running_count
+            
+            # 获取总任务数（从历史记录中）
+            total_count = len(self.history_tasks)
+            
+            # 计算平均处理时间（用于估算等待时间）
+            avg_processing_time = self._calculate_average_processing_time()
+            
+            # 估算等待时间
+            estimated_waiting_time = queued_count * avg_processing_time
+            waiting_str = self._format_waiting_time(estimated_waiting_time)
+            
+            # 构建队列状态数据
+            queue_status = {
+                'in_queue': queued_count,
+                'running_tasks': running_count,
+                'total_tasks': total_count,
+                'unfinished_tasks_count': unfinished_count,
+                'estimated_time': waiting_str,
+                'position': 1,  # 默认为队列首位
+                'progress': 0   # 整体队列进度
+            }
+            
+            return queue_status
+            
+    def _calculate_average_processing_time(self):
+        """计算平均处理时间（秒）"""
+        completed_tasks = [t for t in self.history_tasks.values() 
+                          if t.end_time and t.start_time and t.status == TaskStatus.SUCCESS.value]
+        
+        if not completed_tasks:
+            return 120  # 如果没有完成的任务，返回默认值2分钟
+            
+        total_duration = sum(t.end_time - t.start_time for t in completed_tasks)
+        return total_duration / len(completed_tasks)
+        
+    def _format_waiting_time(self, seconds):
+        """将秒数格式化为友好的时间字符串"""
+        if seconds < 60:
+            return f"{int(seconds)}秒"
+        elif seconds < 3600:
+            minutes = int(seconds / 60)
+            return f"{minutes}分钟"
+        else:
+            hours = int(seconds / 3600)
+            minutes = int((seconds % 3600) / 60)
+            return f"{hours}小时{minutes}分钟"
 
     def _monitor_loop(self):
         """监控循环"""
@@ -133,6 +199,22 @@ class TaskMonitor(TaskBase):
 
                         # 记录到历史
                         self.add_history_task(task.task_id, task)
+                        
+                            # 导入SocketIO路由模块，用于实时推送任务状态
+
+                        # 推送任务状态更新到WebSocket
+                        try:
+                            hengline.flask.route.socketio_route.emit_task_status_update(task.task_id, {
+                                'task_id': task.task_id,
+                                'task_type': task.task_type,
+                                'status': task.status,
+                                'start_time': task.start_time,
+                                'execution_count': task.execution_count,
+                                'queue_position': 0,  # 任务已开始执行，位置为0
+                                'message': f'任务开始执行: {task.task_type}'
+                            })
+                        except Exception as e:
+                            error(f"推送任务状态更新失败: {str(e)}")
 
                     debug(f"开始执行任务: {task.task_id}, 类型: {task.task_type}")
 
@@ -206,7 +288,7 @@ class TaskMonitor(TaskBase):
                             # 任务执行成功，但需要等待实际工作流完成
                             # 不立即设置为completed状态
                             task.status = TaskStatus.RUNNING.value
-                            queue_position, waiting_str = self.estimate_waiting_time(task.task_type, None)
+                            queue_position, waiting_str = self.estimate_waiting_time(task.task_type, task.params)
                             task.task_msg = "任务已提交到工作流服务器，预计等待时间: " + waiting_str
 
                         # 从运行中任务列表移除
@@ -215,6 +297,28 @@ class TaskMonitor(TaskBase):
 
                         # 直接异步保存任务历史，避免阻塞
                         task_history.async_save_task_history()
+
+                        # 推送任务状态更新到WebSocket
+                        try:
+                            hengline.flask.route.socketio_route.emit_task_status_update(task.task_id, {
+                                'task_id': task.task_id,
+                                'task_type': task.task_type,
+                                'status': task.status,
+                                'start_time': task.start_time,
+                                'end_time': task.end_time,
+                                'task_msg': task.task_msg,
+                                'queue_position': 0,
+                                'progress': 100 if TaskStatus.is_success(task.status) else 0
+                            })
+                        except Exception as e:
+                            error(f"推送任务状态更新失败: {str(e)}")
+
+                        # 推送队列状态更新，因为任务状态改变会影响整个队列
+                        try:
+                            # 使用完整路径调用emit_queue_status_update
+                            hengline.flask.route.socketio_route.emit_queue_status_update()
+                        except Exception as e:
+                            error(f"推送队列状态更新失败: {str(e)}")
 
                     info(f"任务执行状态更新: {task.task_id}, 类型: {task.task_type}, 状态: {task.status}")
 

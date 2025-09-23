@@ -34,6 +34,9 @@ from hengline.task.task_email import async_send_failure_email
 # 导入工作流状态检查器
 from hengline.workflow.workflow_status_checker import workflow_status_checker
 
+# 导入SocketIO路由模块，用于WebSocket初始化
+from hengline.flask.route.socketio_route import init_socketio
+
 
 class StartupTaskListener(TaskBase):
     """启动任务监听器类，只在应用启动时运行一次"""

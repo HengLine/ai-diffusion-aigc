@@ -16,6 +16,9 @@ from hengline.logger import debug, error, warning
 from hengline.utils.config_utils import get_task_config
 from hengline.utils.log_utils import print_log_exception
 
+# 导入SocketIO路由模块，用于实时推送任务状态
+from hengline.flask.route.socketio_route import emit_task_status_update
+
 
 class WorkflowStatusChecker:
     """异步定时任务队列，用于检查工作流执行状态"""
@@ -330,6 +333,31 @@ class WorkflowStatusChecker:
                 weak_callback()()
             else:
                 warning("weak_callback_complete 对象已被垃圾回收")
+
+            # 通过WebSocket推送任务状态更新
+            try:
+                # 从task_id中提取原始任务ID（去掉可能的前缀）
+                original_task_id = task_id
+                if task_id.startswith('check_'):
+                    parts = task_id.split('_', 2)
+                    if len(parts) > 2:
+                        # 尝试从剩余部分中提取原始任务ID
+                        # 假设格式为 'check_promptId_timestamp'
+                        potential_task_id = parts[1]  # 使用prompt_id作为任务标识
+                        original_task_id = potential_task_id
+                
+                emit_task_status_update(original_task_id, {
+                    'task_id': original_task_id,
+                    'prompt_id': prompt_id,
+                    'status': 'completed' if success else 'failed',
+                    'message': msg,
+                    'output_name': output_name,
+                    'completion_time': time.time(),
+                    'progress': 100 if success else 0
+                })
+                debug(f"通过WebSocket推送工作流状态更新: {original_task_id}, 状态: {'completed' if success else 'failed'}")
+            except Exception as e:
+                error(f"推送工作流状态更新失败: {str(e)}")
 
             # 移除任务
             with self.checking_tasks_lock:
