@@ -53,6 +53,7 @@ def api_text_to_audio():
         # 获取请求参数
         prompt = data.get('prompt', '').strip()
         negative_prompt = data.get('negative_prompt', '')
+        sampler_name = data.get('sampler_name', None)
 
         # 验证输入
         if not prompt:
@@ -72,7 +73,8 @@ def api_text_to_audio():
             steps=data.get('steps'),
             cfg=data.get('cfg'),
             seconds=data.get('seconds'),
-            batch_size=data.get('batch_size')
+            batch_size=data.get('batch_size'),
+            sampler_name=sampler_name
         )
 
         if result:

@@ -75,7 +75,8 @@ def api_text_to_video():
             steps=data.get('steps'),
             cfg=data.get('cfg'),
             fps=data.get('fps'),
-            batch_size=data.get('batch_size')
+            batch_size=data.get('batch_size'),
+            sampler_name=data.get('sampler_name')
         )
 
         if result:

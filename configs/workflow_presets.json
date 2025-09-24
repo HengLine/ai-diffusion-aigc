@@ -3,6 +3,7 @@
     "default": {
       "steps": 20,
       "device": "default",
+      "sampler_name": "dpmpp_3m_sde_gpu",
       "cfg": 5.8,
       "seconds": 10,
       "prompt": "soft piano music with a calm melody",
@@ -10,7 +11,8 @@
       "batch_size": 1,
       "seed": -1
     },
-    "setting": {}
+    "setting": {},
+    "workflow": ""
   },
   "text_to_image": {
     "default": {
@@ -18,6 +20,7 @@
       "height": 512,
       "steps": 20,
       "device": "default",
+      "sampler_name": "euler",
       "cfg": 7.5,
       "denoise": 0.75,
       "prompt": "a beautiful sunset over a mountain range",
@@ -25,7 +28,8 @@
       "batch_size": 1,
       "seed": -1
     },
-    "setting": {}
+    "setting": {},
+    "workflow": ""
   },
   "image_to_image": {
     "default": {
@@ -34,13 +38,15 @@
       "steps": 20,
       "cfg": 6.5,
       "device": "default",
+      "sampler_name": "dpmpp_2m",
       "batch_size": 1,
       "prompt": "The sunrise over the sea of clouds reflects on the mountain peaks",
       "negative_prompt": "low quality, blurry, unrealistic, static, boring",
       "seed": -1,
       "denoise": 0.55
     },
-    "setting": {}
+    "setting": {},
+    "workflow": ""
   },
   "image_to_video": {
     "default": {
@@ -51,6 +57,7 @@
       "steps": 20,
       "shift": 8,
       "device": "default",
+      "sampler_name": "uni_pc",
       "fps": 16,
       "prompt": "A beautiful landscape with mountains and river, cinematic lighting, smooth camera movement",
       "negative_prompt": "low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres",
@@ -58,7 +65,8 @@
       "seed": -1,
       "cfg": 6.5
     },
-    "setting": {}
+    "setting": {},
+    "workflow": ""
   },
   "text_to_video": {
     "default": {
@@ -68,6 +76,7 @@
       "steps": 20,
       "fps": 16,
       "device": "default",
+      "sampler_name": "uni_pc",
       "shift": 8,
       "batch_size": 1,
       "denoise": 0.75,
@@ -76,6 +85,7 @@
       "negative_prompt": "low quality, blurry, bad anatomy, extra limbs, disfigured, worst quality, lowres",
       "prompt": "A beautiful landscape with mountains and river, cinematic lighting, smooth camera movement"
     },
-    "setting": {}
+    "setting": {},
+    "workflow": ""
   }
 }

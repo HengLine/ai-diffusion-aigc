@@ -95,7 +95,8 @@ def api_image_to_video():
             steps=request.form.get('steps'),
             cfg=request.form.get('cfg'),
             fps=request.form.get('fps'),
-            batch_size=request.form.get('batch_size')
+            batch_size=request.form.get('batch_size'),
+            sampler_name=request.form.get('sampler_name')
         )
 
         if result:

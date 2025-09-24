@@ -426,6 +426,34 @@
                         <li>13 ~ 20+：极强引导，极易产生“过拟合”：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
                     </div>
                 </div>
+                
+                <div class="slider-container">
+                    <label for="sampler_name">采样算法</label>
+                    <div class="slider-input-group">
+                        <select id="sampler_name" name="sampler_name" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler" {% if default_params.sampler_name == 'euler' %}selected{% endif %}>⚡ Euler (快速基础)</option>
+                            <option value="euler_ancestral" {% if default_params.sampler_name == 'euler_ancestral' %}selected{% endif %}>Euler Ancestral</option>
+                            <option value="heun" {% if default_params.sampler_name == 'heun' %}selected{% endif %}>Heun</option>
+                            <option value="dpm_2" {% if default_params.sampler_name == 'dpm_2' %}selected{% endif %}>DPM2</option>
+                            <option value="dpm_2_ancestral" {% if default_params.sampler_name == 'dpm_2_ancestral' %}selected{% endif %}>DPM2 Ancestral</option>
+                            <option value="dpmpp_2s_ancestral" {% if default_params.sampler_name == 'dpmpp_2s_ancestral' %}selected{% endif %}>DPM++ 2S Ancestral</option>
+                            <option value="dpmpp_2m" {% if default_params.sampler_name == 'dpmpp_2m' %}selected{% endif %}>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_2m_sde" {% if default_params.sampler_name == 'dpmpp_2m_sde' %}selected{% endif %}>DPM++ 2M SDE</option>
+                            <option value="dpmpp_3m_sde" {% if default_params.sampler_name == 'dpmpp_3m_sde' %}selected{% endif %}>🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu" {% if default_params.sampler_name == 'dpmpp_3m_sde_gpu' %}selected{% endif %}>🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                            <option value="uni_pc" {% if default_params.sampler_name == 'uni_pc' %}selected{% endif %}>UniPC</option>
+                        </select>
+                    </div>
+                    <div class="parameter-description">
+                        选择用于生成音频的采样算法，不同的算法会产生不同的效果和速度。
+                    </div>
+                    <div class="parameter-description">
+                        <li>Euler：基础算法，适合大多数场景，生成速度快</li>
+                        <li>DPM++ 2M：高质量算法，平衡速度和质量</li>
+                        <li>DPM++ 3M SDE：高质量算法，适合需要精细细节的场景</li>
+                        <li>DPM++ 3M SDE GPU：GPU优化版本，速度更快</li>
+                    </div>
+                </div>
                 </div>
             </div>
             
@@ -436,13 +464,11 @@
                 <div class="slider-container">
                     <label for="secondsSlider">音频时长（秒）</label>
                     <div class="slider-input-group">
-                        <input type="range" id="secondsSlider" class="slider" min="5" max="60" step="１" value="{{ default_params.seconds or 20 }}">
+                        <input type="range" id="secondsSlider" class="slider" min="5" max="60" step="1" value="{{ default_params.seconds or 20 }}">
                         <input type="number" id="seconds" name="seconds" min="5" max="60" step="1" value="{{ default_params.seconds or 20 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">音频时长，建议值：10-30秒</p>
                 </div>
-                
-
                 
                 <div class="slider-container">
                     <label for="batchSizeSlider">生成数量</label>
@@ -457,10 +483,10 @@
             
             <button type="submit" class="form-button" id="generateButton">生成音频</button>
             <!-- 加载指示器 -->
-            <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+            <!-- <div id="loadingIndicator" class="loading-indicator" style="display: none;">
                 <div class="loading-spinner"></div>
                 <span>处理中...</span>
-            </div>
+            </div> -->
         </form>
         
         <!-- 任务队列状态显示区域 -->

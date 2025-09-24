@@ -281,9 +281,19 @@
                     </div>
                     <div class="form-group">
                         <label for="tti_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
-                        <input type="number" id="tti_cfg" name="settings[text_to_image][cfg]" 
+                        <input type="number" id="tti_cfg" name="settings[text_to_image][cfg]"
                                value="{{ settings.text_to_image.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="tti_sampler">采样算法 <span style="color: red;">*</span></label>
+                        <select id="tti_sampler" name="settings[text_to_image][sampler_name]" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler" {% if settings.text_to_image.sampler_name == 'euler' %}selected{% endif %}>⚡ Euler (快速基础)</option>
+                            <option value="dpmpp_2m" {% if settings.text_to_image.sampler_name == 'dpmpp_2m' %}selected{% endif %}>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_3m_sde" {% if settings.text_to_image.sampler_name == 'dpmpp_3m_sde' %}selected{% endif %}>🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu" {% if settings.text_to_image.sampler_name == 'dpmpp_3m_sde_gpu' %}selected{% endif %}>🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                        </select>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">选择生成图像的采样算法，不同算法在速度和质量上有不同表现</small>
                     </div>
                     <div class="form-group">
                         <label for="tti_batch_size">批量大小</label>
@@ -337,9 +347,19 @@
                     </div>
                     <div class="form-group">
                         <label for="tta_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
-                        <input type="number" id="tta_cfg" name="settings[text_to_audio][cfg]" 
+                        <input type="number" id="tta_cfg" name="settings[text_to_audio][cfg]"
                                value="{{ settings.text_to_audio.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 5.0-7.0</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="tta_sampler">采样算法 <span style="color: red;">*</span></label>
+                        <select id="tta_sampler" name="settings[text_to_audio][sampler_name]" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler" {% if settings.text_to_audio.sampler_name == 'euler' %}selected{% endif %}>⚡ Euler (快速基础)</option>
+                            <option value="dpmpp_2m" {% if settings.text_to_audio.sampler_name == 'dpmpp_2m' %}selected{% endif %}>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_3m_sde" {% if settings.text_to_audio.sampler_name == 'dpmpp_3m_sde' %}selected{% endif %}>🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu" {% if settings.text_to_audio.sampler_name == 'dpmpp_3m_sde_gpu' %}selected{% endif %}>🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                        </select>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">选择生成音频的采样算法，不同算法在速度和质量上有不同表现</small>
                     </div>
                     <div class="form-group">
                         <label for="tta_seconds">音频时长（秒） <span style="color: red;">*</span></label>
@@ -404,9 +424,19 @@
                     </div>
                     <div class="form-group">
                         <label for="iti_cfg">提示引导强度（CFG Scale） <span style="color: red;">*</span></label>
-                        <input type="number" id="iti_cfg" name="settings[image_to_image][cfg]" 
+                        <input type="number" id="iti_cfg" name="settings[image_to_image][cfg]"
                                value="{{ settings.image_to_image.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="iti_sampler">采样算法 <span style="color: red;">*</span></label>
+                        <select id="iti_sampler" name="settings[image_to_image][sampler_name]" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler" {% if settings.image_to_image.sampler_name == 'euler' %}selected{% endif %}>⚡ Euler (快速基础)</option>
+                            <option value="dpmpp_2m" {% if settings.image_to_image.sampler_name == 'dpmpp_2m' %}selected{% endif %}>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_3m_sde" {% if settings.image_to_image.sampler_name == 'dpmpp_3m_sde' %}selected{% endif %}>🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu" {% if settings.image_to_image.sampler_name == 'dpmpp_3m_sde_gpu' %}selected{% endif %}>🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                        </select>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">选择生成图像的采样算法，不同算法在速度和质量上有不同表现</small>
                     </div>
                     <div class="form-group">
                         <label for="iti_batch_size">批量大小</label>
@@ -481,6 +511,16 @@
                         <input type="number" id="ttv_cfg" name="settings[text_to_video][cfg]"
                                value="{{ settings.text_to_video.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ttv_sampler">采样算法 <span style="color: red;">*</span></label>
+                        <select id="ttv_sampler" name="settings[text_to_video][sampler_name]" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler" {% if settings.text_to_video.sampler_name == 'euler' %}selected{% endif %}>⚡ Euler (快速基础)</option>
+                            <option value="dpmpp_2m" {% if settings.text_to_video.sampler_name == 'dpmpp_2m' %}selected{% endif %}>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_3m_sde" {% if settings.text_to_video.sampler_name == 'dpmpp_3m_sde' %}selected{% endif %}>🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu" {% if settings.text_to_video.sampler_name == 'dpmpp_3m_sde_gpu' %}selected{% endif %}>🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                        </select>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">选择生成视频的采样算法，不同算法在速度和质量上有不同表现</small>
                     </div>
                     <div class="form-group">
                         <label for="fps">帧率 <span style="color: red;">*</span></label>
@@ -566,6 +606,16 @@
                         <input type="number" id="itv_cfg" name="settings[image_to_video][cfg]"
                                value="{{ settings.image_to_video.cfg }}" min="1" max="30" step="0.01">
                         <small style="color: #666; display: block; margin-top: 0.25rem;">控制生成结果与提示词的匹配程度，值越高越严格，建议值: 7.5-10</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="itv_sampler">采样算法 <span style="color: red;">*</span></label>
+                        <select id="itv_sampler" name="settings[image_to_video][sampler_name]" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler" {% if settings.image_to_video.sampler_name == 'euler' %}selected{% endif %}>⚡ Euler (快速基础)</option>
+                            <option value="dpmpp_2m" {% if settings.image_to_video.sampler_name == 'dpmpp_2m' %}selected{% endif %}>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_3m_sde" {% if settings.image_to_video.sampler_name == 'dpmpp_3m_sde' %}selected{% endif %}>🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu" {% if settings.image_to_video.sampler_name == 'dpmpp_3m_sde_gpu' %}selected{% endif %}>🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                        </select>
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">选择生成视频的采样算法，不同算法在速度和质量上有不同表现</small>
                     </div>
                     <div class="form-group">
                         <label for="fps">帧率 <span style="color: red;">*</span></label>
@@ -1271,8 +1321,18 @@
                 let paramType = 'common';
                 let paramName = forAttr;
                 
+                // 特殊处理采样算法参数
+                if (forAttr.endsWith('_sampler')) {
+                    paramType = 'common';
+                    paramName = 'sampler_name';
+                } 
+                // 特殊处理帧率参数
+                else if (forAttr === 'fps') {
+                    paramType = 'to_video';
+                    paramName = 'fps';
+                } 
                 // 根据ID前缀判断参数所属类型
-                if (forAttr.startsWith('tti_') || forAttr.startsWith('iti_')) {
+                else if (forAttr.startsWith('tti_') || forAttr.startsWith('iti_')) {
                     paramType = 'to_image';
                     paramName = forAttr.substring(4);
                 } else if (forAttr.startsWith('ttv_') || forAttr.startsWith('itv_')) {

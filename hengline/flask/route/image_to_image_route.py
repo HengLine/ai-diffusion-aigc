@@ -92,7 +92,8 @@ def api_image_to_image():
             steps=request.form.get('steps'),
             cfg=request.form.get('cfg'),
             denoise=request.form.get('denoise'),
-            batch_size=request.form.get('batch_size')
+            batch_size=request.form.get('batch_size'),
+            sampler_name=request.form.get('sampler_name')
         )
 
         if result:
