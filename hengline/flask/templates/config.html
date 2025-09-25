@@ -46,6 +46,9 @@
         .form-group input {
             width: 100%;
             padding: 0.75rem;
+            /* margin: 0 auto; */
+            justify-content: center;
+            align-items: center;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 1rem;
@@ -196,25 +199,21 @@
                 <p>请输入您的ComfyUI API URL地址，这是使用AI生成功能的必要条件。</p>
             </div>
             
-
-            
-            <div class="form-group">
-                <label for="comfyui_api_url">ComfyUI API URL <span style="color: red;">*</span></label>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <input type="text" id="comfyui_api_url" name="comfyui_api_url" 
-                           value="{{ comfyui_api_url }}" placeholder="例如：http://127.0.0.1:8188" required style="flex: 1;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div class="form-group">
+                    <label for="comfyui_api_url">ComfyUI API URL <span style="color: red;">*</span></label>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        所在设备环境：
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="radio" name="comfyui_device" value="gpu" {% if comfyui_device == 'gpu' %}checked{% endif %}>
-                            GPU
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="radio" name="comfyui_device" value="cpu" {% if comfyui_device == 'cpu' %}checked{% endif %}>
-                            CPU
-                        </label>
-                        <span style="color: red; font-size: 0.8rem; font-style: italic; font-weight: 400; line-height: 1.2; margin-bottom: 0.5rem;">
-                            *（对于5秒的视频，CPU比GPU慢大约 50-200 倍）</span>
+                        <input type="text" id="comfyui_api_url" name="comfyui_api_url" 
+                            value="{{ comfyui_api_url }}" placeholder="例如：http://127.0.0.1:8188" required style="flex: 1;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="comfyui_device">所在设备环境 <span style="color: red;">*</span></label>
+                    <div style="display: flex; align-items: center; gap: 1rem; display: flex;">
+                        <input style="width: 10%;" type="radio" name="comfyui_device" value="gpu" {% if comfyui_device == 'gpu' %}checked{% endif %}>GPU
+                        <input style="width: 10%;"  type="radio" name="comfyui_device" value="cpu" {% if comfyui_device == 'cpu' %}checked{% endif %}>CPU
+                        <span style="color: red; font-size: 0.8rem; font-style: italic;  width: 80%; font-weight: 400; line-height: 1.2; margin-bottom: 0.5rem;">
+                            （对于5秒的视频，CPU比GPU慢大约 50-200 倍）</span>
                     </div>
                 </div>
             </div>

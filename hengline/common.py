@@ -17,6 +17,12 @@ def get_name_by_type(task_type: str):
         return '文本生视频'
     elif task_type == 'text_to_audio':
         return '文本生音频'
+    elif task_type == 'change_clothes':
+        return '换装'
+    elif task_type == 'change_face':
+        return '换脸'
+    elif task_type == 'change_hair_style':
+        return '换发型'
     else:
         return '未知任务类型'
 
@@ -28,6 +34,9 @@ def get_timestamp_by_type() -> dict[str, float]:
         "text_to_video": 300,  # 默认平均文生视频任务时长（秒）
         "image_to_video": 400,  # 默认平均图生视频任务时长（秒）
         "text_to_audio": 10,  # 默认平均文生音频任务时长（秒）
+        "change_clothes": 25,  # 默认平均换装任务时长（秒）
+        "change_face": 30,  # 默认平均换脸任务时长（秒）
+        "change_hair_style": 25,  # 默认平均换发型任务时长（秒）
     }
 
 

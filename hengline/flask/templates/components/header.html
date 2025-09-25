@@ -35,7 +35,7 @@
     }
     
     .nav-item a {
-        color: white;
+        color: rgb(210, 239, 216);
         text-decoration: none;
         font-weight: 500;
         transition: opacity 0.3s ease;
@@ -49,6 +49,17 @@
     .nav-item a.active {
         font-weight: 700;
         border-bottom: 2px solid white;
+    }
+    
+    /* 其他按钮特定样式 */
+    .nav-item.dropdown a.nav-link {
+        position: relative;
+    }
+    
+    /* 其他按钮点击后高亮样式 */
+    .nav-item.dropdown a.nav-link.clicked {
+        border-bottom: 2px solid white;
+        font-weight: 700;
     }
     
     .nav-right {
@@ -118,13 +129,117 @@
         padding: 0.5rem 0;
     }
     
-    /* 移动端选中菜单高亮样式 */
+    /* 移动端选中菜单高亮样式 - 保持与桌面端一致的下划线效果 */
     .mobile-menu a.active {
         font-weight: 700;
-        background-color: rgba(255, 255, 255, 0.1);
+        border-bottom: 2px solid white;
         padding-left: 10px;
     }
     
+    /* 下拉菜单样式 - 垂直展示优化 */
+    .dropdown-menu {
+        position: absolute;
+        background-color: #36647d;
+        border: none;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 0.5rem 0;
+        min-width: 120px;
+        z-index: 1000;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .dropdown-item {
+        text-decoration: none;
+        padding: 0.75rem 1.25rem;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        display: block;
+        white-space: nowrap;
+        font-size: 0.95rem;
+        border-left: 3px solid transparent;
+    }
+    
+    .dropdown-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-left-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    /* 不同颜色标注的下拉菜单项 */
+    .dropdown-item.change-clothes {
+        color: #ffd700;
+    }
+    
+    .dropdown-item.change-clothes:hover {
+        color: #fff9c4;
+        border-left-color: #ffd700;
+    }
+    
+    .dropdown-item.change-face {
+        color: #ff80ab;
+    }
+    
+    .dropdown-item.change-face:hover {
+        color: #ffc1e0;
+        border-left-color: #ff80ab;
+    }
+    
+    .dropdown-item.change-hairstyle {
+        color: #81d4fa;
+    }
+    
+    .dropdown-item.change-hairstyle:hover {
+        color: #b3e5fc;
+        border-left-color: #81d4fa;
+    }
+    
+    /* 桌面端下拉菜单位置调整 */
+    .nav-item.dropdown {
+        position: relative;
+    }
+    
+    .nav-item.dropdown .dropdown-menu {
+        top: 100%;
+        left: 0;
+        margin-top: 4px;
+    }
+    
+    /* 移动端下拉菜单样式优化 */
+    .mobile-nav-item.dropdown {
+        position: relative;
+    }
+    
+    .mobile-menu .dropdown-menu {
+        position: relative;
+        background-color: rgba(255, 255, 255, 0.05);
+        box-shadow: none;
+        margin: 0.25rem 0 0.5rem 1rem;
+        padding: 0;
+        min-width: auto;
+        border-radius: 4px;
+    }
+    
+    .mobile-menu .dropdown-item {
+        color: white;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        border-left: 2px solid transparent;
+    }
+    
+    .mobile-menu .dropdown-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-left-color: white;
+    }
+    
+    /* 下拉箭头动画 */
+    .ml-1 {
+        transition: transform 0.2s ease;
+        display: inline-block;
+    }
+    
+    /* 响应式调整 */
     @media (max-width: 768px) {
         .nav-menu {
             display: none;
@@ -141,12 +256,23 @@
         <a href="/" class="nav-brand">AIGC 创意平台</a>
         <ul class="nav-menu">
             <li class="nav-item"><a href="/">首页</a></li>
+            <li class="nav-item"><a href="/config">配置</a></li>
             <li class="nav-item"><a href="/text_to_image">文生图</a></li>
             <li class="nav-item"><a href="/image_to_image">图生图</a></li>
             <li class="nav-item"><a href="/text_to_video">文生视频</a></li>
             <li class="nav-item"><a href="/image_to_video">图生视频</a></li>
             <li class="nav-item"><a href="/text_to_audio">文生音频</a></li>
-            <li class="nav-item"><a href="/config">配置</a></li>
+            <li class="nav-item dropdown">
+                <a href="#" class="nav-link dropdown-toggle" id="otherMenuBtn" onclick="toggleOtherMenu()">
+                    其他
+                    <span id="otherMenuIcon" class="ml-1">▼</span>
+                </a>
+                <div id="otherMenuContent" class="dropdown-menu" style="display: none;">
+                    <a href="/change_clothes" class="dropdown-item change-clothes">换装</a>
+                    <a href="/change_face" class="dropdown-item change-face">换脸</a>
+                    <a href="/change_hair_style" class="dropdown-item change-hairstyle">换发型</a>
+                </div>
+            </li>
         </ul>
         <div class="nav-right">
             <button id="tasksButton" class="tasks-button">
@@ -168,6 +294,17 @@
             <li><a href="/text_to_video">文生视频</a></li>
             <li><a href="/image_to_video">图生视频</a></li>
             <li><a href="/text_to_audio">文生音频</a></li>
+            <li class="mobile-nav-item dropdown">
+                <a href="#" class="mobile-nav-link dropdown-toggle" id="mobileOtherMenuBtn" onclick="toggleMobileOtherMenu()">
+                    其他
+                    <span id="mobileOtherMenuIcon" class="ml-1">▼</span>
+                </a>
+                <div id="mobileOtherMenuContent" class="dropdown-menu" style="display: none;">
+                    <a href="/change_clothes" class="dropdown-item change-clothes">换装</a>
+                    <a href="/change_face" class="dropdown-item change-face">换脸</a>
+                    <a href="/change_hair_style" class="dropdown-item change-hairstyle">换发型</a>
+                </div>
+            </li>
             <li><a href="/config">配置</a></li>
         </ul>
     </div>
@@ -217,6 +354,54 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
             link.classList.add('active');
         }
+        
+        // 为移动端导航按钮添加点击事件，确保点击时添加下划线并移除其他按钮的下划线
+        link.addEventListener('click', function() {
+            // 移除所有移动端导航按钮的active类
+            mobileLinks.forEach(mobileLink => {
+                mobileLink.classList.remove('active');
+            });
+            
+            // 为当前点击的按钮添加下划线
+            this.classList.add('active');
+            
+            // 确保移动端"其他"按钮的下划线被移除并还原文本
+            const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
+            if (mobileOtherMenuBtn) {
+                mobileOtherMenuBtn.classList.remove('clicked');
+                
+                // 还原移动端"其他"按钮文本
+                if (mobileOtherMenuBtn.textContent.trim() !== '其他') {
+                    mobileOtherMenuBtn.innerHTML = '';
+                    const textNode = document.createTextNode('其他');
+                    const spanIcon = document.createElement('span');
+                    spanIcon.id = 'mobileOtherMenuIcon';
+                    spanIcon.className = 'ml-1';
+                    spanIcon.textContent = '▼';
+                    mobileOtherMenuBtn.appendChild(textNode);
+                    mobileOtherMenuBtn.appendChild(spanIcon);
+                }
+                
+                // 关闭移动端下拉菜单
+                const mobileOtherMenuContent = document.getElementById('mobileOtherMenuContent');
+                if (mobileOtherMenuContent) {
+                    mobileOtherMenuContent.style.display = 'none';
+                }
+                
+                // 更新图标
+                const mobileOtherMenuIcon = document.getElementById('mobileOtherMenuIcon');
+                if (mobileOtherMenuIcon) {
+                    mobileOtherMenuIcon.textContent = '▼';
+                }
+                
+                // 清除保存的选择状态
+                try {
+                    localStorage.removeItem('selectedOtherMenuItem');
+                } catch (error) {
+                    console.error('清除保存的菜单项状态失败:', error);
+                }
+            }
+        });
     });
     
     // 确保DOM加载完成后徽章仍然可见
@@ -467,6 +652,319 @@ function openTaskModalWrapper() {
     }
 }
 
+// 切换"其他"菜单项的显示/隐藏（桌面端）
+function toggleOtherMenu() {
+    const content = document.getElementById('otherMenuContent');
+    const icon = document.getElementById('otherMenuIcon');
+    const button = document.getElementById('otherMenuBtn');
+    
+    // 移除所有其他导航项的active类，确保只有一个按钮显示下划线
+    document.querySelectorAll('.nav-item a').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '▲';
+        button.classList.add('clicked'); // 点击后显示下划线
+    } else {
+        content.style.display = 'none';
+        icon.textContent = '▼';
+        button.classList.remove('clicked'); // 隐藏时下划线消失
+    }
+    
+    // 阻止事件冒泡，避免点击下拉菜单时页面跳转
+    event.preventDefault();
+}
+
+
+
+// 切换"其他"菜单项的显示/隐藏（移动端）
+function toggleMobileOtherMenu() {
+    const content = document.getElementById('mobileOtherMenuContent');
+    const icon = document.getElementById('mobileOtherMenuIcon');
+    const button = document.getElementById('mobileOtherMenuBtn');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '▲';
+        button.classList.add('clicked'); // 点击后显示高亮
+    } else {
+        content.style.display = 'none';
+        icon.textContent = '▼';
+        button.classList.remove('clicked'); // 隐藏时取消高亮
+    }
+    
+    // 阻止事件冒泡，避免点击下拉菜单时页面跳转
+    event.preventDefault();
+}
+
+// 点击页面其他区域关闭下拉菜单和还原"其他"按钮文本
+document.addEventListener('click', function(event) {
+    const otherMenuBtn = document.getElementById('otherMenuBtn');
+    const otherMenuContent = document.getElementById('otherMenuContent');
+    const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
+    const mobileOtherMenuContent = document.getElementById('mobileOtherMenuContent');
+    
+    // 检查是否点击了导航菜单中的其他按钮
+    const navItems = document.querySelectorAll('.nav-item a:not(#otherMenuBtn)');
+    const clickedNavItem = Array.from(navItems).some(item => item.contains(event.target));
+    
+    // 检查是否点击了下拉菜单的子项
+    const dropdownItems = document.querySelectorAll('#otherMenuContent .dropdown-item, #mobileOtherMenuContent .dropdown-item');
+    const clickedDropdownItem = Array.from(dropdownItems).some(item => item.contains(event.target));
+    
+    // 当点击了页面其他区域或导航按钮，且不是点击下拉菜单子项时，还原"其他"按钮文本
+    if ((!otherMenuBtn.contains(event.target) && !mobileOtherMenuBtn.contains(event.target) && !clickedDropdownItem) || clickedNavItem) {
+        // 注意：只有在用户明确点击了其他导航按钮时才清除localStorage状态
+        // 点击页面其他区域时不清除，以便页面刷新后能保持状态
+        // 还原桌面端"其他"按钮文本
+        if (otherMenuBtn) {
+            // 只有当按钮文本不是"其他"时才进行还原
+            if (otherMenuBtn.textContent.trim() !== '其他') {
+                otherMenuBtn.innerHTML = '';
+                const textNode = document.createTextNode('其他');
+                const spanIcon = document.createElement('span');
+                spanIcon.id = 'otherMenuIcon';
+                spanIcon.className = 'ml-1';
+                spanIcon.textContent = '▼';
+                otherMenuBtn.appendChild(textNode);
+                otherMenuBtn.appendChild(spanIcon);
+            }
+            otherMenuBtn.classList.remove('clicked');
+        }
+        
+        // 还原移动端"其他"按钮文本
+        if (mobileOtherMenuBtn) {
+            // 只有当按钮文本不是"其他"时才进行还原
+            if (mobileOtherMenuBtn.textContent.trim() !== '其他') {
+                mobileOtherMenuBtn.innerHTML = '';
+                const textNode = document.createTextNode('其他');
+                const spanIcon = document.createElement('span');
+                spanIcon.id = 'mobileOtherMenuIcon';
+                spanIcon.className = 'ml-1';
+                spanIcon.textContent = '▼';
+                mobileOtherMenuBtn.appendChild(textNode);
+                mobileOtherMenuBtn.appendChild(spanIcon);
+            }
+            mobileOtherMenuBtn.classList.remove('clicked');
+        }
+        
+        // 关闭桌面端下拉菜单
+        if (otherMenuContent) {
+            otherMenuContent.style.display = 'none';
+        }
+        
+        // 关闭移动端下拉菜单
+        if (mobileOtherMenuContent) {
+            mobileOtherMenuContent.style.display = 'none';
+        }
+        
+        // 更新图标
+        const otherMenuIcon = document.getElementById('otherMenuIcon');
+        if (otherMenuIcon) {
+            otherMenuIcon.textContent = '▼';
+        }
+        
+        const mobileOtherMenuIcon = document.getElementById('mobileOtherMenuIcon');
+        if (mobileOtherMenuIcon) {
+            mobileOtherMenuIcon.textContent = '▼';
+        }
+        
+        // 只有在用户明确点击了其他导航按钮时才清除localStorage状态
+        // 点击页面其他区域时不清除，以便页面刷新后能保持状态
+        if (clickedNavItem) {
+            try {
+                localStorage.removeItem('selectedOtherMenuItem');
+            } catch (error) {
+                console.error('清除保存的菜单项状态失败:', error);
+            }
+        }
+    }
+});
+
+// 恢复上次选择的"其他"菜单项状态
+function restoreSelectedOtherMenuItem() {
+    try {
+        console.log('开始恢复"其他"菜单项状态');
+        
+        // 读取localStorage中的保存状态
+        const savedItem = localStorage.getItem('selectedOtherMenuItem');
+        console.log('从localStorage读取的状态:', savedItem);
+        
+        if (savedItem) {
+            try {
+                const itemData = JSON.parse(savedItem);
+                
+                // 获取当前页面路径，检查是否是从"其他"下拉菜单跳转过来的页面
+                const currentPath = getCurrentPagePath();
+                console.log('当前页面路径:', currentPath);
+                
+                const isFromOtherMenuItem = 
+                    currentPath.includes('/change_clothes') || 
+                    currentPath.includes('/change_face') || 
+                    currentPath.includes('/change_hair_style');
+                
+                console.log('是否来自"其他"下拉菜单:', isFromOtherMenuItem);
+                
+                // 只有在从"其他"下拉菜单跳转过来的页面，才需要恢复状态
+                if (isFromOtherMenuItem) {
+                    // 恢复桌面端按钮状态
+                    const otherMenuBtn = document.getElementById('otherMenuBtn');
+                    if (otherMenuBtn) {
+                        // 强制更新按钮文本和样式（使用DOM操作）
+                        // 先清除所有子元素
+                        otherMenuBtn.innerHTML = '';
+                        // 重新创建文本节点和图标
+                        const textNode = document.createTextNode(itemData.text);
+                        const spanIcon = document.createElement('span');
+                        spanIcon.id = 'otherMenuIcon';
+                        spanIcon.className = 'ml-1';
+                        spanIcon.textContent = '▼';
+                        
+                        // 重新组装按钮内容
+                        otherMenuBtn.appendChild(textNode);
+                        otherMenuBtn.appendChild(spanIcon);
+                        
+                        // 添加下划线标注
+                        otherMenuBtn.classList.add('clicked');
+                        
+                        // 移除所有其他导航项的active类
+                        document.querySelectorAll('.nav-item a').forEach(navItem => {
+                            navItem.classList.remove('active');
+                        });
+                        
+                        console.log('桌面端"其他"按钮状态已恢复');
+                    }
+                    
+                    // 恢复移动端按钮状态
+                    const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
+                    if (mobileOtherMenuBtn) {
+                        // 强制更新按钮文本和样式（使用DOM操作）
+                        // 先清除所有子元素
+                        mobileOtherMenuBtn.innerHTML = '';
+                        // 重新创建文本节点和图标
+                        const textNode = document.createTextNode(itemData.text);
+                        const spanIcon = document.createElement('span');
+                        spanIcon.id = 'mobileOtherMenuIcon';
+                        spanIcon.className = 'ml-1';
+                        spanIcon.textContent = '▼';
+                        
+                        // 重新组装按钮内容
+                        mobileOtherMenuBtn.appendChild(textNode);
+                        mobileOtherMenuBtn.appendChild(spanIcon);
+                        
+                        // 添加高亮样式
+                        mobileOtherMenuBtn.classList.add('clicked');
+                        
+                        console.log('移动端"其他"按钮状态已恢复');
+                    }
+                }
+            } catch (parseError) {
+                console.error('解析保存的菜单项数据失败:', parseError);
+                // 尝试清除损坏的数据
+                try {
+                    localStorage.removeItem('selectedOtherMenuItem');
+                } catch (clearError) {
+                    console.error('清除损坏的菜单项数据失败:', clearError);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('恢复上次选择的菜单项失败:', error);
+    }
+}
+
+// 为导航菜单中的非其他按钮添加点击事件，确保互斥
+    document.addEventListener('DOMContentLoaded', function() {
+        const navItems = document.querySelectorAll('.nav-item a:not(#otherMenuBtn)');
+        
+        // 首先恢复上次选择的菜单项状态
+        restoreSelectedOtherMenuItem();
+        
+        // 然后设置"其他"下拉菜单项的点击事件
+        setupOtherMenuItems();
+        
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                // 获取当前点击的是哪个导航项
+                const clickedItem = this;
+                
+                // 检查当前点击的是否是导航菜单中的普通按钮（非"其他"按钮）
+                if (clickedItem.id !== 'otherMenuBtn') {
+                    // 移除所有非"其他"按钮的active类
+                    navItems.forEach(navItem => {
+                        navItem.classList.remove('active');
+                    });
+                    
+                    // 移除"其他"按钮的clicked类
+                    const otherMenuBtn = document.getElementById('otherMenuBtn');
+                    if (otherMenuBtn) {
+                        otherMenuBtn.classList.remove('clicked');
+                        
+                        // 还原"其他"按钮文本
+                        otherMenuBtn.innerHTML = '';
+                        const textNode = document.createTextNode('其他');
+                        const spanIcon = document.createElement('span');
+                        spanIcon.id = 'otherMenuIcon';
+                        spanIcon.className = 'ml-1';
+                        spanIcon.textContent = '▼';
+                        otherMenuBtn.appendChild(textNode);
+                        otherMenuBtn.appendChild(spanIcon);
+                        
+                        // 关闭下拉菜单
+                        const otherMenuContent = document.getElementById('otherMenuContent');
+                        if (otherMenuContent) {
+                            otherMenuContent.style.display = 'none';
+                            
+                            const otherMenuIcon = document.getElementById('otherMenuIcon');
+                            if (otherMenuIcon) {
+                                otherMenuIcon.textContent = '▼';
+                            }
+                        }
+                        
+                        // 清除保存的选择状态
+                        try {
+                            localStorage.removeItem('selectedOtherMenuItem');
+                        } catch (error) {
+                            console.error('清除保存的菜单项状态失败:', error);
+                        }
+                    }
+                    
+                    // 为当前点击的按钮添加下划线
+                    this.classList.add('active');
+                    
+                    // 处理移动端"其他"按钮，确保点击其他导航按钮时也能还原为"其他"文本
+                    const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
+                    if (mobileOtherMenuBtn) {
+                        mobileOtherMenuBtn.classList.remove('clicked');
+                        
+                        // 还原移动端"其他"按钮文本
+                        mobileOtherMenuBtn.innerHTML = '';
+                        const textNode = document.createTextNode('其他');
+                        const spanIcon = document.createElement('span');
+                        spanIcon.id = 'mobileOtherMenuIcon';
+                        spanIcon.className = 'ml-1';
+                        spanIcon.textContent = '▼';
+                        mobileOtherMenuBtn.appendChild(textNode);
+                        mobileOtherMenuBtn.appendChild(spanIcon);
+                        
+                        // 关闭移动端下拉菜单
+                        const mobileOtherMenuContent = document.getElementById('mobileOtherMenuContent');
+                        if (mobileOtherMenuContent) {
+                            mobileOtherMenuContent.style.display = 'none';
+                            
+                            const mobileOtherMenuIcon = document.getElementById('mobileOtherMenuIcon');
+                            if (mobileOtherMenuIcon) {
+                                mobileOtherMenuIcon.textContent = '▼';
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    });
+
 // 获取当前页面的任务类型
 function getCurrentTaskType() {
     const path = getCurrentPagePath();
@@ -480,11 +978,175 @@ function getCurrentTaskType() {
         return 'text_to_video';
     } else if (path.includes('/image_to_video')) {
         return 'image_to_video';
+    } else if (path.includes('/change_clothes')) {
+        return 'change_clothes';
+    } else if (path.includes('/change_face')) {
+        return 'change_face';
+    } else if (path.includes('/change_hair_style')) {
+        return 'change_hair_style';
     } else if (path.includes('/config')) {
         return 'all'; // 配置页面显示所有类型任务
     } else {
         return 'all'; // 首页显示所有类型任务
     }
+}
+
+// 增强setupOtherMenuItems函数，确保按钮文本正确更新和下划线互斥
+function setupOtherMenuItems() {
+    // 处理桌面端下拉菜单
+    const dropdownItems = document.querySelectorAll('#otherMenuContent .dropdown-item');
+    const otherMenuBtn = document.getElementById('otherMenuBtn');
+    const otherMenuContent = document.getElementById('otherMenuContent');
+    
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // 获取当前选择的文本
+            const selectedText = this.textContent.trim();
+            const href = this.getAttribute('href') || '#';
+            
+            // 保存当前选择的菜单项信息，用于页面刷新后恢复
+            try {
+                localStorage.setItem('selectedOtherMenuItem', JSON.stringify({
+                    text: selectedText,
+                    href: href
+                }));
+            } catch (error) {
+                console.error('保存菜单项状态失败:', error);
+            }
+            
+            // 先移除所有其他导航项的下划线样式（active类和clicked类）
+            // 包括桌面端导航项
+            document.querySelectorAll('.nav-item a').forEach(navItem => {
+                navItem.classList.remove('active');
+                navItem.classList.remove('clicked');
+            });
+            
+            // 包括移动端导航项
+            document.querySelectorAll('.mobile-menu a').forEach(mobileNavItem => {
+                mobileNavItem.classList.remove('active');
+            });
+            
+            // 强制更新按钮文本和样式
+            if (otherMenuBtn) {
+                // 使用setTimeout确保DOM操作的顺序性
+                setTimeout(() => {
+                    // 先清除所有子元素
+                    otherMenuBtn.innerHTML = '';
+                    // 重新创建文本节点和图标
+                    const textNode = document.createTextNode(selectedText);
+                    const spanIcon = document.createElement('span');
+                    spanIcon.id = 'otherMenuIcon';
+                    spanIcon.className = 'ml-1';
+                    spanIcon.textContent = '▼';
+                    
+                    // 重新组装按钮内容
+                    otherMenuBtn.appendChild(textNode);
+                    otherMenuBtn.appendChild(spanIcon);
+                    
+                    // 添加下划线标注
+                    otherMenuBtn.classList.add('clicked');
+                }, 0);
+            }
+            
+            // 关闭下拉菜单
+            if (otherMenuContent) {
+                otherMenuContent.style.display = 'none';
+            }
+            
+            // 确保按钮文本更新完成后再执行页面跳转
+            // 使用setTimeout确保DOM更新和localStorage保存操作完成
+            setTimeout(function() {
+                // 跳转到对应的页面
+                if (selectedText === '换装') {
+                    window.location.href = '/change_clothes';
+                } else if (selectedText === '换脸') {
+                    window.location.href = '/change_face';
+                } else if (selectedText === '换发型') {
+                    window.location.href = '/change_hair_style';
+                }
+            }, 50);
+        });
+    });
+    
+    // 处理移动端下拉菜单
+    const mobileDropdownItems = document.querySelectorAll('#mobileOtherMenuContent .dropdown-item');
+    const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
+    const mobileOtherMenuContent = document.getElementById('mobileOtherMenuContent');
+    const mobileOtherMenuIcon = document.getElementById('mobileOtherMenuIcon');
+    
+    mobileDropdownItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // 获取当前选择的文本
+            const selectedText = this.textContent;
+            const href = this.getAttribute('href') || '#';
+            
+            // 保存当前选择的菜单项信息，用于页面刷新后恢复
+            try {
+                localStorage.setItem('selectedOtherMenuItem', JSON.stringify({
+                    text: selectedText,
+                    href: href
+                }));
+            } catch (error) {
+                console.error('保存菜单项状态失败:', error);
+            }
+            
+            // 强制更新移动端按钮文本和样式
+            if (mobileOtherMenuBtn) {
+                // 先清除所有子元素
+                mobileOtherMenuBtn.innerHTML = '';
+                // 重新创建文本节点和图标
+                const textNode = document.createTextNode(selectedText);
+                const spanIcon = document.createElement('span');
+                spanIcon.id = 'mobileOtherMenuIcon';
+                spanIcon.className = 'ml-1';
+                spanIcon.textContent = '▼';
+                
+                // 重新组装按钮内容
+                mobileOtherMenuBtn.appendChild(textNode);
+                mobileOtherMenuBtn.appendChild(spanIcon);
+                
+                // 添加高亮样式
+                mobileOtherMenuBtn.classList.add('clicked');
+            }
+            
+            // 关闭下拉菜单
+            if (mobileOtherMenuContent) {
+                mobileOtherMenuContent.style.display = 'none';
+            }
+            if (mobileOtherMenuIcon) {
+                mobileOtherMenuIcon.textContent = '▼';
+            }
+            
+            // 移除所有其他导航项的下划线样式（active类和clicked类）
+            // 包括桌面端导航项
+            document.querySelectorAll('.nav-item a').forEach(navItem => {
+                navItem.classList.remove('active');
+                navItem.classList.remove('clicked');
+            });
+            
+            // 包括移动端导航项
+            document.querySelectorAll('.mobile-menu a').forEach(mobileNavItem => {
+                mobileNavItem.classList.remove('active');
+            });
+            
+            // 确保按钮文本更新完成后再执行页面跳转
+            // 使用setTimeout确保DOM更新和localStorage保存操作完成
+            setTimeout(function() {
+                // 跳转到对应的页面
+                if (selectedText === '换装') {
+                    window.location.href = '/change_clothes';
+                } else if (selectedText === '换脸') {
+                    window.location.href = '/change_face';
+                } else if (selectedText === '换发型') {
+                    window.location.href = '/change_hair_style';
+                }
+            }, 50);
+        });
+    });
 }
 
 // 为任务按钮添加点击事件

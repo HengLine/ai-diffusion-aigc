@@ -4,29 +4,6 @@
 使用Flask + Jinja2构建的AIGC Web界面
 """
 
-# 首先导入并应用eventlet的猴子补丁，这必须在导入任何其他模块之前执行
-import eventlet
-# 在Windows平台上应用猴子补丁时，添加专门的错误处理
-if hasattr(eventlet, 'patcher'):
-    # 保存原始的send方法以进行错误处理
-    original_socket_send = eventlet.patcher.original('socket').socket.send
-    
-    # 创建一个包装器来处理连接相关错误
-    def safe_socket_send(self, data, flags=0):
-        try:
-            return original_socket_send(self, data, flags)
-        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
-            # 优雅地处理所有连接中断相关错误，避免程序崩溃
-            from hengline.logger import debug
-            debug("检测到客户端连接中断，但已安全处理")
-            return 0
-            
-    # 应用安全的send方法
-eventlet.patcher.original('socket').socket.send = safe_socket_send
-
-# 应用猴子补丁
-eventlet.monkey_patch()
-
 # 然后导入其他标准库和第三方库
 import datetime
 import os
@@ -62,6 +39,9 @@ from route.text_to_audio_route import text_to_audio_bp
 from route.task_queue_route import task_queue_bp
 from route.flask_config_route import config_bp
 from route.socketio_route import socketio_bp, init_socketio
+from route.change_clothes_route import change_clothes_bp
+from route.change_face_route import change_face_bp
+from route.change_hair_style_route import change_hair_style_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='templates')
@@ -111,6 +91,9 @@ app.register_blueprint(text_to_video_bp)
 app.register_blueprint(text_to_audio_bp)
 app.register_blueprint(task_queue_bp)
 app.register_blueprint(socketio_bp)
+app.register_blueprint(change_clothes_bp)
+app.register_blueprint(change_face_bp)
+app.register_blueprint(change_hair_style_bp)
 
 
 # 路由定义
@@ -207,20 +190,14 @@ def shutdown():
 def run_flask_app():
     """\在独立函数中运行Flask应用，便于信号处理"""
     try:
-        # 初始化SocketIO
-        global socketio
-        socketio = init_socketio(app)
-        
-        # 使用SocketIO启动Flask应用，优化配置以提高连接稳定性
-        info("使用SocketIO启动Flask应用...")
-        # 使用SocketIO启动Flask应用
-        # 注意：ping_timeout, ping_interval等参数应在SocketIO构造函数中指定
-        # 这些参数不应该在run()方法中指定
-        socketio.run(app, 
-                     debug=True, 
-                     host='0.0.0.0', 
-                     port=5000,  # 使用Flask默认端口5000
-                     use_reloader=False)
+        # 直接使用Flask内置服务器启动应用（不使用SocketIO）
+        info("使用Flask内置服务器启动应用...")
+        app.run(
+            debug=True,
+            host='0.0.0.0',
+            port=5000,
+            use_reloader=False
+        )
     except KeyboardInterrupt:
         info("Flask应用被用户中断")
         handle_shutdown(None, None)

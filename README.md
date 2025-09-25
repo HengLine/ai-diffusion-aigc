@@ -91,7 +91,25 @@
    >
    > 4. **文生音频**（共约5G）：
    >    - /**text_encoders**/[t5-base.safetensors](https://huggingface.co/ComfyUI-Wiki/t5-base/resolve/main/t5-base.safetensors)（850M）
+   >
    >    - /**checkpoints**/[stable-audio-open-1.0.safetensors](https://huggingface.co/Comfy-Org/stable-audio-open-1.0_repackaged/resolve/main/stable-audio-open-1.0.safetensors)（4.5G）
+   >
+   >      
+   >
+   > 5. **换装**
+   >
+   >    安装插件
+   >
+   >    ```python
+   >    cd ComfyUI/custom_nodes
+   >    git clone https://github.com/cubiq/ComfyUI_IPAdapter_plus.git
+   >    git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git
+   >    pip install -r comfyui_controlnet_aux/requirements.txt
+   >    ```
+   >
+   >    
+   >
+   > 6. 
 
 4. 启动 ComfyUI 
 
