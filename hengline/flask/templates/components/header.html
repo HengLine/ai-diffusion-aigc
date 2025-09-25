@@ -278,6 +278,18 @@
                     <a href="/change_hair_style" class="dropdown-item change-hairstyle">换发型</a>
                 </div>
             </li>
+            <li class="nav-item dropdown">
+                <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="agentMenuBtn" onclick="toggleAgentMenu()">
+                    智能体|Agent
+                    <span id="agentMenuIcon" class="ml-1">▼</span>
+                </a>
+                <div id="agentMenuContent" class="dropdown-menu" style="display: none;">
+                    <a href="/agent/medical" class="dropdown-item agent-medical">医疗问答Agent</a>
+                    <a href="/agent/stocks" class="dropdown-item agent-stocks">股票分析Agent</a> 
+                    <a href="/agent/study" class="dropdown-item agent-study">教育学习Agent</a>
+                    <a href="/agent/movie" class="dropdown-item agent-movie">剧本创作Agent</a>
+                </div>
+            </li>
         </ul>
         <div class="nav-right">
             <button id="tasksButton" class="tasks-button">
@@ -308,6 +320,18 @@
                     <a href="/change_clothes" class="dropdown-item change-clothes">换装</a>
                     <a href="/change_face" class="dropdown-item change-face">换脸</a>
                     <a href="/change_hair_style" class="dropdown-item change-hairstyle">换发型</a>
+                </div>
+            </li>
+            <li class="mobile-nav-item dropdown">
+                <a href="#" class="mobile-nav-link dropdown-toggle" id="mobileAgentMenuBtn" onclick="toggleMobileAgentMenu()">
+                    智能体|Agent
+                    <span id="mobileAgentMenuIcon" class="ml-1">▼</span>
+                </a>
+                <div id="mobileAgentMenuContent" class="dropdown-menu" style="display: none;">
+                    <a href="/agent/medical" class="dropdown-item agent-medical">医疗问答Agent</a>
+                    <a href="/agent/stocks" class="dropdown-item agent-stocks">股票分析Agent</a>
+                    <a href="/agent/study" class="dropdown-item agent-study">教育学习Agent</a>
+                    <a href="/agent/movie" class="dropdown-item agent-movie">剧本创作Agent</a>
                 </div>
             </li>
             <li><a href="/config">配置</a></li>
@@ -351,14 +375,21 @@
             const linkPath = new URL(link.href).pathname;
             if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
 
-                if (['/change_clothes', '/change_face', '/change_hair_style'].includes(currentPath)) {
+                if (currentPath.includes("change")) {
                     const content = document.getElementById('otherMenuContent');
                     const button = document.getElementById('otherMenuBtn');
                     content.classList.add('active'); // 点击后显示下划线
                     content.style.display = 'none';
                     button.textContent = content.querySelector('a[href="' + currentPath + '"]').textContent + ' ▼';
                     button.classList.add('active'); // 隐藏时下划线消失
-                } else {
+                } else if (currentPath.includes("agent")) {
+                    const content = document.getElementById('agentMenuContent');
+                    const button = document.getElementById('agentMenuBtn');
+                    content.classList.add('active'); // 点击后显示下划线
+                    content.style.display = 'none';
+                    button.textContent = content.querySelector('a[href="' + currentPath + '"]').textContent + ' ▼';
+                    button.classList.add('active'); // 隐藏时下划线消失
+                } else{
                     link.classList.add('active');
                 }
                 shouldBreak = true;
@@ -374,7 +405,7 @@
             if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
                 mobileShouldBreak = true;
 
-                if (['/change_clothes', '/change_face', '/change_hair_style'].includes(currentPath)) {
+                if (currentPath.includes("change")) {
                     const content = document.getElementById('mobileOtherMenuContent');
                     const icon = document.getElementById('mobileOtherMenuIcon');
                     const button = document.getElementById('mobileOtherMenuBtn');
@@ -384,7 +415,17 @@
                         content.querySelector('a[href="' + currentPath + '"]').classList.add('active');
                         button.textContent = content.querySelector('a[href="' + currentPath + '"]').textContent + ' ▼';
                     }
-                } else {
+                } else if (currentPath.includes("agent")) {
+                    const content = document.getElementById('mobileAgentMenuContent');
+                    const icon = document.getElementById('mobileAgentMenuIcon');
+                    const button = document.getElementById('mobileAgentMenuBtn');
+                    if (content.style.display === 'none') {
+                        content.style.display = 'block';
+                        icon.textContent = '▲';
+                        content.querySelector('a[href="' + currentPath + '"]').classList.add('active');
+                        button.textContent = content.querySelector('a[href="' + currentPath + '"]').textContent + ' ▼';
+                    }
+                } else{
                     link.classList.add('active');
                 }
             }
@@ -458,6 +499,35 @@
         return false;
     }
 
+    // 切换"智能体"菜单项的显示/隐藏（桌面端）
+    function toggleAgentMenu() {
+        const content = document.getElementById('agentMenuContent');
+        const icon = document.getElementById('agentMenuIcon');
+        const button = document.getElementById('agentMenuBtn');
+
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.textContent = '▲';
+            button.classList.add('active'); // 点击后显示下划线
+        } else {
+            content.style.display = 'none';
+            icon.textContent = '▼';
+            button.classList.remove('active'); // 隐藏时下划线消失
+        }
+
+        // 移除所有其他菜单项的高亮状态
+        const desktopLinks = document.querySelectorAll('.nav-menu .nav-item a');
+        desktopLinks.forEach(item => {
+            if (item.className !== 'dropdown-item agent') {
+                item.classList.remove('active');
+            }
+        });
+
+        button.classList.add('active');
+
+        return false;
+    }
+
 
     // 切换"其他"菜单项的显示/隐藏（移动端）
     function toggleMobileOtherMenu() {
@@ -478,6 +548,32 @@
         const mobileLinks = document.querySelectorAll('.mobile-menu a');
         mobileLinks.forEach(item => {
             if (item.className !== 'dropdown-item other') {
+                item.classList.remove('active');
+            }
+        });
+        button.classList.add('clicked');
+        return false;
+    }
+
+    // 切换"智能体"菜单项的显示/隐藏（移动端）
+    function toggleMobileAgentMenu() {
+        const content = document.getElementById('mobileAgentMenuContent');
+        const icon = document.getElementById('mobileAgentMenuIcon');
+        const button = document.getElementById('mobileAgentMenuBtn');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.textContent = '▲';
+            button.classList.add('clicked'); // 点击后显示高亮
+        } else {
+            content.style.display = 'none';
+            icon.textContent = '▼';
+            button.classList.remove('clicked'); // 隐藏时取消高亮
+        }
+
+        // 移除所有其他菜单项的高亮状态
+        const mobileLinks = document.querySelectorAll('.mobile-menu a');
+        mobileLinks.forEach(item => {
+            if (item.className !== 'dropdown-item agent') {
                 item.classList.remove('active');
             }
         });

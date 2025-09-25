@@ -42,6 +42,10 @@ from route.socketio_route import socketio_bp, init_socketio
 from route.change_clothes_route import change_clothes_bp
 from route.change_face_route import change_face_bp
 from route.change_hair_style_route import change_hair_style_bp
+from hengline.agent.medical.route.medical_agent_route import medical_agent_bp
+from hengline.agent.stocks.route.stocks_agent_route import stocks_agent_bp
+from hengline.agent.study.route.study_agent_route import study_agent_bp
+from hengline.agent.movie.route.movie_agent_route import movie_agent_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='templates')
@@ -94,6 +98,10 @@ app.register_blueprint(socketio_bp)
 app.register_blueprint(change_clothes_bp)
 app.register_blueprint(change_face_bp)
 app.register_blueprint(change_hair_style_bp)
+app.register_blueprint(medical_agent_bp)
+app.register_blueprint(stocks_agent_bp)
+app.register_blueprint(study_agent_bp)
+app.register_blueprint(movie_agent_bp)
 
 
 # 路由定义

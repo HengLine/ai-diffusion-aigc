@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剧本创作Agent - HengLine AIGC创意平台</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #9b59b6;
+            box-shadow: 0 0 0 2px rgba(155, 89, 182, 0.2);
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+            background-color: #fff;
+        }
+        select:focus {
+            outline: none;
+            border-color: #9b59b6;
+            box-shadow: 0 0 0 2px rgba(155, 89, 182, 0.2);
+        }
+        .number-input {
+            width: 80px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .number-input:focus {
+            outline: none;
+            border-color: #9b59b6;
+            box-shadow: 0 0 0 2px rgba(155, 89, 182, 0.2);
+        }
+        .form-button {
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .form-button:hover {
+            background-color: #8e44ad;
+        }
+        .form-button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .result-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+            border-left: 3px solid #9b59b6;
+            padding-left: 20px;
+        }
+        .loading-indicator {
+            display: none;
+            margin-left: 10px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #9b59b6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .creative-tip {
+            background-color: #f3e5f5;
+            border: 1px solid #e1bee7;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #4a148c;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .form-container, .result-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入头部组件 -->
+    {% include 'components/header.html' %}
+    
+    <div class="container">
+        <div class="form-container">
+            <h1>剧本创作Agent</h1>
+            
+            <div class="creative-tip">
+                <strong>创作提示：</strong>输入您的剧本主题，选择剧本类型和角色数量，我们的AI创作助手将为您生成创意剧本内容。
+            </div>
+            
+            <form id="movieForm">
+                <div class="form-group">
+                    <label for="scriptTheme">剧本主题：</label>
+                    <input type="text" id="scriptTheme" name="scriptTheme" placeholder="请输入剧本主题（如：未来科幻、爱情故事、悬疑推理）" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scriptType">剧本类型：</label>
+                    <select id="scriptType" name="scriptType">
+                        <option value="dialogue">对话剧本</option>
+                        <option value="scene">场景剧本</option>
+                        <option value="outline">剧本大纲</option>
+                        <option value="comprehensive">综合剧本</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="characterCount">角色数量：</label>
+                    <input type="number" id="characterCount" name="characterCount" class="number-input" min="1" max="10" value="2" required>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" id="submitButton" class="form-button">
+                        创作剧本
+                        <span id="loadingIndicator" class="loading-indicator">⟳</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 结果显示区域 -->
+        <div id="resultContainer" class="result-container">
+            <h2>剧本内容</h2>
+            <div id="resultContent" class="result-content">
+                <!-- 结果将在这里显示 -->
+            </div>
+        </div>
+        
+        <a href="{{ url_for('index') }}" class="back-link">← 返回首页</a>
+    </div>
+    
+    <!-- 引入通知组件 -->
+    {% include 'components/notification.html' %}
+    
+    <!-- 引入页脚组件 -->
+    {% include 'components/footer.html' %}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('movieForm');
+            const submitButton = document.getElementById('submitButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // 获取表单数据
+                const scriptTheme = document.getElementById('scriptTheme').value;
+                const scriptType = document.getElementById('scriptType').value;
+                const characterCount = parseInt(document.getElementById('characterCount').value);
+                
+                // 验证剧本主题不能为空
+                if (!scriptTheme.trim()) {
+                    showNotification('请输入剧本主题！', 'warning', 3000);
+                    return;
+                }
+                
+                // 验证角色数量在有效范围内
+                if (isNaN(characterCount) || characterCount < 1 || characterCount > 10) {
+                    showNotification('角色数量必须在1-10之间！', 'warning', 3000);
+                    return;
+                }
+                
+                // 禁用按钮防止重复提交
+                submitButton.disabled = true;
+                submitButton.textContent = '正在创作剧本...';
+                loadingIndicator.style.display = 'inline-block';
+                
+                try {
+                    // 发送API请求
+                    const response = await fetch('/api/movie_agent', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            script_theme: scriptTheme,
+                            script_type: scriptType,
+                            character_count: characterCount 
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // 显示结果
+                        resultContent.textContent = data.data.script_content;
+                        resultContainer.style.display = 'block';
+                        
+                        // 显示成功通知
+                        showAutoCloseNotification('剧本创作完成！', 2000);
+                        
+                    } else {
+                        // 显示错误通知
+                        showNotification(data.message || '剧本创作失败，请重试', 'error', 3000);
+                    }
+                    
+                } catch (error) {
+                    showNotification(`请求失败: ${error.message}`, 'error', 3000);
+                } finally {
+                    // 恢复按钮状态
+                    submitButton.disabled = false;
+                    submitButton.textContent = '创作剧本';
+                    loadingIndicator.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
