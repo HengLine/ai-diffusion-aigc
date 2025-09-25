@@ -241,7 +241,8 @@ class AppBaseEnv:
         debug(f"使用虚拟环境pip安装项目依赖包（{REQUIREMENTS_FILE}）...")
 
         # 使用虚拟环境的pip安装项目依赖
-        result = self.run_command(f'"{pip_exe}" install -r "{REQUIREMENTS_FILE}"')
+        # result = self.run_command(f'"{pip_exe}" install -r "{REQUIREMENTS_FILE}"')
+        result = self.run_command(f'pip install -r requirements.txt"')
         if result and hasattr(result, 'returncode') and result.returncode == 0:
             debug("[成功] 依赖安装成功。")
             return True

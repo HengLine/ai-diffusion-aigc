@@ -2,14 +2,14 @@
 <style>
     /* 导航栏样式 */
     nav {
-        background-color: #4a6fa5;
+        background-color: #4b5460;
         color: white;
         padding: 1rem 0;
         margin-bottom: 2rem;
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-    
+
     .nav-container {
         max-width: 1200px;
         margin: 0 auto;
@@ -18,14 +18,14 @@
         justify-content: space-between;
         align-items: center;
     }
-    
+
     .nav-brand {
         font-size: 1.5rem;
         font-weight: 700;
         text-decoration: none;
         color: white;
     }
-    
+
     .nav-menu {
         display: flex;
         gap: 1.5rem;
@@ -33,41 +33,44 @@
         margin: 0;
         padding: 0;
     }
-    
+
     .nav-item a {
         color: rgb(210, 239, 216);
         text-decoration: none;
         font-weight: 500;
         transition: opacity 0.3s ease;
     }
-    
+
     .nav-item a:hover {
         opacity: 0.8;
     }
-    
+
     /* 当前选中菜单高亮样式 */
     .nav-item a.active {
         font-weight: 700;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #11d8cf;
+        font-size: large;
         border-bottom: 2px solid white;
     }
-    
+
     /* 其他按钮特定样式 */
     .nav-item.dropdown a.nav-link {
         position: relative;
     }
-    
+
     /* 其他按钮点击后高亮样式 */
     .nav-item.dropdown a.nav-link.clicked {
         border-bottom: 2px solid white;
         font-weight: 700;
     }
-    
+
     .nav-right {
         display: flex;
         align-items: center;
         gap: 1rem;
     }
-    
+
     .tasks-button {
         background-color: #ffffff;
         color: #4a6fa5;
@@ -78,11 +81,11 @@
         font-weight: 500;
         transition: background-color 0.3s ease;
     }
-    
+
     .tasks-button:hover {
         background-color: #f8f9fa;
     }
-    
+
     .task-badge {
         background-color: #dc3545;
         color: white;
@@ -92,7 +95,7 @@
         margin-left: 4px;
         font-weight: 600;
     }
-    
+
     /* 移动端导航菜单 */
     .mobile-menu-button {
         display: none;
@@ -101,7 +104,7 @@
         color: white;
         cursor: pointer;
     }
-    
+
     .mobile-menu {
         background-color: #4a6fa5;
         max-width: 1200px;
@@ -110,17 +113,17 @@
         border-radius: 0 0 8px 8px;
         display: none;
     }
-    
+
     .mobile-menu ul {
         list-style: none;
         margin: 0;
         padding: 0;
     }
-    
+
     .mobile-menu li {
         margin-bottom: 0.5rem;
     }
-    
+
     .mobile-menu a {
         color: white;
         text-decoration: none;
@@ -128,14 +131,16 @@
         display: block;
         padding: 0.5rem 0;
     }
-    
+
     /* 移动端选中菜单高亮样式 - 保持与桌面端一致的下划线效果 */
     .mobile-menu a.active {
         font-weight: 700;
+        font-size: large;
+        background-color: #856404;
         border-bottom: 2px solid white;
         padding-left: 10px;
     }
-    
+
     /* 下拉菜单样式 - 垂直展示优化 */
     .dropdown-menu {
         position: absolute;
@@ -150,7 +155,7 @@
         flex-direction: column;
         overflow: hidden;
     }
-    
+
     .dropdown-item {
         text-decoration: none;
         padding: 0.75rem 1.25rem;
@@ -160,56 +165,56 @@
         font-size: 0.95rem;
         border-left: 3px solid transparent;
     }
-    
+
     .dropdown-item:hover {
         background-color: rgba(255, 255, 255, 0.1);
         border-left-color: rgba(255, 255, 255, 0.5);
     }
-    
+
     /* 不同颜色标注的下拉菜单项 */
     .dropdown-item.change-clothes {
         color: #ffd700;
     }
-    
+
     .dropdown-item.change-clothes:hover {
         color: #fff9c4;
         border-left-color: #ffd700;
     }
-    
+
     .dropdown-item.change-face {
         color: #ff80ab;
     }
-    
+
     .dropdown-item.change-face:hover {
         color: #ffc1e0;
         border-left-color: #ff80ab;
     }
-    
+
     .dropdown-item.change-hairstyle {
         color: #81d4fa;
     }
-    
+
     .dropdown-item.change-hairstyle:hover {
         color: #b3e5fc;
         border-left-color: #81d4fa;
     }
-    
+
     /* 桌面端下拉菜单位置调整 */
     .nav-item.dropdown {
         position: relative;
     }
-    
+
     .nav-item.dropdown .dropdown-menu {
         top: 100%;
         left: 0;
         margin-top: 4px;
     }
-    
+
     /* 移动端下拉菜单样式优化 */
     .mobile-nav-item.dropdown {
         position: relative;
     }
-    
+
     .mobile-menu .dropdown-menu {
         position: relative;
         background-color: rgba(255, 255, 255, 0.05);
@@ -219,32 +224,32 @@
         min-width: auto;
         border-radius: 4px;
     }
-    
+
     .mobile-menu .dropdown-item {
         color: white;
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
         border-left: 2px solid transparent;
     }
-    
+
     .mobile-menu .dropdown-item:hover {
         background-color: rgba(255, 255, 255, 0.1);
         color: white;
         border-left-color: white;
     }
-    
+
     /* 下拉箭头动画 */
     .ml-1 {
         transition: transform 0.2s ease;
         display: inline-block;
     }
-    
+
     /* 响应式调整 */
     @media (max-width: 768px) {
         .nav-menu {
             display: none;
         }
-        
+
         .mobile-menu-button {
             display: block;
         }
@@ -263,7 +268,7 @@
             <li class="nav-item"><a href="/image_to_video">图生视频</a></li>
             <li class="nav-item"><a href="/text_to_audio">文生音频</a></li>
             <li class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle" id="otherMenuBtn" onclick="toggleOtherMenu()">
+                <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="otherMenuBtn" onclick="toggleOtherMenu()">
                     其他
                     <span id="otherMenuIcon" class="ml-1">▼</span>
                 </a>
@@ -311,229 +316,263 @@
 </nav>
 
 <script>
-// 获取当前页面路径
-function getCurrentPagePath() {
-    const path = window.location.pathname;
-    // 确保路径以/开头
-    return path.startsWith('/') ? path : '/' + path;
-}
-
-// 移动端菜单切换函数
-function toggleMobileMenu() {
-    const mobileMenu = document.getElementById('mobileMenu');
-    mobileMenu.style.display = mobileMenu.style.display === 'none' || mobileMenu.style.display === '' ? 'block' : 'none';
-}
-
-// 全局变量跟踪徽章显示状态
-let badgeVisible = false;
-let badgeCount = 0;
-
-// 为移动端菜单按钮添加点击事件
-document.addEventListener('DOMContentLoaded', function() {
-    const mobileMenuButton = document.getElementById('mobileMenuButton');
-    if (mobileMenuButton) {
-        mobileMenuButton.addEventListener('click', toggleMobileMenu);
+    // 获取当前页面路径
+    function getCurrentPagePath() {
+        const path = window.location.pathname;
+        // 确保路径以/开头
+        return path.startsWith('/') ? path : '/' + path;
     }
-    
-    // 设置当前菜单高亮
-    const currentPath = getCurrentPagePath();
-    
-    // 高亮桌面端菜单
-    const desktopLinks = document.querySelectorAll('.nav-menu .nav-item a');
-    desktopLinks.forEach(link => {
-        const linkPath = new URL(link.href).pathname;
-        if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
-            link.classList.add('active');
+
+    // 移动端菜单切换函数
+    function toggleMobileMenu() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileMenu.style.display = mobileMenu.style.display === 'none' || mobileMenu.style.display === '' ? 'block' : 'none';
+    }
+
+    // 全局变量跟踪徽章显示状态
+    let badgeVisible = false;
+    let badgeCount = 0;
+
+    // 为移动端菜单按钮添加点击事件
+    document.addEventListener('DOMContentLoaded', function () {
+        const mobileMenuButton = document.getElementById('mobileMenuButton');
+        if (mobileMenuButton) {
+            mobileMenuButton.addEventListener('click', toggleMobileMenu);
         }
-    });
-    
-    // 高亮移动端菜单
-    const mobileLinks = document.querySelectorAll('.mobile-menu a');
-    mobileLinks.forEach(link => {
-        const linkPath = new URL(link.href).pathname;
-        if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
-            link.classList.add('active');
-        }
-        
-        // 为移动端导航按钮添加点击事件，确保点击时添加下划线并移除其他按钮的下划线
-        link.addEventListener('click', function() {
-            // 移除所有移动端导航按钮的active类
-            mobileLinks.forEach(mobileLink => {
-                mobileLink.classList.remove('active');
-            });
-            
-            // 为当前点击的按钮添加下划线
-            this.classList.add('active');
-            
-            // 确保移动端"其他"按钮的下划线被移除并还原文本
-            const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
-            if (mobileOtherMenuBtn) {
-                mobileOtherMenuBtn.classList.remove('clicked');
-                
-                // 还原移动端"其他"按钮文本
-                if (mobileOtherMenuBtn.textContent.trim() !== '其他') {
-                    mobileOtherMenuBtn.innerHTML = '';
-                    const textNode = document.createTextNode('其他');
-                    const spanIcon = document.createElement('span');
-                    spanIcon.id = 'mobileOtherMenuIcon';
-                    spanIcon.className = 'ml-1';
-                    spanIcon.textContent = '▼';
-                    mobileOtherMenuBtn.appendChild(textNode);
-                    mobileOtherMenuBtn.appendChild(spanIcon);
+
+        // 设置当前菜单高亮
+        const currentPath = getCurrentPagePath();
+
+        // 高亮桌面端菜单
+        const desktopLinks = document.querySelectorAll('.nav-menu .nav-item a');
+        let shouldBreak = false;
+        desktopLinks.forEach(link => {
+            if (shouldBreak) return;
+            const linkPath = new URL(link.href).pathname;
+            if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
+
+                if (['/change_clothes', '/change_face', '/change_hair_style'].includes(currentPath)) {
+                    const content = document.getElementById('otherMenuContent');
+                    const button = document.getElementById('otherMenuBtn');
+                    content.classList.add('active'); // 点击后显示下划线
+                    content.style.display = 'none';
+                    button.textContent = content.querySelector('a[href="' + currentPath + '"]').textContent + ' ▼';
+                    button.classList.add('active'); // 隐藏时下划线消失
+                } else {
+                    link.classList.add('active');
                 }
-                
-                // 关闭移动端下拉菜单
-                const mobileOtherMenuContent = document.getElementById('mobileOtherMenuContent');
-                if (mobileOtherMenuContent) {
-                    mobileOtherMenuContent.style.display = 'none';
-                }
-                
-                // 更新图标
-                const mobileOtherMenuIcon = document.getElementById('mobileOtherMenuIcon');
-                if (mobileOtherMenuIcon) {
-                    mobileOtherMenuIcon.textContent = '▼';
-                }
-                
-                // 清除保存的选择状态
-                try {
-                    localStorage.removeItem('selectedOtherMenuItem');
-                } catch (error) {
-                    console.error('清除保存的菜单项状态失败:', error);
-                }
+                shouldBreak = true;
             }
         });
-    });
-    
-    // 确保DOM加载完成后徽章仍然可见
-    const taskBadge = document.getElementById('queueTaskBadge');
-    if (taskBadge) {
-        console.log('找到徽章元素，开始设置初始样式');
-        
-        // 先设置一个静态的徽章显示，确保HTML/CSS工作正常
-        taskBadge.textContent = '1'; // 设置一个默认数字
-        console.log('已设置默认徽章数字为1');
-        
-        // 先设置基础的显示样式，不依赖badgeVisible状态
-        taskBadge.style.display = 'inline !important';
-        taskBadge.style.visibility = 'visible !important';
-        taskBadge.style.opacity = '1 !important';
-        console.log('已设置基础显示样式');
-        
-        // 然后再应用其他样式
-        taskBadge.style.position = 'relative';
-        taskBadge.style.zIndex = '9999';
-        taskBadge.style.background = '#dc3545';
-        taskBadge.style.color = 'white';
-        taskBadge.style.fontSize = '0.75rem';
-        taskBadge.style.padding = '2px 6px';
-        taskBadge.style.borderRadius = '10px';
-        taskBadge.style.marginLeft = '4px';
-        taskBadge.style.fontWeight = '600';
-        taskBadge.style.minWidth = '20px';
-        taskBadge.style.textAlign = 'center';
-        console.log('DOM完全加载后强制设置徽章显示样式完成');
-    } else {
-        console.error('未找到徽章元素queueTaskBadge');
-    }
-    
-    // 加载并显示未完成任务数
-    console.log('DOM加载完成，开始加载任务数量');
-    if (typeof loadUnfinishedTaskCount === 'function') {
-        console.log('loadUnfinishedTaskCount函数存在，准备调用');
-        loadUnfinishedTaskCount();
-    } else {
-        console.error('loadUnfinishedTaskCount函数不存在');
-    }
-    
-    // 定时刷新任务数量（每30秒）
-    console.log('设置定时刷新任务数量（每30秒）');
-    setInterval(loadUnfinishedTaskCount, 30000);
-});
 
-// 获取状态文本函数 - 从task_modal.html中复制的完整实现
-function getStatusText(status) {
-    const statusTexts = {
-        'queued': '排队中',
-        'running': '运行中',
-        'success': '完成',
-        'failed': '失败'
-    };
-    return statusTexts[status] || status;
-}
+        // 高亮移动端菜单
+        const mobileLinks = document.querySelectorAll('.mobile-menu a');
+        let mobileShouldBreak = false;
+        mobileLinks.forEach(link => {
+            if (mobileShouldBreak) return;
+            const linkPath = new URL(link.href).pathname;
+            if (currentPath === linkPath || (currentPath === '/' && linkPath === '/')) {
+                mobileShouldBreak = true;
 
-// 加载任务列表函数 - 从task_modal.html中复制的完整实现，包含状态筛选功能
-function loadTaskList() {
-    const taskList = document.getElementById('taskList');
-    const dateFilter = document.getElementById('taskDateFilter');
-    const statusFilter = document.getElementById('taskStatusFilter');
-    
-    if (!taskList || !dateFilter) {
-        console.error('任务列表或筛选器元素未找到');
-        return;
-    }
-    
-    taskList.innerHTML = '<div class="loading">加载任务列表中...</div>';
-    
-    // 获取选择的日期和状态
-    const selectedDate = dateFilter.value;
-    const selectedStatus = statusFilter ? statusFilter.value : '';
-    
-    // 构建请求URL，添加日期和状态参数
-    let url = '/api/task_queue/all_tasks?';
-    const params = [];
-    
-    if (selectedDate) {
-        params.push('date=' + selectedDate);
-    }
-    
-    if (selectedStatus && selectedStatus !== 'all') {
-        params.push('status=' + selectedStatus);
-    }
-    
-    url += params.join('&');
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.data) {
-                const tasks = data.data;
-                
-                if (tasks.length === 0) {
-                    taskList.innerHTML = '<div class="no-tasks">暂无任务记录</div>';
-                    return;
+                if (['/change_clothes', '/change_face', '/change_hair_style'].includes(currentPath)) {
+                    const content = document.getElementById('mobileOtherMenuContent');
+                    const icon = document.getElementById('mobileOtherMenuIcon');
+                    const button = document.getElementById('mobileOtherMenuBtn');
+                    if (content.style.display === 'none') {
+                        content.style.display = 'block';
+                        icon.textContent = '▲';
+                        content.querySelector('a[href="' + currentPath + '"]').classList.add('active');
+                        button.textContent = content.querySelector('a[href="' + currentPath + '"]').textContent + ' ▼';
+                    }
+                } else {
+                    link.classList.add('active');
                 }
-                
-                let taskHTML = '';
-                tasks.forEach(task => {
-                    // 格式化时间
-                    const createTime = new Date(task.timestamp * 1000).toLocaleString('zh-CN');
-                    let startTime = '-';
-                    let endTime = '-';
-                    let duration = '-';
-                    
-                    if (task.start_time) {
-                        startTime = new Date(task.start_time * 1000).toLocaleString('zh-CN');
+            }
+
+        });
+
+        // 确保DOM加载完成后徽章仍然可见
+        const taskBadge = document.getElementById('queueTaskBadge');
+        if (taskBadge) {
+            // 先设置一个静态的徽章显示，确保HTML/CSS工作正常
+            taskBadge.textContent = '1'; // 设置一个默认数字
+
+            // 先设置基础的显示样式，不依赖badgeVisible状态
+            taskBadge.style.display = 'inline !important';
+            taskBadge.style.visibility = 'visible !important';
+            taskBadge.style.opacity = '1 !important';
+
+            // 然后再应用其他样式
+            taskBadge.style.position = 'relative';
+            taskBadge.style.zIndex = '9999';
+            taskBadge.style.background = '#dc3545';
+            taskBadge.style.color = 'white';
+            taskBadge.style.fontSize = '0.75rem';
+            taskBadge.style.padding = '2px 6px';
+            taskBadge.style.borderRadius = '10px';
+            taskBadge.style.marginLeft = '4px';
+            taskBadge.style.fontWeight = '600';
+            taskBadge.style.minWidth = '20px';
+            taskBadge.style.textAlign = 'center';
+        } else {
+            console.error('未找到徽章元素queueTaskBadge');
+        }
+
+        if (typeof loadUnfinishedTaskCount === 'function') {
+            loadUnfinishedTaskCount();
+        } else {
+            console.error('loadUnfinishedTaskCount函数不存在');
+        }
+
+        // 定时刷新任务数量（每30秒）
+        console.log('设置定时刷新任务数量（每30秒）');
+        setInterval(loadUnfinishedTaskCount, 30000);
+    });
+
+    // 切换"其他"菜单项的显示/隐藏（桌面端）
+    function toggleOtherMenu() {
+        const content = document.getElementById('otherMenuContent');
+        const icon = document.getElementById('otherMenuIcon');
+        const button = document.getElementById('otherMenuBtn');
+
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.textContent = '▲';
+            button.classList.add('active'); // 点击后显示下划线
+        } else {
+            content.style.display = 'none';
+            icon.textContent = '▼';
+            button.classList.remove('active'); // 隐藏时下划线消失
+        }
+
+        // 移除所有其他菜单项的高亮状态
+        const desktopLinks = document.querySelectorAll('.nav-menu .nav-item a');
+        desktopLinks.forEach(item => {
+            if (item.className !== 'dropdown-item other') {
+                item.classList.remove('active');
+            }
+        });
+
+        button.classList.add('active');
+
+        return false;
+    }
+
+
+    // 切换"其他"菜单项的显示/隐藏（移动端）
+    function toggleMobileOtherMenu() {
+        const content = document.getElementById('mobileOtherMenuContent');
+        const icon = document.getElementById('mobileOtherMenuIcon');
+        const button = document.getElementById('mobileOtherMenuBtn');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.textContent = '▲';
+            button.classList.add('clicked'); // 点击后显示高亮
+        } else {
+            content.style.display = 'none';
+            icon.textContent = '▼';
+            button.classList.remove('clicked'); // 隐藏时取消高亮
+        }
+
+        // 移除所有其他菜单项的高亮状态
+        const mobileLinks = document.querySelectorAll('.mobile-menu a');
+        mobileLinks.forEach(item => {
+            if (item.className !== 'dropdown-item other') {
+                item.classList.remove('active');
+            }
+        });
+        button.classList.add('clicked');
+        return false;
+    }
+
+    // 获取状态文本函数 - 从task_modal.html中复制的完整实现
+    function getStatusText(status) {
+        const statusTexts = {
+            'queued': '排队中',
+            'running': '运行中',
+            'success': '完成',
+            'failed': '失败'
+        };
+        return statusTexts[status] || status;
+    }
+
+    // 加载任务列表函数 - 从task_modal.html中复制的完整实现，包含状态筛选功能
+    function loadTaskList() {
+        const taskList = document.getElementById('taskList');
+        const dateFilter = document.getElementById('taskDateFilter');
+        const statusFilter = document.getElementById('taskStatusFilter');
+
+        if (!taskList || !dateFilter) {
+            console.error('任务列表或筛选器元素未找到');
+            return;
+        }
+
+        taskList.innerHTML = '<div class="loading">加载任务列表中...</div>';
+
+        // 获取选择的日期和状态
+        const selectedDate = dateFilter.value;
+        const selectedStatus = statusFilter ? statusFilter.value : '';
+
+        // 构建请求URL，添加日期和状态参数
+        let url = '/api/task_queue/all_tasks?';
+        const params = [];
+
+        if (selectedDate) {
+            params.push('date=' + selectedDate);
+        }
+
+        if (selectedStatus && selectedStatus !== 'all') {
+            params.push('status=' + selectedStatus);
+        }
+
+        url += params.join('&');
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const tasks = data.data;
+
+                    if (tasks.length === 0) {
+                        taskList.innerHTML = '<div class="no-tasks">暂无任务记录</div>';
+                        return;
                     }
-                    
-                    if (task.end_time) {
-                        endTime = new Date(task.end_time * 1000).toLocaleString('zh-CN');
+
+                    let taskHTML = '';
+                    tasks.forEach(task => {
+                        // 格式化时间
+                        const createTime = new Date(task.timestamp * 1000).toLocaleString('zh-CN');
+                        let startTime = '-';
+                        let endTime = '-';
+                        let duration = '-';
+
                         if (task.start_time) {
-                            duration = Math.round(task.duration) + '秒';
+                            startTime = new Date(task.start_time * 1000).toLocaleString('zh-CN');
                         }
-                    }
-                    
-                    // 获取任务类型的中文名称
-                    const taskTypeNames = {
-                        'text_to_image': '文生图',
-                        'image_to_image': '图生图',
-                        'text_to_video': '文生视频',
-                        'image_to_video': '图生视频'
-                    };
-                    
-                    const taskTypeName = taskTypeNames[task.task_type] || task.task_type;
-                    
-                    // 构建任务项HTML
-                    taskHTML += `
+
+                        if (task.end_time) {
+                            endTime = new Date(task.end_time * 1000).toLocaleString('zh-CN');
+                            if (task.start_time) {
+                                duration = Math.round(task.duration) + '秒';
+                            }
+                        }
+
+                        // 获取任务类型的中文名称
+                        const taskTypeNames = {
+                            'text_to_image': '文生图',
+                            'image_to_image': '图生图',
+                            'text_to_video': '文生视频',
+                            'image_to_video': '图生视频',
+                            'text_to_audio': '文生音频',
+                            'change_clothes': '换装',
+                            'change_face': '换脸',
+                            'change_hair_style': '换发型',
+                        };
+
+                        const taskTypeName = taskTypeNames[task.task_type] || task.task_type;
+
+                        // 构建任务项HTML
+                        taskHTML += `
                         <div class="task-item">
                             <div class="task-item-header">
                                 <span class="task-type">${taskTypeName}</span>
@@ -547,700 +586,230 @@ function loadTaskList() {
                                 <div class="task-info">执行时长: ${duration}</div>
                             </div>
                             <div class="task-actions">
-                                ${task.status === 'success' ? 
-                                    '<button class="view-result-button" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>' : 
-                                    ''
-                                }
+                                ${task.status === 'success' ?
+                            '<button class="view-result-button" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>' :
+                            ''
+                        }
                             </div>
                         </div>
                     `;
-                });
-                
-                taskList.innerHTML = taskHTML;
-            } else {
-                taskList.innerHTML = '<div class="error">加载任务失败: ' + (data.message || '未知错误') + '</div>';
-            }
-        })
-        .catch(error => {
-            console.error('加载任务列表失败:', error);
-            taskList.innerHTML = '<div class="error">加载任务列表失败，请刷新页面重试</div>';
-        });
-}
-
-// 为任务按钮添加点击事件 - 使用完整的功能实现
-function openTaskModalWrapper() {
-    try {
-        // 获取当前页面的任务类型
-        const currentTaskType = getCurrentTaskType();
-        console.log('当前页面任务类型:', currentTaskType);
-        
-        // 首先检查全局的openTaskModal函数是否存在
-        if (typeof window.openTaskModal === 'function') {
-            // 扩展window.openTaskModal函数以接受taskType参数
-            if (window.openTaskModal.length > 0) {
-                window.openTaskModal(currentTaskType);
-            } else {
-                // 如果原始函数不接受参数，先调用它，然后再设置任务类型
-                window.openTaskModal();
-                // 延迟设置任务类型，确保模态框已完全加载
-                setTimeout(() => {
-                    const taskTypeFilter = document.getElementById('taskTypeFilter');
-                    if (taskTypeFilter && currentTaskType && currentTaskType !== 'all') {
-                        taskTypeFilter.value = currentTaskType;
-                        // 触发加载任务列表
-                        const loadTaskListEvent = new Event('change');
-                        taskTypeFilter.dispatchEvent(loadTaskListEvent);
-                    }
-                }, 100);
-            }
-            return;
-        }
-        
-        // 如果全局函数不存在， ourselves实现打开模态框和加载任务列表的逻辑
-        const taskModal = document.getElementById('taskModal');
-        if (!taskModal) {
-            console.error('任务模态框元素未找到');
-            showNotification('无法找到任务列表组件，请刷新页面重试', 'error', 3000);
-            return;
-        }
-        
-        // 显示模态框
-        taskModal.style.display = 'block';
-        
-        // 设置日期选择框默认值为今天
-        const today = new Date().toISOString().split('T')[0];
-        const dateFilter = document.getElementById('taskDateFilter');
-        if (dateFilter) {
-            dateFilter.value = today;
-            dateFilter.max = today;
-            
-            // 添加日期变化事件监听
-            dateFilter.removeEventListener('change', loadTaskList); // 防止重复添加
-            dateFilter.addEventListener('change', loadTaskList);
-        }
-        
-        // 添加状态筛选下拉框处理
-        const statusFilter = document.getElementById('taskStatusFilter');
-        if (statusFilter) {
-            // 添加状态变化事件监听
-            statusFilter.removeEventListener('change', loadTaskList); // 防止重复添加
-            statusFilter.addEventListener('change', loadTaskList);
-        }
-        
-        // 设置任务类型筛选框
-        const taskTypeFilter = document.getElementById('taskTypeFilter');
-        if (taskTypeFilter && currentTaskType && currentTaskType !== 'all') {
-            taskTypeFilter.value = currentTaskType;
-            // 添加类型变化事件监听
-            taskTypeFilter.removeEventListener('change', loadTaskList); // 防止重复添加
-            taskTypeFilter.addEventListener('change', loadTaskList);
-        }
-        
-        // 加载任务列表
-        loadTaskList();
-        
-        // 确保结果查看函数可用
-        if (typeof window.viewTaskResult !== 'function') {
-            window.viewTaskResult = function(taskId) {
-                showNotification('查看结果功能需要刷新页面才能使用', 'info', 3000);
-            };
-        }
-        
-    } catch (error) {
-        console.error('打开任务模态框失败:', error);
-        showNotification('无法打开任务列表，请刷新页面重试', 'error', 3000);
-    }
-}
-
-// 切换"其他"菜单项的显示/隐藏（桌面端）
-function toggleOtherMenu() {
-    const content = document.getElementById('otherMenuContent');
-    const icon = document.getElementById('otherMenuIcon');
-    const button = document.getElementById('otherMenuBtn');
-    
-    // 移除所有其他导航项的active类，确保只有一个按钮显示下划线
-    document.querySelectorAll('.nav-item a').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        icon.textContent = '▲';
-        button.classList.add('clicked'); // 点击后显示下划线
-    } else {
-        content.style.display = 'none';
-        icon.textContent = '▼';
-        button.classList.remove('clicked'); // 隐藏时下划线消失
-    }
-    
-    // 阻止事件冒泡，避免点击下拉菜单时页面跳转
-    event.preventDefault();
-}
-
-
-
-// 切换"其他"菜单项的显示/隐藏（移动端）
-function toggleMobileOtherMenu() {
-    const content = document.getElementById('mobileOtherMenuContent');
-    const icon = document.getElementById('mobileOtherMenuIcon');
-    const button = document.getElementById('mobileOtherMenuBtn');
-    
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        icon.textContent = '▲';
-        button.classList.add('clicked'); // 点击后显示高亮
-    } else {
-        content.style.display = 'none';
-        icon.textContent = '▼';
-        button.classList.remove('clicked'); // 隐藏时取消高亮
-    }
-    
-    // 阻止事件冒泡，避免点击下拉菜单时页面跳转
-    event.preventDefault();
-}
-
-// 点击页面其他区域关闭下拉菜单和还原"其他"按钮文本
-document.addEventListener('click', function(event) {
-    const otherMenuBtn = document.getElementById('otherMenuBtn');
-    const otherMenuContent = document.getElementById('otherMenuContent');
-    const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
-    const mobileOtherMenuContent = document.getElementById('mobileOtherMenuContent');
-    
-    // 检查是否点击了导航菜单中的其他按钮
-    const navItems = document.querySelectorAll('.nav-item a:not(#otherMenuBtn)');
-    const clickedNavItem = Array.from(navItems).some(item => item.contains(event.target));
-    
-    // 检查是否点击了下拉菜单的子项
-    const dropdownItems = document.querySelectorAll('#otherMenuContent .dropdown-item, #mobileOtherMenuContent .dropdown-item');
-    const clickedDropdownItem = Array.from(dropdownItems).some(item => item.contains(event.target));
-    
-    // 当点击了页面其他区域或导航按钮，且不是点击下拉菜单子项时，还原"其他"按钮文本
-    if ((!otherMenuBtn.contains(event.target) && !mobileOtherMenuBtn.contains(event.target) && !clickedDropdownItem) || clickedNavItem) {
-        // 注意：只有在用户明确点击了其他导航按钮时才清除localStorage状态
-        // 点击页面其他区域时不清除，以便页面刷新后能保持状态
-        // 还原桌面端"其他"按钮文本
-        if (otherMenuBtn) {
-            // 只有当按钮文本不是"其他"时才进行还原
-            if (otherMenuBtn.textContent.trim() !== '其他') {
-                otherMenuBtn.innerHTML = '';
-                const textNode = document.createTextNode('其他');
-                const spanIcon = document.createElement('span');
-                spanIcon.id = 'otherMenuIcon';
-                spanIcon.className = 'ml-1';
-                spanIcon.textContent = '▼';
-                otherMenuBtn.appendChild(textNode);
-                otherMenuBtn.appendChild(spanIcon);
-            }
-            otherMenuBtn.classList.remove('clicked');
-        }
-        
-        // 还原移动端"其他"按钮文本
-        if (mobileOtherMenuBtn) {
-            // 只有当按钮文本不是"其他"时才进行还原
-            if (mobileOtherMenuBtn.textContent.trim() !== '其他') {
-                mobileOtherMenuBtn.innerHTML = '';
-                const textNode = document.createTextNode('其他');
-                const spanIcon = document.createElement('span');
-                spanIcon.id = 'mobileOtherMenuIcon';
-                spanIcon.className = 'ml-1';
-                spanIcon.textContent = '▼';
-                mobileOtherMenuBtn.appendChild(textNode);
-                mobileOtherMenuBtn.appendChild(spanIcon);
-            }
-            mobileOtherMenuBtn.classList.remove('clicked');
-        }
-        
-        // 关闭桌面端下拉菜单
-        if (otherMenuContent) {
-            otherMenuContent.style.display = 'none';
-        }
-        
-        // 关闭移动端下拉菜单
-        if (mobileOtherMenuContent) {
-            mobileOtherMenuContent.style.display = 'none';
-        }
-        
-        // 更新图标
-        const otherMenuIcon = document.getElementById('otherMenuIcon');
-        if (otherMenuIcon) {
-            otherMenuIcon.textContent = '▼';
-        }
-        
-        const mobileOtherMenuIcon = document.getElementById('mobileOtherMenuIcon');
-        if (mobileOtherMenuIcon) {
-            mobileOtherMenuIcon.textContent = '▼';
-        }
-        
-        // 只有在用户明确点击了其他导航按钮时才清除localStorage状态
-        // 点击页面其他区域时不清除，以便页面刷新后能保持状态
-        if (clickedNavItem) {
-            try {
-                localStorage.removeItem('selectedOtherMenuItem');
-            } catch (error) {
-                console.error('清除保存的菜单项状态失败:', error);
-            }
-        }
-    }
-});
-
-// 恢复上次选择的"其他"菜单项状态
-function restoreSelectedOtherMenuItem() {
-    try {
-        console.log('开始恢复"其他"菜单项状态');
-        
-        // 读取localStorage中的保存状态
-        const savedItem = localStorage.getItem('selectedOtherMenuItem');
-        console.log('从localStorage读取的状态:', savedItem);
-        
-        if (savedItem) {
-            try {
-                const itemData = JSON.parse(savedItem);
-                
-                // 获取当前页面路径，检查是否是从"其他"下拉菜单跳转过来的页面
-                const currentPath = getCurrentPagePath();
-                console.log('当前页面路径:', currentPath);
-                
-                const isFromOtherMenuItem = 
-                    currentPath.includes('/change_clothes') || 
-                    currentPath.includes('/change_face') || 
-                    currentPath.includes('/change_hair_style');
-                
-                console.log('是否来自"其他"下拉菜单:', isFromOtherMenuItem);
-                
-                // 只有在从"其他"下拉菜单跳转过来的页面，才需要恢复状态
-                if (isFromOtherMenuItem) {
-                    // 恢复桌面端按钮状态
-                    const otherMenuBtn = document.getElementById('otherMenuBtn');
-                    if (otherMenuBtn) {
-                        // 强制更新按钮文本和样式（使用DOM操作）
-                        // 先清除所有子元素
-                        otherMenuBtn.innerHTML = '';
-                        // 重新创建文本节点和图标
-                        const textNode = document.createTextNode(itemData.text);
-                        const spanIcon = document.createElement('span');
-                        spanIcon.id = 'otherMenuIcon';
-                        spanIcon.className = 'ml-1';
-                        spanIcon.textContent = '▼';
-                        
-                        // 重新组装按钮内容
-                        otherMenuBtn.appendChild(textNode);
-                        otherMenuBtn.appendChild(spanIcon);
-                        
-                        // 添加下划线标注
-                        otherMenuBtn.classList.add('clicked');
-                        
-                        // 移除所有其他导航项的active类
-                        document.querySelectorAll('.nav-item a').forEach(navItem => {
-                            navItem.classList.remove('active');
-                        });
-                        
-                        console.log('桌面端"其他"按钮状态已恢复');
-                    }
-                    
-                    // 恢复移动端按钮状态
-                    const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
-                    if (mobileOtherMenuBtn) {
-                        // 强制更新按钮文本和样式（使用DOM操作）
-                        // 先清除所有子元素
-                        mobileOtherMenuBtn.innerHTML = '';
-                        // 重新创建文本节点和图标
-                        const textNode = document.createTextNode(itemData.text);
-                        const spanIcon = document.createElement('span');
-                        spanIcon.id = 'mobileOtherMenuIcon';
-                        spanIcon.className = 'ml-1';
-                        spanIcon.textContent = '▼';
-                        
-                        // 重新组装按钮内容
-                        mobileOtherMenuBtn.appendChild(textNode);
-                        mobileOtherMenuBtn.appendChild(spanIcon);
-                        
-                        // 添加高亮样式
-                        mobileOtherMenuBtn.classList.add('clicked');
-                        
-                        console.log('移动端"其他"按钮状态已恢复');
-                    }
-                }
-            } catch (parseError) {
-                console.error('解析保存的菜单项数据失败:', parseError);
-                // 尝试清除损坏的数据
-                try {
-                    localStorage.removeItem('selectedOtherMenuItem');
-                } catch (clearError) {
-                    console.error('清除损坏的菜单项数据失败:', clearError);
-                }
-            }
-        }
-    } catch (error) {
-        console.error('恢复上次选择的菜单项失败:', error);
-    }
-}
-
-// 为导航菜单中的非其他按钮添加点击事件，确保互斥
-    document.addEventListener('DOMContentLoaded', function() {
-        const navItems = document.querySelectorAll('.nav-item a:not(#otherMenuBtn)');
-        
-        // 首先恢复上次选择的菜单项状态
-        restoreSelectedOtherMenuItem();
-        
-        // 然后设置"其他"下拉菜单项的点击事件
-        setupOtherMenuItems();
-        
-        navItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                // 获取当前点击的是哪个导航项
-                const clickedItem = this;
-                
-                // 检查当前点击的是否是导航菜单中的普通按钮（非"其他"按钮）
-                if (clickedItem.id !== 'otherMenuBtn') {
-                    // 移除所有非"其他"按钮的active类
-                    navItems.forEach(navItem => {
-                        navItem.classList.remove('active');
                     });
-                    
-                    // 移除"其他"按钮的clicked类
-                    const otherMenuBtn = document.getElementById('otherMenuBtn');
-                    if (otherMenuBtn) {
-                        otherMenuBtn.classList.remove('clicked');
-                        
-                        // 还原"其他"按钮文本
-                        otherMenuBtn.innerHTML = '';
-                        const textNode = document.createTextNode('其他');
-                        const spanIcon = document.createElement('span');
-                        spanIcon.id = 'otherMenuIcon';
-                        spanIcon.className = 'ml-1';
-                        spanIcon.textContent = '▼';
-                        otherMenuBtn.appendChild(textNode);
-                        otherMenuBtn.appendChild(spanIcon);
-                        
-                        // 关闭下拉菜单
-                        const otherMenuContent = document.getElementById('otherMenuContent');
-                        if (otherMenuContent) {
-                            otherMenuContent.style.display = 'none';
-                            
-                            const otherMenuIcon = document.getElementById('otherMenuIcon');
-                            if (otherMenuIcon) {
-                                otherMenuIcon.textContent = '▼';
-                            }
-                        }
-                        
-                        // 清除保存的选择状态
-                        try {
-                            localStorage.removeItem('selectedOtherMenuItem');
-                        } catch (error) {
-                            console.error('清除保存的菜单项状态失败:', error);
-                        }
-                    }
-                    
-                    // 为当前点击的按钮添加下划线
-                    this.classList.add('active');
-                    
-                    // 处理移动端"其他"按钮，确保点击其他导航按钮时也能还原为"其他"文本
-                    const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
-                    if (mobileOtherMenuBtn) {
-                        mobileOtherMenuBtn.classList.remove('clicked');
-                        
-                        // 还原移动端"其他"按钮文本
-                        mobileOtherMenuBtn.innerHTML = '';
-                        const textNode = document.createTextNode('其他');
-                        const spanIcon = document.createElement('span');
-                        spanIcon.id = 'mobileOtherMenuIcon';
-                        spanIcon.className = 'ml-1';
-                        spanIcon.textContent = '▼';
-                        mobileOtherMenuBtn.appendChild(textNode);
-                        mobileOtherMenuBtn.appendChild(spanIcon);
-                        
-                        // 关闭移动端下拉菜单
-                        const mobileOtherMenuContent = document.getElementById('mobileOtherMenuContent');
-                        if (mobileOtherMenuContent) {
-                            mobileOtherMenuContent.style.display = 'none';
-                            
-                            const mobileOtherMenuIcon = document.getElementById('mobileOtherMenuIcon');
-                            if (mobileOtherMenuIcon) {
-                                mobileOtherMenuIcon.textContent = '▼';
-                            }
-                        }
-                    }
+
+                    taskList.innerHTML = taskHTML;
+                } else {
+                    taskList.innerHTML = '<div class="error">加载任务失败: ' + (data.message || '未知错误') + '</div>';
                 }
+            })
+            .catch(error => {
+                console.error('加载任务列表失败:', error);
+                taskList.innerHTML = '<div class="error">加载任务列表失败，请刷新页面重试</div>';
             });
-        });
-    });
-
-// 获取当前页面的任务类型
-function getCurrentTaskType() {
-    const path = getCurrentPagePath();
-    
-    // 根据不同页面路径返回对应的任务类型
-    if (path.includes('/text_to_image')) {
-        return 'text_to_image';
-    } else if (path.includes('/image_to_image')) {
-        return 'image_to_image';
-    } else if (path.includes('/text_to_video')) {
-        return 'text_to_video';
-    } else if (path.includes('/image_to_video')) {
-        return 'image_to_video';
-    } else if (path.includes('/change_clothes')) {
-        return 'change_clothes';
-    } else if (path.includes('/change_face')) {
-        return 'change_face';
-    } else if (path.includes('/change_hair_style')) {
-        return 'change_hair_style';
-    } else if (path.includes('/config')) {
-        return 'all'; // 配置页面显示所有类型任务
-    } else {
-        return 'all'; // 首页显示所有类型任务
     }
-}
 
-// 增强setupOtherMenuItems函数，确保按钮文本正确更新和下划线互斥
-function setupOtherMenuItems() {
-    // 处理桌面端下拉菜单
-    const dropdownItems = document.querySelectorAll('#otherMenuContent .dropdown-item');
-    const otherMenuBtn = document.getElementById('otherMenuBtn');
-    const otherMenuContent = document.getElementById('otherMenuContent');
-    
-    dropdownItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // 获取当前选择的文本
-            const selectedText = this.textContent.trim();
-            const href = this.getAttribute('href') || '#';
-            
-            // 保存当前选择的菜单项信息，用于页面刷新后恢复
-            try {
-                localStorage.setItem('selectedOtherMenuItem', JSON.stringify({
-                    text: selectedText,
-                    href: href
-                }));
-            } catch (error) {
-                console.error('保存菜单项状态失败:', error);
-            }
-            
-            // 先移除所有其他导航项的下划线样式（active类和clicked类）
-            // 包括桌面端导航项
-            document.querySelectorAll('.nav-item a').forEach(navItem => {
-                navItem.classList.remove('active');
-                navItem.classList.remove('clicked');
-            });
-            
-            // 包括移动端导航项
-            document.querySelectorAll('.mobile-menu a').forEach(mobileNavItem => {
-                mobileNavItem.classList.remove('active');
-            });
-            
-            // 强制更新按钮文本和样式
-            if (otherMenuBtn) {
-                // 使用setTimeout确保DOM操作的顺序性
-                setTimeout(() => {
-                    // 先清除所有子元素
-                    otherMenuBtn.innerHTML = '';
-                    // 重新创建文本节点和图标
-                    const textNode = document.createTextNode(selectedText);
-                    const spanIcon = document.createElement('span');
-                    spanIcon.id = 'otherMenuIcon';
-                    spanIcon.className = 'ml-1';
-                    spanIcon.textContent = '▼';
-                    
-                    // 重新组装按钮内容
-                    otherMenuBtn.appendChild(textNode);
-                    otherMenuBtn.appendChild(spanIcon);
-                    
-                    // 添加下划线标注
-                    otherMenuBtn.classList.add('clicked');
-                }, 0);
-            }
-            
-            // 关闭下拉菜单
-            if (otherMenuContent) {
-                otherMenuContent.style.display = 'none';
-            }
-            
-            // 确保按钮文本更新完成后再执行页面跳转
-            // 使用setTimeout确保DOM更新和localStorage保存操作完成
-            setTimeout(function() {
-                // 跳转到对应的页面
-                if (selectedText === '换装') {
-                    window.location.href = '/change_clothes';
-                } else if (selectedText === '换脸') {
-                    window.location.href = '/change_face';
-                } else if (selectedText === '换发型') {
-                    window.location.href = '/change_hair_style';
+    // 为任务按钮添加点击事件 - 使用完整的功能实现
+    function openTaskModalWrapper() {
+        try {
+            // 获取当前页面的任务类型
+            const currentTaskType = getCurrentTaskType();
+            console.log('当前页面任务类型:', currentTaskType);
+
+            // 首先检查全局的openTaskModal函数是否存在
+            if (typeof window.openTaskModal === 'function') {
+                // 扩展window.openTaskModal函数以接受taskType参数
+                if (window.openTaskModal.length > 0) {
+                    window.openTaskModal(currentTaskType);
+                } else {
+                    // 如果原始函数不接受参数，先调用它，然后再设置任务类型
+                    window.openTaskModal();
+                    // 延迟设置任务类型，确保模态框已完全加载
+                    setTimeout(() => {
+                        const taskTypeFilter = document.getElementById('taskTypeFilter');
+                        if (taskTypeFilter && currentTaskType && currentTaskType !== 'all') {
+                            taskTypeFilter.value = currentTaskType;
+                            // 触发加载任务列表
+                            const loadTaskListEvent = new Event('change');
+                            taskTypeFilter.dispatchEvent(loadTaskListEvent);
+                        }
+                    }, 100);
                 }
-            }, 50);
-        });
-    });
-    
-    // 处理移动端下拉菜单
-    const mobileDropdownItems = document.querySelectorAll('#mobileOtherMenuContent .dropdown-item');
-    const mobileOtherMenuBtn = document.getElementById('mobileOtherMenuBtn');
-    const mobileOtherMenuContent = document.getElementById('mobileOtherMenuContent');
-    const mobileOtherMenuIcon = document.getElementById('mobileOtherMenuIcon');
-    
-    mobileDropdownItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // 获取当前选择的文本
-            const selectedText = this.textContent;
-            const href = this.getAttribute('href') || '#';
-            
-            // 保存当前选择的菜单项信息，用于页面刷新后恢复
-            try {
-                localStorage.setItem('selectedOtherMenuItem', JSON.stringify({
-                    text: selectedText,
-                    href: href
-                }));
-            } catch (error) {
-                console.error('保存菜单项状态失败:', error);
+                return;
             }
-            
-            // 强制更新移动端按钮文本和样式
-            if (mobileOtherMenuBtn) {
-                // 先清除所有子元素
-                mobileOtherMenuBtn.innerHTML = '';
-                // 重新创建文本节点和图标
-                const textNode = document.createTextNode(selectedText);
-                const spanIcon = document.createElement('span');
-                spanIcon.id = 'mobileOtherMenuIcon';
-                spanIcon.className = 'ml-1';
-                spanIcon.textContent = '▼';
-                
-                // 重新组装按钮内容
-                mobileOtherMenuBtn.appendChild(textNode);
-                mobileOtherMenuBtn.appendChild(spanIcon);
-                
-                // 添加高亮样式
-                mobileOtherMenuBtn.classList.add('clicked');
-            }
-            
-            // 关闭下拉菜单
-            if (mobileOtherMenuContent) {
-                mobileOtherMenuContent.style.display = 'none';
-            }
-            if (mobileOtherMenuIcon) {
-                mobileOtherMenuIcon.textContent = '▼';
-            }
-            
-            // 移除所有其他导航项的下划线样式（active类和clicked类）
-            // 包括桌面端导航项
-            document.querySelectorAll('.nav-item a').forEach(navItem => {
-                navItem.classList.remove('active');
-                navItem.classList.remove('clicked');
-            });
-            
-            // 包括移动端导航项
-            document.querySelectorAll('.mobile-menu a').forEach(mobileNavItem => {
-                mobileNavItem.classList.remove('active');
-            });
-            
-            // 确保按钮文本更新完成后再执行页面跳转
-            // 使用setTimeout确保DOM更新和localStorage保存操作完成
-            setTimeout(function() {
-                // 跳转到对应的页面
-                if (selectedText === '换装') {
-                    window.location.href = '/change_clothes';
-                } else if (selectedText === '换脸') {
-                    window.location.href = '/change_face';
-                } else if (selectedText === '换发型') {
-                    window.location.href = '/change_hair_style';
-                }
-            }, 50);
-        });
-    });
-}
 
-// 为任务按钮添加点击事件
-document.addEventListener('DOMContentLoaded', function() {
-    const tasksButton = document.getElementById('tasksButton');
-    if (tasksButton) {
-        tasksButton.addEventListener('click', openTaskModalWrapper);
-    }
-});
+            // 如果全局函数不存在， ourselves实现打开模态框和加载任务列表的逻辑
+            const taskModal = document.getElementById('taskModal');
+            if (!taskModal) {
+                console.error('任务模态框元素未找到');
+                showNotification('无法找到任务列表组件，请刷新页面重试', 'error', 3000);
+                return;
+            }
 
-// 加载并显示未完成任务数
-function loadUnfinishedTaskCount() {
-    const taskBadge = document.getElementById('queueTaskBadge');
-    if (!taskBadge) {
-        console.error('任务徽章元素未找到');
-        return;
+            // 显示模态框
+            taskModal.style.display = 'block';
+
+            // 设置日期选择框默认值为今天
+            const today = new Date().toISOString().split('T')[0];
+            const dateFilter = document.getElementById('taskDateFilter');
+            if (dateFilter) {
+                dateFilter.value = today;
+                dateFilter.max = today;
+
+                // 添加日期变化事件监听
+                dateFilter.removeEventListener('change', loadTaskList); // 防止重复添加
+                dateFilter.addEventListener('change', loadTaskList);
+            }
+
+            // 添加状态筛选下拉框处理
+            const statusFilter = document.getElementById('taskStatusFilter');
+            if (statusFilter) {
+                // 添加状态变化事件监听
+                statusFilter.removeEventListener('change', loadTaskList); // 防止重复添加
+                statusFilter.addEventListener('change', loadTaskList);
+            }
+
+            // 设置任务类型筛选框
+            const taskTypeFilter = document.getElementById('taskTypeFilter');
+            if (taskTypeFilter && currentTaskType && currentTaskType !== 'all') {
+                taskTypeFilter.value = currentTaskType;
+                // 添加类型变化事件监听
+                taskTypeFilter.removeEventListener('change', loadTaskList); // 防止重复添加
+                taskTypeFilter.addEventListener('change', loadTaskList);
+            }
+
+            // 加载任务列表
+            loadTaskList();
+
+            // 确保结果查看函数可用
+            if (typeof window.viewTaskResult !== 'function') {
+                window.viewTaskResult = function (taskId) {
+                    showNotification('查看结果功能需要刷新页面才能使用', 'info', 3000);
+                };
+            }
+
+        } catch (error) {
+            console.error('打开任务模态框失败:', error);
+            showNotification('无法打开任务列表，请刷新页面重试', 'error', 3000);
+        }
     }
-    
-    console.log('开始加载未完成任务数');
-    
+
+
     // 获取当前页面的任务类型
-    const taskType = getCurrentTaskType();
-    console.log('当前页面任务类型:', taskType);
-    
-    // 构建请求URL，根据任务类型添加过滤参数
-    let url = '/api/task_queue/status';
-    if (taskType && taskType !== 'all') {
-        url += '?task_type=' + taskType;
+    function getCurrentTaskType() {
+        const path = getCurrentPagePath();
+
+        // 根据不同页面路径返回对应的任务类型
+        if (path.includes('/text_to_image')) {
+            return 'text_to_image';
+        } else if (path.includes('/image_to_image')) {
+            return 'image_to_image';
+        } else if (path.includes('/text_to_video')) {
+            return 'text_to_video';
+        } else if (path.includes('/image_to_video')) {
+            return 'image_to_video';
+        } else if (path.includes('/change_clothes')) {
+            return 'change_clothes';
+        } else if (path.includes('/change_face')) {
+            return 'change_face';
+        } else if (path.includes('/change_hair_style')) {
+            return 'change_hair_style';
+        } else if (path.includes('/config')) {
+            return 'all'; // 配置页面显示所有类型任务
+        } else {
+            return 'all'; // 首页显示所有类型任务
+        }
     }
-    
-    console.log('请求URL:', url);
-    
-    // 添加缓存控制，确保每次获取最新数据
-    const headers = new Headers({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+
+    // 为任务按钮添加点击事件
+    document.addEventListener('DOMContentLoaded', function () {
+        const tasksButton = document.getElementById('tasksButton');
+        if (tasksButton) {
+            tasksButton.addEventListener('click', openTaskModalWrapper);
+        }
     });
-    
-    fetch(url, { headers: headers })
-        .then(response => {
-            console.log('响应状态:', response.status);
-            if (!response.ok) {
-                throw new Error('服务器响应错误: ' + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success && data.data && typeof data.data.unfinished_tasks_count === 'number') {
-                const count = data.data.unfinished_tasks_count;
-                
-                // 更新全局状态
-                badgeCount = count;
-                badgeVisible = true;
-                
-                // 使用setTimeout确保DOM操作在正确的时机执行
-                setTimeout(() => {
-                    taskBadge.textContent = count;
-                    taskBadge.style.display = 'inline !important';
-                    // 强制设置更强的CSS样式确保徽章可见
-                    taskBadge.style.position = 'relative';
-                    taskBadge.style.zIndex = '9999';
-                    taskBadge.style.background = '#dc3545';
-                    taskBadge.style.color = 'white';
-                    taskBadge.style.fontSize = '0.75rem';
-                    taskBadge.style.padding = '2px 6px';
-                    taskBadge.style.borderRadius = '10px';
-                    taskBadge.style.marginLeft = '4px';
-                    taskBadge.style.fontWeight = '600';
-                    taskBadge.style.minWidth = '20px';
-                    taskBadge.style.textAlign = 'center';
-                    taskBadge.style.boxSizing = 'border-box';
-                    taskBadge.style.verticalAlign = 'middle';
-                    taskBadge.style.whiteSpace = 'nowrap';
-                    taskBadge.style.overflow = 'visible';
-                    taskBadge.style.float = 'none';
-                    taskBadge.style.clear = 'none';
-                    // 使用!important增强样式优先级
-                    taskBadge.style.display = 'inline !important';
-                    taskBadge.style.visibility = 'visible !important';
-                    taskBadge.style.opacity = '1 !important';
-                }, 10);
-            } else {
-                console.error('获取未完成任务数失败:', data.message || '数据格式不正确');
-                // 发生错误时不要隐藏徽章，保留上次显示的状态
-            }
-        })
-        .catch(error => {
-            console.error('获取未完成任务数网络错误:', error);
-            // 网络错误时不要隐藏徽章，保留上次显示的状态
-        })
-        .finally(() => {
-            console.log('任务数量加载完成');
+
+    // 加载并显示未完成任务数
+    function loadUnfinishedTaskCount() {
+        const taskBadge = document.getElementById('queueTaskBadge');
+        if (!taskBadge) {
+            console.error('任务徽章元素未找到');
+            return;
+        }
+
+        console.log('开始加载未完成任务数');
+
+        // 获取当前页面的任务类型
+        const taskType = getCurrentTaskType();
+        console.log('当前页面任务类型:', taskType);
+
+        // 构建请求URL，根据任务类型添加过滤参数
+        let url = '/api/task_queue/status';
+        if (taskType && taskType !== 'all') {
+            url += '?task_type=' + taskType;
+        }
+
+        console.log('请求URL:', url);
+
+        // 添加缓存控制，确保每次获取最新数据
+        const headers = new Headers({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
         });
-}
+
+        fetch(url, {headers: headers})
+            .then(response => {
+                console.log('响应状态:', response.status);
+                if (!response.ok) {
+                    throw new Error('服务器响应错误: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.data && typeof data.data.unfinished_tasks_count === 'number') {
+                    const count = data.data.unfinished_tasks_count;
+
+                    // 更新全局状态
+                    badgeCount = count;
+                    badgeVisible = true;
+
+                    // 使用setTimeout确保DOM操作在正确的时机执行
+                    setTimeout(() => {
+                        taskBadge.textContent = count;
+                        taskBadge.style.display = 'inline !important';
+                        // 强制设置更强的CSS样式确保徽章可见
+                        taskBadge.style.position = 'relative';
+                        taskBadge.style.zIndex = '9999';
+                        taskBadge.style.background = '#dc3545';
+                        taskBadge.style.color = 'white';
+                        taskBadge.style.fontSize = '0.75rem';
+                        taskBadge.style.padding = '2px 6px';
+                        taskBadge.style.borderRadius = '10px';
+                        taskBadge.style.marginLeft = '4px';
+                        taskBadge.style.fontWeight = '600';
+                        taskBadge.style.minWidth = '20px';
+                        taskBadge.style.textAlign = 'center';
+                        taskBadge.style.boxSizing = 'border-box';
+                        taskBadge.style.verticalAlign = 'middle';
+                        taskBadge.style.whiteSpace = 'nowrap';
+                        taskBadge.style.overflow = 'visible';
+                        taskBadge.style.float = 'none';
+                        taskBadge.style.clear = 'none';
+                        // 使用!important增强样式优先级
+                        taskBadge.style.display = 'inline !important';
+                        taskBadge.style.visibility = 'visible !important';
+                        taskBadge.style.opacity = '1 !important';
+                    }, 10);
+                } else {
+                    console.error('获取未完成任务数失败:', data.message || '数据格式不正确');
+                    // 发生错误时不要隐藏徽章，保留上次显示的状态
+                }
+            })
+            .catch(error => {
+                console.error('获取未完成任务数网络错误:', error);
+                // 网络错误时不要隐藏徽章，保留上次显示的状态
+            })
+            .finally(() => {
+                console.log('任务数量加载完成');
+            });
+    }
 
 </script>
