@@ -115,7 +115,24 @@ class WorkflowManager:
                 return {"success": False, "message": "无法连接到ComfyUI服务器，请确保服务器已启动"}
 
             # 获取工作流文件路径
-            workflow_path = get_workflow_path(task_type)
+            # 先检查workflow_presets.json的workflow节点是否有值
+            workflow_filename = self.workflow_presets.get('workflow')
+            workflow_path = None
+            
+            # 如果workflow节点有值，尝试使用该工作流文件
+            if workflow_filename:
+                preset_workflow_path = os.path.join(get_workflows_dir(), 'preset', workflow_filename)
+                if os.path.exists(preset_workflow_path):
+                    workflow_path = preset_workflow_path
+                    debug(f"使用预设工作流文件: {workflow_path}")
+                else:
+                    warning(f"预设工作流文件不存在: {preset_workflow_path}")
+            
+            # 如果workflow节点没有值或文件不存在，使用默认工作流文件
+            if not workflow_path:
+                workflow_path = get_workflow_path(task_type)
+                debug(f"使用默认工作流文件: {workflow_path}")
+                
             if not workflow_path:
                 error(f"未找到{task_type}工作流文件")
                 return {"success": False, "message": f"未找到{task_type}工作流文件"}

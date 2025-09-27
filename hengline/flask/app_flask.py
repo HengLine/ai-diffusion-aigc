@@ -42,6 +42,7 @@ from route.socketio_route import socketio_bp, init_socketio
 from route.change_clothes_route import change_clothes_bp
 from route.change_face_route import change_face_bp
 from route.change_hair_style_route import change_hair_style_bp
+from route.workflow_preset_route import workflow_preset_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='templates')
@@ -94,6 +95,7 @@ app.register_blueprint(socketio_bp)
 app.register_blueprint(change_clothes_bp)
 app.register_blueprint(change_face_bp)
 app.register_blueprint(change_hair_style_bp)
+app.register_blueprint(workflow_preset_bp)
 
 
 # 路由定义
