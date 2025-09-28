@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional, Callable
 import requests
 
 from hengline.logger import debug, error, warning, info
-from hengline.utils.config_utils import get_task_config
+from hengline.utils.config_utils import get_task_config, get_comfyui_api_url
 from hengline.utils.file_utils import is_valid_image_file
 from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.workflow_node import fill_image_in_workflow
@@ -467,4 +467,4 @@ class ComfyUIApi:
 
 
 # 全局ComfyUIApi实例，方便其他模块直接使用
-comfyui_api = ComfyUIApi()
+comfyui_api = ComfyUIApi(get_comfyui_api_url())

@@ -143,9 +143,14 @@ class WorkflowManager:
                 error("工作流加载失败")
                 return {"success": False, "message": "工作流加载失败"}
 
+            # 包装工作流以符合ComfyUI API的要求格式
+            # 我们的包装方法已经能够智能处理各种格式的工作流
+            wrapped_workflow = wrap_workflow_for_comfyui(workflow)
+            debug("工作流已包装完成")
+
             # 上传图片到ComfyUI服务器并更新工作流
             image_path = params.get('image_path', '')
-            updated_workflow = workflow
+            updated_workflow = wrapped_workflow
             if image_path and os.path.exists(image_path):
                 # 使用comfyui_api上传图片并将文件名填充到工作流中
                 updated_workflow = comfyui_api.upload_and_fill_image(image_path, updated_workflow)
@@ -168,16 +173,6 @@ class WorkflowManager:
             if updated_workflow is None:
                 error("更新工作流参数失败")
                 return {"success": False, "message": "更新工作流参数失败"}
-            
-            # 包装工作流以符合ComfyUI API的要求格式
-            if "prompt" in updated_workflow:
-                # 如果工作流已经包含prompt键，则使用prompt内容作为节点数据
-                wrapped_workflow = wrap_workflow_for_comfyui(updated_workflow["prompt"])
-            else:
-                # 否则直接使用整个工作流作为节点数据
-                wrapped_workflow = wrap_workflow_for_comfyui(updated_workflow)
-            
-            debug("工作流已包装完成，准备提交到ComfyUI")
 
             # 生成唯一的输出文件名
             output_filename = generate_output_filename(task_type)
@@ -192,7 +187,7 @@ class WorkflowManager:
                 task_queue_manager.update_task_status(on_task_id, TaskStatus.FAILED, task_msg=error_message)
 
             prompt_id = self.runner.async_run_workflow(
-                wrapped_workflow,
+                updated_workflow,
                 output_filename,
                 on_complete=on_completion,
                 on_error=on_error,
