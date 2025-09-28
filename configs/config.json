@@ -56,6 +56,13 @@
       "console_level": "DEBUG",
       "file_level": "INFO",
       "disable_unnecessary_logs": true
+    },
+    "rocketmq": {
+      "name_server_address": "127.0.0.1:9876",
+      "producer_group": "default_producer_group",
+      "consumer_group": "default_consumer_group",
+      "instance_name": "default_instance",
+      "retry_times": 3
     }
   }
 }

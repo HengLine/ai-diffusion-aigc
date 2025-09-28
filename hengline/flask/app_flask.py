@@ -172,11 +172,22 @@ def handle_shutdown(signum, frame):
     # 停止任务监控器
     # 注意：这里不使用线程，直接调用stop方法，因为在eventlet环境中创建线程可能会导致问题
     task_monitor.stop()
+    info("服务正在关闭，请稍等片刻......")
 
     # 等待一段时间让异步关闭有时间完成
-    time.sleep(3)
+    time.sleep(1)
 
-    info("服务正在关闭，请稍等片刻......")
+    # 关闭RocketMQ连接池
+    try:
+        from hengline.mq import shutdown_all_pools
+        info("正在关闭RocketMQ连接池...")
+        shutdown_all_pools()
+        info("RocketMQ连接池已关闭")
+    except Exception as e:
+        info(f"关闭RocketMQ连接池时出错: {str(e)}")
+
+    # 再等待一段时间确保资源完全释放
+    time.sleep(2)
 
     # 在信号处理上下文中，我们不应该尝试通过request.environ获取shutdown函数
     # 因为此时没有活跃的HTTP请求上下文，直接退出程序
