@@ -46,6 +46,7 @@ from hengline.agent.medical.route.medical_agent_route import medical_agent_bp
 from hengline.agent.stocks.route.stocks_agent_route import stocks_agent_bp
 from hengline.agent.study.route.study_agent_route import study_agent_bp
 from hengline.agent.movie.route.movie_agent_route import movie_agent_bp
+from route.workflow_preset_route import workflow_preset_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='templates')
@@ -102,6 +103,7 @@ app.register_blueprint(medical_agent_bp)
 app.register_blueprint(stocks_agent_bp)
 app.register_blueprint(study_agent_bp)
 app.register_blueprint(movie_agent_bp)
+app.register_blueprint(workflow_preset_bp)
 
 
 # 路由定义

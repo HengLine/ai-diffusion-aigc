@@ -178,6 +178,7 @@
     <!-- 引入公共组件 -->
     {% include 'components/header.html' %}
     {% include 'components/common_scripts.html' %}
+    {% include 'components/workflow_modal.html' %}
 
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -256,7 +257,10 @@
             <div id="textToImage" class="tab-content" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3 style="margin-top: 0; margin-bottom: 0;">文生图参数</h3>
-                    <button type="button" id="resetTextToImage" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="customWorkflowTextToImage" class="form-button" style="background-color: #28a745; margin: 0;" onclick="openWorkflowModal('text_to_image')">自定义工作流</button>
+                        <button type="button" id="resetTextToImage" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    </div>
                 </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
@@ -334,7 +338,10 @@
             <div id="textToAudio" class="tab-content" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3 style="margin-top: 0; margin-bottom: 0;">文生音频参数</h3>
-                    <button type="button" id="resetTextToAudio" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="customWorkflowTextToAudio" class="form-button" style="background-color: #28a745; margin: 0;" onclick="openWorkflowModal('text_to_audio')">自定义工作流</button>
+                        <button type="button" id="resetTextToAudio" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    </div>
                 </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
@@ -399,7 +406,10 @@
             <div id="imageToImage" class="tab-content" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3 style="margin-top: 0; margin-bottom: 0;">图生图参数</h3>
-                    <button type="button" id="resetImageToImage" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="customWorkflowImageToImage" class="form-button" style="background-color: #28a745; margin: 0;" onclick="openWorkflowModal('image_to_image')">自定义工作流</button>
+                        <button type="button" id="resetImageToImage" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    </div>
                 </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
@@ -477,7 +487,10 @@
             <div id="textToVideo" class="tab-content" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3 style="margin-top: 0; margin-bottom: 0;">文生视频参数</h3>
-                    <button type="button" id="resetTextToVideo" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="customWorkflowTextToVideo" class="form-button" style="background-color: #28a745; margin: 0;" onclick="openWorkflowModal('text_to_video')">自定义工作流</button>
+                        <button type="button" id="resetTextToVideo" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    </div>
                 </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
@@ -572,7 +585,10 @@
             <div id="imageToVideo" class="tab-content" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3 style="margin-top: 0; margin-bottom: 0;">图生视频参数</h3>
-                    <button type="button" id="resetImageToVideo" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="customWorkflowImageToVideo" class="form-button" style="background-color: #28a745; margin: 0;" onclick="openWorkflowModal('image_to_video')">自定义工作流</button>
+                        <button type="button" id="resetImageToVideo" class="form-button" style="background-color: #f39c12; margin: 0;">恢复初始值</button>
+                    </div>
                 </div>
                 
                 <div class="grid-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">

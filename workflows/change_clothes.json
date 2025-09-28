@@ -1,302 +1,132 @@
 {
-  "last_node_id": 18,
-  "last_link_id": 25,
-  "nodes": [
-    {
-      "id": 1,
-      "type": "LoadImage",
-      "pos": [100, 100],
-      "size": [315, 314],
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        { "name": "IMAGE", "type": "IMAGE", "links": [1], "slot_index": 0 },
-        { "name": "MASK", "type": "MASK", "links": null }
-      ],
-      "properties": { "Node name for S&R": "LoadImage" },
-      "widgets_values": ["person.png"]
+  "1": {
+    "inputs": {
+      "image": "your_person.jpg",
+      "upload": "image"
     },
-    {
-      "id": 2,
-      "type": "LoadImage",
-      "pos": [100, 500],
-      "size": [315, 314],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        { "name": "IMAGE", "type": "IMAGE", "links": [2], "slot_index": 0 },
-        { "name": "MASK", "type": "MASK", "links": null }
-      ],
-      "properties": { "Node name for S&R": "LoadImage" },
-      "widgets_values": ["outfit.jpg"]
-    },
-    {
-      "id": 3,
-      "type": "OpenposePreprocessor",
-      "pos": [500, 100],
-      "size": [315, 258],
-      "flags": {},
-      "order": 2,
-      "mode": 0,
-      "inputs": [
-        { "name": "image", "type": "IMAGE", "link": 1 }
-      ],
-      "outputs": [
-        { "name": "IMAGE", "type": "IMAGE", "links": [3], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "OpenposePreprocessor" },
-      "widgets_values": [true, true, true]
-    },
-    {
-      "id": 4,
-      "type": "ControlNetLoader",
-      "pos": [500, 400],
-      "size": [315, 58],
-      "flags": {},
-      "order": 3,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        { "name": "CONTROL_NET", "type": "CONTROL_NET", "links": [4], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "ControlNetLoader" },
-      "widgets_values": ["controlnet-openpose-sdxl-1.0.safetensors"]
-    },
-    {
-      "id": 5,
-      "type": "IPAdapterModelLoader",
-      "pos": [500, 600],
-      "size": [315, 58],
-      "flags": {},
-      "order": 4,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        { "name": "IPADAPTER", "type": "IPADAPTER", "links": [5], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "IPAdapterModelLoader" },
-      "widgets_values": ["ip-adapter_sdxl_vit-h.bin"]
-    },
-    {
-      "id": 6,
-      "type": "CLIPVisionLoader",
-      "pos": [500, 700],
-      "size": [315, 58],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        { "name": "CLIP_VISION", "type": "CLIP_VISION", "links": [6], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "CLIPVisionLoader" },
-      "widgets_values": ["CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"]
-    },
-    {
-      "id": 7,
-      "type": "LoadCheckpoint",
-      "pos": [900, 100],
-      "size": [315, 122],
-      "flags": {},
-      "order": 6,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        { "name": "MODEL", "type": "MODEL", "links": [7], "slot_index": 0 },
-        { "name": "CLIP", "type": "CLIP", "links": [8], "slot_index": 1 },
-        { "name": "VAE", "type": "VAE", "links": [9], "slot_index": 2 }
-      ],
-      "properties": { "Node name for S&R": "LoadCheckpoint" },
-      "widgets_values": ["sd_xl_base_1.0.safetensors"]
-    },
-    {
-      "id": 8,
-      "type": "ControlNetApplyAdvanced",
-      "pos": [900, 300],
-      "size": [315, 166],
-      "flags": {},
-      "order": 8,
-      "mode": 0,
-      "inputs": [
-        { "name": "control_net", "type": "CONTROL_NET", "link": 4 },
-        { "name": "image", "type": "IMAGE", "link": 3 },
-        { "name": "model", "type": "MODEL", "link": 7 }
-      ],
-      "outputs": [
-        { "name": "MODEL", "type": "MODEL", "links": [10], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "ControlNetApplyAdvanced" },
-      "widgets_values": [0.8, 0.0, 1.0]
-    },
-    {
-      "id": 9,
-      "type": "IPAdapterClipVisionEncoder",
-      "pos": [900, 500],
-      "size": [315, 82],
-      "flags": {},
-      "order": 9,
-      "mode": 0,
-      "inputs": [
-        { "name": "image", "type": "IMAGE", "link": 2 },
-        { "name": "clip_vision", "type": "CLIP_VISION", "link": 6 }
-      ],
-      "outputs": [
-        { "name": "EMBEDS", "type": "EMBEDS", "links": [11], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "IPAdapterClipVisionEncoder" }
-    },
-    {
-      "id": 10,
-      "type": "IPAdapterApplyEncoded",
-      "pos": [1300, 400],
-      "size": [315, 182],
-      "flags": {},
-      "order": 10,
-      "mode": 0,
-      "inputs": [
-        { "name": "ipadapter", "type": "IPADAPTER", "link": 5 },
-        { "name": "embeds", "type": "EMBEDS", "link": 11 },
-        { "name": "model", "type": "MODEL", "link": 10 }
-      ],
-      "outputs": [
-        { "name": "MODEL", "type": "MODEL", "links": [12], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "IPAdapterApplyEncoded" },
-      "widgets_values": [0.8, 0.8, "linear", 0, 1, false]
-    },
-    {
-      "id": 11,
-      "type": "CLIPTextEncode",
-      "pos": [1300, 100],
-      "size": [400, 100],
-      "flags": {},
-      "order": 7,
-      "mode": 0,
-      "inputs": [
-        { "name": "clip", "type": "CLIP", "link": 8 }
-      ],
-      "outputs": [
-        { "name": "CONDITIONING", "type": "CONDITIONING", "links": [13], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "CLIPTextEncode" },
-      "widgets_values": ["masterpiece, best quality, a person wearing a stylish outfit, detailed clothing, sharp focus"]
-    },
-    {
-      "id": 12,
-      "type": "CLIPTextEncode",
-      "pos": [1300, 200],
-      "size": [400, 100],
-      "flags": {},
-      "order": 11,
-      "mode": 0,
-      "inputs": [
-        { "name": "clip", "type": "CLIP", "link": 8 }
-      ],
-      "outputs": [
-        { "name": "CONDITIONING", "type": "CONDITIONING", "links": [14], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "CLIPTextEncode" },
-      "widgets_values": ["low quality, bad anatomy, blurry, distorted clothing"]
-    },
-    {
-      "id": 13,
-      "type": "EmptyLatentImage",
-      "pos": [1300, 300],
-      "size": [315, 106],
-      "flags": {},
-      "order": 12,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        { "name": "LATENT", "type": "LATENT", "links": [15], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "EmptyLatentImage" },
-      "widgets_values": [1024, 1024, 1]
-    },
-    {
-      "id": 14,
-      "type": "KSampler",
-      "pos": [1700, 300],
-      "size": [315, 278],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        { "name": "model", "type": "MODEL", "link": 12 },
-        { "name": "positive", "type": "CONDITIONING", "link": 13 },
-        { "name": "negative", "type": "CONDITIONING", "link": 14 },
-        { "name": "latent_image", "type": "LATENT", "link": 15 }
-      ],
-      "outputs": [
-        { "name": "LATENT", "type": "LATENT", "links": [16], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "KSampler" },
-      "widgets_values": ["randomize", 12345, 20, 8, "euler", "normal", 1]
-    },
-    {
-      "id": 15,
-      "type": "VAEDecode",
-      "pos": [2100, 300],
-      "size": [210, 46],
-      "flags": {},
-      "order": 14,
-      "mode": 0,
-      "inputs": [
-        { "name": "samples", "type": "LATENT", "link": 16 },
-        { "name": "vae", "type": "VAE", "link": 9 }
-      ],
-      "outputs": [
-        { "name": "IMAGE", "type": "IMAGE", "links": [17], "slot_index": 0 }
-      ],
-      "properties": { "Node name for S&R": "VAEDecode" }
-    },
-    {
-      "id": 16,
-      "type": "SaveImage",
-      "pos": [2400, 300],
-      "size": [315, 314],
-      "flags": {},
-      "order": 15,
-      "mode": 0,
-      "inputs": [
-        { "name": "images", "type": "IMAGE", "link": 17 }
-      ],
-      "outputs": [],
-      "properties": { "Node name for S&R": "SaveImage" },
-      "widgets_values": ["outfit_transfer_result"]
-    }
-  ],
-  "links": [
-    [1, 1, 0, 3, 0, "IMAGE"],
-    [2, 2, 0, 9, 0, "IMAGE"],
-    [3, 3, 0, 8, 1, "IMAGE"],
-    [4, 4, 0, 8, 0, "CONTROL_NET"],
-    [5, 5, 0, 10, 0, "IPADAPTER"],
-    [6, 6, 0, 9, 1, "CLIP_VISION"],
-    [7, 7, 0, 8, 2, "MODEL"],
-    [8, 7, 1, 11, 0, "CLIP"],
-    [8, 7, 1, 12, 0, "CLIP"],
-    [9, 7, 2, 15, 1, "VAE"],
-    [10, 8, 0, 10, 2, "MODEL"],
-    [11, 9, 0, 10, 1, "EMBEDS"],
-    [12, 10, 0, 14, 0, "MODEL"],
-    [13, 11, 0, 14, 1, "CONDITIONING"],
-    [14, 12, 0, 14, 2, "CONDITIONING"],
-    [15, 13, 0, 14, 3, "LATENT"],
-    [16, 14, 0, 15, 0, "LATENT"],
-    [17, 15, 0, 16, 0, "IMAGE"]
-  ],
-  "groups": [],
-  "config": {},
-  "extra": {
-    "ds": {
-      "scale": 0.8,
-      "offset": [0, 0]
-    }
+    "class_type": "LoadImage"
   },
-  "version": 0.4
+  "2": {
+    "inputs": {
+      "image": ["1", 0],
+      "width": 512,
+      "height": 768,
+      "crop": "disabled"
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "3": {
+    "inputs": {
+      "image": ["2", 0],
+      "resolution": 512
+    },
+    "class_type": "OpenposePreprocessor"
+  },
+  "4": {
+    "inputs": {
+      "control_net_name": "control_v11p_sd15_openpose.pth"
+    },
+    "class_type": "ControlNetLoader"
+  },
+  "5": {
+    "inputs": {
+      "ckpt_name": "realisticVisionV60B1_v51HyperInpaint.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "6": {
+    "inputs": {
+      "text": "masterpiece, best quality, 1girl, wearing a red silk evening gown, full body, elegant pose, studio lighting",
+      "clip": ["5", 1]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "7": {
+    "inputs": {
+      "text": "nsfw, low quality, bad anatomy, extra limbs, deformed clothes",
+      "clip": ["5", 1]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "8": {
+    "inputs": {
+      "grounding_dino_model": "GroundingDINO_SwinB.cfg.py"
+    },
+    "class_type": "GroundingDinoModelLoader"
+  },
+  "9": {
+    "inputs": {
+      "grounding_dino_model": ["8", 0],
+      "image": ["2", 0],
+      "text": "clothes",
+      "threshold": 0.35
+    },
+    "class_type": "GroundingDinoDetection"
+  },
+  "10": {
+    "inputs": {
+      "sam_model": "sam_vit_h (256px).pth"
+    },
+    "class_type": "SAMModelLoader"
+  },
+  "11": {
+    "inputs": {
+      "sam_model": ["10", 0],
+      "image": ["2", 0],
+      "boxes": ["9", 1]
+    },
+    "class_type": "SAMSegmentation"
+  },
+  "12": {
+    "inputs": {
+      "mask": ["11", 0],
+      "expand": 8
+    },
+    "class_type": "GrowMask"
+  },
+  "13": {
+    "inputs": {
+      "pixels": ["2", 0],
+      "mask": ["12", 0],
+      "vae": ["5", 2]
+    },
+    "class_type": "VAEEncodeForInpaint"
+  },
+  "14": {
+    "inputs": {
+      "conditioning": ["6", 0],
+      "control_net": ["4", 0],
+      "image": ["3", 0],
+      "strength": 0.95
+    },
+    "class_type": "ControlNetApply"
+  },
+  "15": {
+    "inputs": {
+      "seed": 12345,
+      "steps": 25,
+      "cfg": 7,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["5", 0],
+      "positive": ["14", 0],
+      "negative": ["7", 0],
+      "latent_image": ["13", 0]
+    },
+    "class_type": "KSampler"
+  },
+  "16": {
+    "inputs": {
+      "samples": ["15", 0],
+      "vae": ["5", 2]
+    },
+    "class_type": "VAEDecode"
+  },
+  "17": {
+    "inputs": {
+      "images": ["16", 0]
+    },
+    "class_type": "PreviewImage"
+  }
 }
