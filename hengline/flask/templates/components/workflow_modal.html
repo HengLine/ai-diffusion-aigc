@@ -367,35 +367,10 @@
                                 return;
                             }
                             
-                            // 包装JSON：添加prompt、client_id、extra_data节点
-                            const clientId = 'hengline-' + Date.now().toString(36) + Math.random().toString(36).substr(2);
-                            
-                            const wrappedJsonObj = {
-                                client_id: clientId,
-                                prompt: jsonObj,
-                                extra_data: {
-                                    groups: [],
-                                    config: {},
-                                    extra: {
-                                        ds: {
-                                            scale: 0.6734062593544803,
-                                            offset: [
-                                                -219.35580451797807,
-                                                53.27316285543402
-                                            ]
-                                        },
-                                        frontendVersion: '1.25.11'
-                                    },
-                                    version: 0.4
-                                }
-                            };
-                            
-                            const wrappedJsonStr = JSON.stringify(wrappedJsonObj, null, 2);
-                            
                             // 先保存为文件
                             const saveBody = {
                                 type: currentWorkflowType,
-                                json: wrappedJsonStr
+                                json: jsonStr
                             };
                             
                             const saveResponse = await fetch('/workflows/preset/save', {
@@ -532,35 +507,7 @@
                     return;
                 }
                 
-                // 包装JSON：添加prompt、client_id、extra_data节点
-                // 生成唯一的client_id
-                const clientId = 'hengline-' + Date.now().toString(36) + Math.random().toString(36).substr(2);
-                
-                // 构建包装后的JSON对象
-                const wrappedJsonObj = {
-                    client_id: clientId,
-                    prompt: jsonObj,
-                    extra_data: {
-                        groups: [],
-                        config: {},
-                        extra: {
-                            ds: {
-                                scale: 0.6734062593544803,
-                                offset: [
-                                    -219.35580451797807,
-                                    53.27316285543402
-                                ]
-                            },
-                            frontendVersion: '1.25.11'
-                        },
-                        version: 0.4
-                    }
-                };
-                
-                // 转换回字符串
-                const wrappedJsonStr = JSON.stringify(wrappedJsonObj, null, 2);
-                
-                console.log('包装后的工作流JSON:', wrappedJsonObj);
+                console.log('工作流JSON:', jsonObj);
             } catch (error) {
                 jsonError.textContent = `JSON格式错误: ${error.message}`;
                 jsonError.style.display = 'block';
@@ -588,7 +535,7 @@
                 // 调用API保存工作流
                 const saveBody = {
                     type: currentWorkflowType,
-                    json: wrappedJsonStr
+                    json: jsonStr
                 };
                 
                 // 如果不是新增工作流，则添加name字段用于更新
