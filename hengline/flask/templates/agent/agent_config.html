@@ -177,7 +177,7 @@
             <strong>配置提示：</strong>选择LLM提供商后，下方将显示该提供商的配置项。
         </div>
 
-        <form id="agentConfigForm">
+        <form id="agentConfigForm" novalidate>
             <!-- 全局设置 -->
             <div class="config-section">
                 <h3>LLM API 设置</h3>
@@ -212,8 +212,8 @@
                     <input type="text" id="openaiBaseUrl" name="openai_base_url" placeholder="https://api.openai.com/v1" required>
                 </div>
                 <div class="form-group">
-                    <label for="defaultModel">默认模型：</label>
-                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                    <label for="openaiModel">默认模型：</label>
+                    <input type="text" id="openaiModel" name="openaiModel" placeholder="如：gpt-4o" required>
                 </div>
             </div>
 
@@ -230,8 +230,8 @@
                     <input type="text" id="anthropicBaseUrl" name="anthropic_base_url" placeholder="https://api.anthropic.com/v1" required>
                 </div>
                 <div class="form-group">
-                    <label for="defaultModel">默认模型：</label>
-                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                    <label for="anthropicModel">默认模型：</label>
+                    <input type="text" id="anthropicModel" name="anthropicModel" placeholder="如：gpt-4o" required>
                 </div>
             </div>
 
@@ -248,8 +248,8 @@
                     <input type="text" id="qwenBaseUrl" name="qwen_base_url" placeholder="https://api.qwen.com/v1" value="https://api.qwen.com/v1" required>
                 </div>
                 <div class="form-group">
-                    <label for="defaultModel">默认模型：</label>
-                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                    <label for="qwenModel">默认模型：</label>
+                    <input type="text" id="qwenModel" name="qwenModel" placeholder="如：gpt-4o" required>
                 </div>
             </div>
 
@@ -266,8 +266,8 @@
                     <input type="text" id="vllmBaseUrl" name="vllm_base_url" placeholder="http://localhost:8000/v1" value="http://localhost:8000/v1" required>
                 </div>
                 <div class="form-group">
-                    <label for="defaultModel">默认模型：</label>
-                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                    <label for="vllmModel">默认模型：</label>
+                    <input type="text" id="vllmModel" name="vllmModel" placeholder="如：gpt-4o" required>
                 </div>
             </div>
 
@@ -284,8 +284,8 @@
                     <input type="text" id="zhipuBaseUrl" name="zhipu_base_url" placeholder="https://open.bigmodel.cn/api/paas/v4" required>
                 </div>
                 <div class="form-group">
-                    <label for="defaultModel">默认模型：</label>
-                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                    <label for="zhipuModel">默认模型：</label>
+                    <input type="text" id="zhipuModel" name="zhipuModel" placeholder="如：gpt-4o" required>
                 </div>
             </div>
 
@@ -293,13 +293,17 @@
                 <h3>Ollama配置（本地）</h3>
 
                 <div class="form-group">
+                    <label for="ollamaApiKey">API密钥：</label>
+                    <input type="password" id="ollamaApiKey" name="ollamaApiKey" placeholder="...">
+                </div>
+                <div class="form-group">
                     <label for="ollamaBaseUrl">基础URL：</label>
                     <input type="text" id="ollamaBaseUrl" name="ollama_base_url" placeholder="http://localhost:11434/api" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="defaultModel">默认模型：</label>
-                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                    <label for="ollamaModel">默认模型：</label>
+                    <input type="text" id="ollamaModel" name="ollamaModel" placeholder="如：gpt-4o" required>
                 </div>
             </div>
 
@@ -408,7 +412,7 @@
                         document.getElementById('selectedProvider').value = selectedProviderValue;
 
                         // 根据选中的提供商设置对应配置
-                        loadProviderConfigValue(selectedProviderValue, config);)
+                        loadProviderConfigValue(selectedProviderValue, config);
 
                         // 显示选定的提供商配置
                         showSelectedProviderConfig();
@@ -445,26 +449,26 @@
             if (provider === 'openai') {
                 document.getElementById('openaiApiKey').value = config.openai_api_key || '';
                 document.getElementById('openaiBaseUrl').value = config.openai_base_url || 'https://api.openai.com/v1';
-                document.getElementById('defaultModel').value = config.openai_model || 'gpt-4o';
+                document.getElementById('openaiModel').value = config.openai_model || 'gpt-4o';
             } else if (provider === 'anthropic') {
                 document.getElementById('anthropicApiKey').value = config.anthropic_api_key || '';
                 document.getElementById('anthropicBaseUrl').value = config.anthropic_base_url || 'https://api.anthropic.com/v1';
-                document.getElementById('defaultModel').value = config.anthropic_model || 'claude-3-opus-20240229';
+                document.getElementById('anthropicModel').value = config.anthropic_model || 'claude-3-opus-20240229';
             } else if (provider === 'qwen') {
                 document.getElementById('qwenApiKey').value = config.qwen_api_key || '';
                 document.getElementById('qwenBaseUrl').value = config.qwen_base_url || 'https://api.qwen.com/v1';
-                document.getElementById('defaultModel').value = config.qwen_model || 'qwen-max';
+                document.getElementById('qwenModel').value = config.qwen_model || 'qwen-max';
             } else if (provider === 'vllm') {
                 document.getElementById('vllmApiKey').value = config.vllm_api_key || '';
                 document.getElementById('vllmBaseUrl').value = config.vllm_base_url || 'http://localhost:8000/v1';
-                document.getElementById('defaultModel').value = config.vllm_model || 'gpt2';
+                document.getElementById('vllmModel').value = config.vllm_model || 'gpt2';
             } else if (provider === 'zhipu') {
                 document.getElementById('zhipuApiKey').value = config.zhipu_api_key || '';
                 document.getElementById('zhipuBaseUrl').value = config.zhipu_base_url || 'https://open.bigmodel.cn/api/paas/v4';
-                document.getElementById('defaultModel').value = config.zhipu_model || 'glm-4';
+                document.getElementById('zhipuModel').value = config.zhipu_model || 'glm-4';
             } else if (provider === 'ollama') {
                 document.getElementById('ollamaBaseUrl').value = config.ollama_base_url || 'http://localhost:11434/api';
-                document.getElementById('defaultModel').value = config.ollama_model || 'llama3';
+                document.getElementById('ollamaModel').value = config.ollama_model || 'llama3';
                 document.getElementById('ollamaApiKey').value = config.ollama_api_key || '';
             } else if (provider === 'custom') {
                 document.getElementById('customApiKey').value = config.custom_api_key || '';
@@ -490,32 +494,32 @@
 
             // 为当前选择的提供商创建扁平化配置
             if (provider === 'openai') {
-                formData.openai_model = document.getElementById('defaultModel').value;
+                formData.openai_model = document.getElementById('openaiModel').value;
                 formData.openai_base_url = document.getElementById('openaiBaseUrl').value;
                 formData.openai_api_key = document.getElementById('openaiApiKey').value;
 
             } else if (provider === 'anthropic') {
-                formData.anthropic_model = document.getElementById('defaultModel').value;
+                formData.anthropic_model = document.getElementById('anthropicModel').value;
                 formData.anthropic_base_url = document.getElementById('anthropicBaseUrl').value;
                 formData.anthropic_api_key = document.getElementById('anthropicApiKey').value;
 
             } else if (provider === 'qwen') {
-                formData.qwen_model = document.getElementById('defaultModel').value;
+                formData.qwen_model = document.getElementById('qwenModel').value;
                 formData.qwen_base_url = document.getElementById('qwenBaseUrl').value;
                 formData.qwen_api_key = document.getElementById('qwenApiKey').value;
 
             } else if (provider === 'vllm') {
-                formData.vllm_model = document.getElementById('defaultModel').value;
+                formData.vllm_model = document.getElementById('vllmModel').value;
                 formData.vllm_base_url = document.getElementById('vllmBaseUrl').value;
                 formData.vllm_api_key = document.getElementById('vllmApiKey').value;
 
             } else if (provider === 'zhipu') {
-                formData.zhipu_model = document.getElementById('defaultModel').value;
+                formData.zhipu_model = document.getElementById('zhipuModel').value;
                 formData.zhipu_base_url = document.getElementById('zhipuBaseUrl').value;
                 formData.zhipu_api_key = document.getElementById('zhipuApiKey').value;
 
             } else if (provider === 'ollama') {
-                formData.ollama_model = document.getElementById('defaultModel').value;
+                formData.ollama_model = document.getElementById('ollamaModel').value;
                 formData.ollama_base_url = document.getElementById('ollamaBaseUrl').value;
                 formData.ollama_api_key = document.getElementById('ollamaApiKey').value;
 
