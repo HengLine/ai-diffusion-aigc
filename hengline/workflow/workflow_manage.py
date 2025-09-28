@@ -7,7 +7,7 @@ import os
 import random
 from typing import Dict, Any
 
-from hengline.logger import info, error, debug
+from hengline.logger import info, error, debug, warning
 from hengline.task.task_manage import task_queue_manager
 from hengline.task.task_queue import TaskStatus
 # 导入配置工具
@@ -17,7 +17,7 @@ from hengline.utils.file_utils import generate_output_filename
 from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.run_workflow import ComfyUIRunner
 from hengline.workflow.workflow_comfyui import comfyui_api
-from hengline.workflow.workflow_node import load_workflow, update_workflow_params
+from hengline.workflow.workflow_node import load_workflow, update_workflow_params, wrap_workflow_for_comfyui
 
 
 class WorkflowManager:
@@ -116,9 +116,9 @@ class WorkflowManager:
 
             # 获取工作流文件路径
             # 先检查workflow_presets.json的workflow节点是否有值
-            workflow_filename = self.workflow_presets.get('workflow')
+            workflow_filename = self.workflow_presets.get(task_type, {}).get('workflow')
             workflow_path = None
-            
+
             # 如果workflow节点有值，尝试使用该工作流文件
             if workflow_filename:
                 preset_workflow_path = os.path.join(get_workflows_dir(), 'preset', workflow_filename)
@@ -152,7 +152,7 @@ class WorkflowManager:
                 if not updated_workflow:
                     error("图片上传失败，无法继续处理图生图任务")
                     return {"success": False, "message": "图片上传失败"}
-            elif task_type in ['image_to_image', 'image_to_video']:
+            elif task_type in ['image_to_image', 'image_to_video', 'change_clothes', 'change_hair_style', 'change_face']:
                 # 如果没有图片路径或图片文件不存在
                 error(f"无效的图片路径: {image_path}")
                 return {"success": False, "message": f"无效的图片路径: {image_path}"}
@@ -168,6 +168,16 @@ class WorkflowManager:
             if updated_workflow is None:
                 error("更新工作流参数失败")
                 return {"success": False, "message": "更新工作流参数失败"}
+            
+            # 包装工作流以符合ComfyUI API的要求格式
+            if "prompt" in updated_workflow:
+                # 如果工作流已经包含prompt键，则使用prompt内容作为节点数据
+                wrapped_workflow = wrap_workflow_for_comfyui(updated_workflow["prompt"])
+            else:
+                # 否则直接使用整个工作流作为节点数据
+                wrapped_workflow = wrap_workflow_for_comfyui(updated_workflow)
+            
+            debug("工作流已包装完成，准备提交到ComfyUI")
 
             # 生成唯一的输出文件名
             output_filename = generate_output_filename(task_type)
@@ -182,7 +192,7 @@ class WorkflowManager:
                 task_queue_manager.update_task_status(on_task_id, TaskStatus.FAILED, task_msg=error_message)
 
             prompt_id = self.runner.async_run_workflow(
-                updated_workflow,
+                wrapped_workflow,
                 output_filename,
                 on_complete=on_completion,
                 on_error=on_error,

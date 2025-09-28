@@ -199,3 +199,28 @@ def update_node_inputs(node_data: Dict[str, Any], params: Dict[str, Any],
         # 直接更新节点输入中存在的参数
         elif param_name in inputs:
             inputs[param_name] = param_value
+
+
+def wrap_workflow_for_comfyui(workflow_nodes: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    包装工作流以符合ComfyUI API的要求格式
+    
+    Args:
+        workflow_nodes: 工作流节点数据
+        
+    Returns:
+        Dict[str, Any]: 包装后的完整工作流结构，包含client_id、prompt和extra_data
+    """
+    # 构建完整的工作流结构
+    wrapped_workflow = {
+        "client_id": "hengline-workflow",
+        "prompt": workflow_nodes,
+        "extra_data": {
+            "extra_pnginfo": {
+                "workflow": workflow_nodes
+            }
+        }
+    }
+    
+    debug(f"已包装工作流")
+    return wrapped_workflow
