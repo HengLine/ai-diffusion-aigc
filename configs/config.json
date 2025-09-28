@@ -57,12 +57,17 @@
       "file_level": "INFO",
       "disable_unnecessary_logs": true
     },
-    "rocketmq": {
-      "name_server_address": "127.0.0.1:9876",
-      "producer_group": "default_producer_group",
-      "consumer_group": "default_consumer_group",
-      "instance_name": "default_instance",
-      "retry_times": 3
+    "rabbitmq": {
+      "host": "localhost",
+      "port": 5672,
+      "username": "guest",
+      "password": "guest",
+      "virtual_host": "/",
+      "exchange_name": "default_exchange",
+      "queue_name": "default_queue",
+      "routing_key": "default_routing_key",
+      "connection_timeout": 30,
+      "heartbeat": 60
     }
   }
 }

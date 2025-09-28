@@ -177,14 +177,14 @@ def handle_shutdown(signum, frame):
     # 等待一段时间让异步关闭有时间完成
     time.sleep(1)
 
-    # 关闭RocketMQ连接池
+    # 关闭RabbitMQ连接池
     try:
         from hengline.mq import shutdown_all_pools
-        info("正在关闭RocketMQ连接池...")
+        info("正在关闭RabbitMQ连接池...")
         shutdown_all_pools()
-        info("RocketMQ连接池已关闭")
+        info("RabbitMQ连接池已关闭")
     except Exception as e:
-        info(f"关闭RocketMQ连接池时出错: {str(e)}")
+        info(f"关闭RabbitMQ连接池时出错: {str(e)}")
 
     # 再等待一段时间确保资源完全释放
     time.sleep(2)
