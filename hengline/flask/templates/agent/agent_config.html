@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能体配置 - HengLine AIGC创意平台</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+            background-color: #fff;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .form-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .form-button:hover {
+            background-color: #2980b9;
+        }
+
+        .form-button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .loading-indicator {
+            display: none;
+            margin-left: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .config-section {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .config-section h3 {
+            margin-top: 0;
+            color: #495057;
+            font-size: 1.25rem;
+        }
+
+        .config-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+
+        .button-group {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .provider-specific-config {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .form-container, .config-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 引入头部组件 -->
+{% include 'components/header.html' %}
+
+<div class="container">
+    <div class="form-container">
+        <h1>智能体配置</h1>
+
+        <div class="config-note">
+            <strong>配置提示：</strong>选择LLM提供商后，下方将显示该提供商的配置项。
+        </div>
+
+        <form id="agentConfigForm">
+            <!-- 全局设置 -->
+            <div class="config-section">
+                <h3>LLM API 设置</h3>
+
+                <div class="form-group">
+                    <label for="selectedProvider">选择并配置默认LLM提供商：</label>
+                    <select id="selectedProvider" name="selectedProvider">
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="qwen">千问</option>
+                        <option value="zhipu">智谱</option>
+                        <option value="vllm">vLLM</option>
+                        <option value="ollama">Ollama</option>
+                        <option value="custom">自定义API</option>
+                    </select>
+                </div>
+
+
+            </div>
+
+            <!-- 提供商特定配置 - 初始隐藏 -->
+            <div id="openaiConfig" class="config-section provider-specific-config">
+                <h3>OpenAI配置</h3>
+
+                <div class="form-group">
+                    <label for="openaiApiKey">API密钥：</label>
+                    <input type="password" id="openaiApiKey" name="openai_api_key" placeholder="sk-...">
+                </div>
+
+                <div class="form-group">
+                    <label for="openaiBaseUrl">基础URL：</label>
+                    <input type="text" id="openaiBaseUrl" name="openai_base_url" placeholder="https://api.openai.com/v1" required>
+                </div>
+                <div class="form-group">
+                    <label for="defaultModel">默认模型：</label>
+                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                </div>
+            </div>
+
+            <div id="anthropicConfig" class="config-section provider-specific-config">
+                <h3>Anthropic配置</h3>
+
+                <div class="form-group">
+                    <label for="anthropicApiKey">API密钥：</label>
+                    <input type="password" id="anthropicApiKey" name="anthropic_api_key" placeholder="sk-ant-...">
+                </div>
+
+                <div class="form-group">
+                    <label for="anthropicBaseUrl">基础URL：</label>
+                    <input type="text" id="anthropicBaseUrl" name="anthropic_base_url" placeholder="https://api.anthropic.com/v1" required>
+                </div>
+                <div class="form-group">
+                    <label for="defaultModel">默认模型：</label>
+                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                </div>
+            </div>
+
+            <div id="qwenConfig" class="config-section provider-specific-config">
+                <h3>Qwen配置</h3>
+
+                <div class="form-group">
+                    <label for="qwenApiKey">API密钥：</label>
+                    <input type="password" id="qwenApiKey" name="qwen_api_key" placeholder="请输入Qwen API密钥">
+                </div>
+
+                <div class="form-group">
+                    <label for="qwenBaseUrl">基础URL：</label>
+                    <input type="text" id="qwenBaseUrl" name="qwen_base_url" placeholder="https://api.qwen.com/v1" value="https://api.qwen.com/v1" required>
+                </div>
+                <div class="form-group">
+                    <label for="defaultModel">默认模型：</label>
+                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                </div>
+            </div>
+
+            <div id="vllmConfig" class="config-section provider-specific-config">
+                <h3>vLLM配置</h3>
+
+                <div class="form-group">
+                    <label for="vllmApiKey">API密钥（可选）：</label>
+                    <input type="password" id="vllmApiKey" name="vllm_api_key" placeholder="请输入vLLM API密钥（可选）">
+                </div>
+
+                <div class="form-group">
+                    <label for="vllmBaseUrl">基础URL：</label>
+                    <input type="text" id="vllmBaseUrl" name="vllm_base_url" placeholder="http://localhost:8000/v1" value="http://localhost:8000/v1" required>
+                </div>
+                <div class="form-group">
+                    <label for="defaultModel">默认模型：</label>
+                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                </div>
+            </div>
+
+            <div id="zhipuConfig" class="config-section provider-specific-config">
+                <h3>智谱AI配置</h3>
+
+                <div class="form-group">
+                    <label for="zhipuApiKey">API密钥：</label>
+                    <input type="password" id="zhipuApiKey" name="zhipu_api_key" placeholder="...">
+                </div>
+
+                <div class="form-group">
+                    <label for="zhipuBaseUrl">基础URL：</label>
+                    <input type="text" id="zhipuBaseUrl" name="zhipu_base_url" placeholder="https://open.bigmodel.cn/api/paas/v4" required>
+                </div>
+                <div class="form-group">
+                    <label for="defaultModel">默认模型：</label>
+                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                </div>
+            </div>
+
+            <div id="ollamaConfig" class="config-section provider-specific-config">
+                <h3>Ollama配置（本地）</h3>
+
+                <div class="form-group">
+                    <label for="ollamaBaseUrl">基础URL：</label>
+                    <input type="text" id="ollamaBaseUrl" name="ollama_base_url" placeholder="http://localhost:11434/api" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="defaultModel">默认模型：</label>
+                    <input type="text" id="defaultModel" name="defaultModel" placeholder="如：gpt-4o" required>
+                </div>
+            </div>
+
+            <div id="customConfig" class="config-section provider-specific-config">
+                <h3>自定义API配置</h3>
+
+                <div class="form-group">
+                    <label for="customProviderName">提供商名称：</label>
+                    <input type="text" id="customProviderName" name="custom_provider_name" placeholder="如：MyAI" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customApiKey">API密钥（可选）：</label>
+                    <input type="password" id="customApiKey" name="custom_api_key" placeholder="请输入API密钥（可选）">
+                </div>
+
+                <div class="form-group">
+                    <label for="customBaseUrl">基础URL：</label>
+                    <input type="text" id="customBaseUrl" name="custom_base_url" placeholder="如：https://api.myai.com/v1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customModel">默认模型：</label>
+                    <input type="text" id="customModel" name="customModel" placeholder="如：myai-llm-4" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customAuthType">认证方式：</label>
+                    <select id="customAuthType" name="custom_auth_type">
+                        <option value="bearer">Bearer Token</option>
+                        <option value="api_key">API Key</option>
+                        <option value="none">无认证</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="customApiPath">API路径（可选）：</label>
+                    <input type="text" id="customApiPath" name="custom_api_path" placeholder="如：chat/completions">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" id="saveButton" class="form-button">
+                    保存配置
+                    <span id="loadingIndicator" class="loading-indicator">⟳</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <a href="{{ url_for('index') }}" class="back-link">← 返回首页</a>
+</div>
+
+<!-- 引入通知组件 -->
+{% include 'components/notification.html' %}
+
+<!-- 引入页脚组件 -->
+{% include 'components/footer.html' %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('agentConfigForm');
+        const saveButton = document.getElementById('saveButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const selectedProvider = document.getElementById('selectedProvider');
+
+        // 所有提供商配置区域
+        const providerConfigs = {
+            'openai': document.getElementById('openaiConfig'),
+            'anthropic': document.getElementById('anthropicConfig'),
+            'qwen': document.getElementById('qwenConfig'),
+            'zhipu': document.getElementById('zhipuConfig'),
+            'vllm': document.getElementById('vllmConfig'),
+            'ollama': document.getElementById('ollamaConfig'),
+            'custom': document.getElementById('customConfig')
+        };
+
+        // 显示选定的提供商配置，隐藏其他配置
+        function showSelectedProviderConfig() {
+            const provider = selectedProvider.value;
+
+            // 隐藏所有配置
+            Object.values(providerConfigs).forEach(config => {
+                config.style.display = 'none';
+            });
+
+            // 显示选定的配置
+            if (providerConfigs[provider]) {
+                providerConfigs[provider].style.display = 'block';
+                // 加载选定提供商的配置数据
+                loadProviderConfig(provider);
+            }
+        }
+
+        // 初始化表单数据
+        function initForm() {
+            // 从服务器获取当前配置
+            fetch('/api/agent/config')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const config = data.data;
+
+                        // 填充表单数据 - 先设置选中的提供商
+                        const selectedProviderValue = config.selected_provider || 'openai';
+                        document.getElementById('selectedProvider').value = selectedProviderValue;
+
+                        // 根据选中的提供商设置对应配置
+                        loadProviderConfigValue(selectedProviderValue, config);)
+
+                        // 显示选定的提供商配置
+                        showSelectedProviderConfig();
+                    }
+                })
+                .catch(error => {
+                    console.error('获取配置失败:', error);
+                    showNotification('加载配置失败，请刷新页面重试', 'error', 3000);
+                });
+        }
+
+        // 当选择提供商变化时，加载并显示对应配置
+        function loadProviderConfig(provider) {
+            fetch('/api/agent/config')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const config = data.data;
+
+                        // 清除当前表单数据
+                        loadProviderConfigValue(provider, config);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载提供商配置失败:', error);
+                });
+        }
+
+        // 初始化表单
+        initForm();
+
+        function loadProviderConfigValue(provider, config) {
+            // 清除当前表单数据
+            if (provider === 'openai') {
+                document.getElementById('openaiApiKey').value = config.openai_api_key || '';
+                document.getElementById('openaiBaseUrl').value = config.openai_base_url || 'https://api.openai.com/v1';
+                document.getElementById('defaultModel').value = config.openai_model || 'gpt-4o';
+            } else if (provider === 'anthropic') {
+                document.getElementById('anthropicApiKey').value = config.anthropic_api_key || '';
+                document.getElementById('anthropicBaseUrl').value = config.anthropic_base_url || 'https://api.anthropic.com/v1';
+                document.getElementById('defaultModel').value = config.anthropic_model || 'claude-3-opus-20240229';
+            } else if (provider === 'qwen') {
+                document.getElementById('qwenApiKey').value = config.qwen_api_key || '';
+                document.getElementById('qwenBaseUrl').value = config.qwen_base_url || 'https://api.qwen.com/v1';
+                document.getElementById('defaultModel').value = config.qwen_model || 'qwen-max';
+            } else if (provider === 'vllm') {
+                document.getElementById('vllmApiKey').value = config.vllm_api_key || '';
+                document.getElementById('vllmBaseUrl').value = config.vllm_base_url || 'http://localhost:8000/v1';
+                document.getElementById('defaultModel').value = config.vllm_model || 'gpt2';
+            } else if (provider === 'zhipu') {
+                document.getElementById('zhipuApiKey').value = config.zhipu_api_key || '';
+                document.getElementById('zhipuBaseUrl').value = config.zhipu_base_url || 'https://open.bigmodel.cn/api/paas/v4';
+                document.getElementById('defaultModel').value = config.zhipu_model || 'glm-4';
+            } else if (provider === 'ollama') {
+                document.getElementById('ollamaBaseUrl').value = config.ollama_base_url || 'http://localhost:11434/api';
+                document.getElementById('defaultModel').value = config.ollama_model || 'llama3';
+                document.getElementById('ollamaApiKey').value = config.ollama_api_key || '';
+            } else if (provider === 'custom') {
+                document.getElementById('customApiKey').value = config.custom_api_key || '';
+                document.getElementById('customProviderName').value = config.custom_provider_name || '';
+                document.getElementById('customBaseUrl').value = config.custom_base_url || '';
+                document.getElementById('customAuthType').value = config.custom_auth_type || 'bearer';
+                document.getElementById('customApiPath').value = config.custom_api_path || '';
+                document.getElementById('customModel').value = config.custom_model || 'myai-llm-4';
+            }
+        }
+
+        // 监听提供商选择变化
+        selectedProvider.addEventListener('change', showSelectedProviderConfig);
+
+        // 表单提交事件
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const provider = selectedProvider.value;
+            const formData = {
+                selected_provider: provider
+            };
+
+            // 为当前选择的提供商创建扁平化配置
+            if (provider === 'openai') {
+                formData.openai_model = document.getElementById('defaultModel').value;
+                formData.openai_base_url = document.getElementById('openaiBaseUrl').value;
+                formData.openai_api_key = document.getElementById('openaiApiKey').value;
+
+            } else if (provider === 'anthropic') {
+                formData.anthropic_model = document.getElementById('defaultModel').value;
+                formData.anthropic_base_url = document.getElementById('anthropicBaseUrl').value;
+                formData.anthropic_api_key = document.getElementById('anthropicApiKey').value;
+
+            } else if (provider === 'qwen') {
+                formData.qwen_model = document.getElementById('defaultModel').value;
+                formData.qwen_base_url = document.getElementById('qwenBaseUrl').value;
+                formData.qwen_api_key = document.getElementById('qwenApiKey').value;
+
+            } else if (provider === 'vllm') {
+                formData.vllm_model = document.getElementById('defaultModel').value;
+                formData.vllm_base_url = document.getElementById('vllmBaseUrl').value;
+                formData.vllm_api_key = document.getElementById('vllmApiKey').value;
+
+            } else if (provider === 'zhipu') {
+                formData.zhipu_model = document.getElementById('defaultModel').value;
+                formData.zhipu_base_url = document.getElementById('zhipuBaseUrl').value;
+                formData.zhipu_api_key = document.getElementById('zhipuApiKey').value;
+
+            } else if (provider === 'ollama') {
+                formData.ollama_model = document.getElementById('defaultModel').value;
+                formData.ollama_base_url = document.getElementById('ollamaBaseUrl').value;
+                formData.ollama_api_key = document.getElementById('ollamaApiKey').value;
+
+            } else if (provider === 'custom') {
+                formData.custom_model = document.getElementById('customModel').value;
+                formData.custom_provider_name = document.getElementById('customProviderName').value;
+                formData.custom_base_url = document.getElementById('customBaseUrl').value;
+                formData.custom_auth_type = document.getElementById('customAuthType').value;
+                formData.custom_api_path = document.getElementById('customApiPath').value;
+                formData.custom_api_key = document.getElementById('customApiKey').value;
+            }
+
+            // 禁用按钮防止重复提交
+            saveButton.disabled = true;
+            saveButton.textContent = '保存中...';
+            loadingIndicator.style.display = 'inline-block';
+
+            try {
+                // 发送API请求
+                const response = await fetch('/api/agent/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // 显示成功通知
+                    showAutoCloseNotification('配置保存成功！', 2000);
+                } else {
+                    // 显示错误通知
+                    showNotification(data.message || '配置保存失败，请重试', 'error', 3000);
+                }
+
+            } catch (error) {
+                showNotification(`请求失败: ${error.message}`, 'error', 3000);
+            } finally {
+                // 恢复按钮状态
+                saveButton.disabled = false;
+                saveButton.textContent = '保存配置';
+                loadingIndicator.style.display = 'none';
+            }
+        });
+    });
+</script>
+</body>
+</html>
