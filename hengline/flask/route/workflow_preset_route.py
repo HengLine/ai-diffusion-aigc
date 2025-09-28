@@ -20,14 +20,17 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # 创建Blueprint
 workflow_preset_bp = Blueprint('workflow_preset', __name__)
 
+# 获取项目根目录
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 # 工作流预设目录路径
-WORKFLOW_PRESET_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'workflows', 'preset')
+WORKFLOW_PRESET_DIR = os.path.join(project_root, 'workflows', 'preset')
 # 工作流预设配置文件路径
-WORKFLOW_PRESETS_CONFIG = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'configs', 'workflow_presets.json')
+WORKFLOW_PRESETS_CONFIG = os.path.join(project_root, 'configs', 'workflow_presets.json')
 
 # 确保工作流预设目录存在
-# if not os.path.exists(WORKFLOW_PRESET_DIR):
-    # os.makedirs(WORKFLOW_PRESET_DIR)
+if not os.path.exists(WORKFLOW_PRESET_DIR):
+    os.makedirs(WORKFLOW_PRESET_DIR)
 
 
 def load_workflow_presets():
@@ -126,13 +129,13 @@ def save_workflow():
                 timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
                 filename = f'{workflow_type}__{timestamp}.json'
                 file_path = os.path.join(WORKFLOW_PRESET_DIR, filename)
-                workflow_name = filename[:-18]  # 18 = 9（时间戳长度） + 5（.json长度）
+                workflow_name = filename  # 保存完整的文件名
         else:
             # 生成新文件名：类型__年月日_时分秒.json
             timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
             filename = f'{workflow_type}__{timestamp}.json'
             file_path = os.path.join(WORKFLOW_PRESET_DIR, filename)
-            workflow_name = filename[:-18]  # 18 = 9（时间戳长度） + 5（.json长度）
+            workflow_name = filename  # 保存完整的文件名
         
         # 保存工作流文件
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -140,11 +143,18 @@ def save_workflow():
         
         # 更新workflow_presets.json文件
         presets_config = load_workflow_presets()
-        if workflow_type in presets_config:
-            # 这里我们不自动设置workflow字段，让用户手动选择
-            pass
+        # 确保类型节点存在
+        if workflow_type not in presets_config:
+            presets_config[workflow_type] = {
+                'default': {},
+                'setting': {},
+                'workflow': ''
+            }
         
-        return jsonify({'success': True, 'message': '工作流保存成功', 'workflowName': workflow_name})
+        # 这里我们不自动设置workflow字段，让用户手动选择通过前端的应用按钮来设置
+        
+        # 确保返回完整的文件名，以便前端能够正确更新workflow节点
+        return jsonify({'success': True, 'message': '工作流保存成功', 'workflowName': filename})
     except Exception as e:
         error(f"保存工作流失败: {e}")
         return jsonify({'success': False, 'message': f'保存失败: {str(e)}'}), 500
@@ -253,4 +263,4 @@ def set_workflow():
         error(f"设置工作流配置失败: {e}")
         import traceback
         traceback.print_exc()
-    return jsonify({'success': False, 'message': f'设置失败: {str(e)}'}), 500
+        return jsonify({'success': False, 'message': f'设置失败: {str(e)}'}), 500

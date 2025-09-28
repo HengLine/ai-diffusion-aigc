@@ -12,7 +12,7 @@ from hengline.task.task_manage import task_queue_manager
 from hengline.task.task_queue import TaskStatus
 # 导入配置工具
 from hengline.utils.config_utils import load_workflow_presets, get_comfyui_api_url, \
-    get_output_folder, get_effective_config, get_workflow_path
+    get_output_folder, get_effective_config, get_workflow_path, get_workflows_dir
 from hengline.utils.file_utils import generate_output_filename
 from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.run_workflow import ComfyUIRunner

@@ -173,7 +173,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         const workflowModal = document.getElementById('workflowModal');
         const closeBtns = workflowModal.querySelectorAll('.close, .close-button');
-        const saveWorkflowBtn = document.getElementById('saveWorkflowBtn');
         const workflowTypeSelect = document.getElementById('workflowType');
         const workflowPresetsSelect = document.getElementById('workflowPresets');
         const workflowJsonTextarea = document.getElementById('workflowJson');
@@ -340,7 +339,7 @@
             const jsonStr = workflowJsonTextarea.value.trim();
             const selectedPreset = workflowPresetsSelect.value;
             
-            // 如果选择的是默认工作流且点击了应用按钮，直接清空workflow节点值
+            // 如果选择的是默认工作流且点击了应用按钮，根据文本框内容决定是应用还是清空
             if (selectedPreset === 'default' && applyAfterSave) {
                 // 获取当前操作的按钮并禁用
                 const saveOnlyBtn = document.getElementById('saveWorkflowOnlyBtn');
@@ -354,43 +353,151 @@
                 saveAndApplyBtn.textContent = '保存中...';
                 
                 try {
-                    // 构建应用工作流的请求数据（空字符串表示清空）
-                    const setRequestData = {
-                        type: currentWorkflowType,
-                        workflow: ''
-                    };
-                    
-                    console.log('清空workflow节点值:', setRequestData);
-                    
-                    const applyResponse = await fetch('/workflows/preset/set', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify(setRequestData)
-                    });
-                    
-                    if (applyResponse.ok) {
-                        const applyResult = await applyResponse.json();
-                        if (applyResult.success) {
-                            // 显示成功消息
-                            if (window.showAutoCloseNotification) {
-                                window.showAutoCloseNotification('工作流已清空', 'success', 3000);
-                            } else {
-                                alert('工作流已清空');
+                    // 检查文本框中是否有内容
+                    if (jsonStr) {
+                        // 文本框有内容，验证并包装JSON，然后先保存为文件，再应用文件名
+                        try {
+                            const jsonObj = JSON.parse(jsonStr);
+                            
+                            // 验证工作流节点结构
+                            const nodeValidation = validateWorkflowNodes(jsonObj, currentWorkflowType);
+                            if (!nodeValidation.valid) {
+                                jsonError.textContent = nodeValidation.message;
+                                jsonError.style.display = 'block';
+                                return;
                             }
-                        } else {
-                            jsonError.textContent = `清空工作流失败: ${applyResult.message || '未知错误'}`;
+                            
+                            // 包装JSON：添加prompt、client_id、extra_data节点
+                            const clientId = 'hengline-' + Date.now().toString(36) + Math.random().toString(36).substr(2);
+                            
+                            const wrappedJsonObj = {
+                                client_id: clientId,
+                                prompt: jsonObj,
+                                extra_data: {
+                                    groups: [],
+                                    config: {},
+                                    extra: {
+                                        ds: {
+                                            scale: 0.6734062593544803,
+                                            offset: [
+                                                -219.35580451797807,
+                                                53.27316285543402
+                                            ]
+                                        },
+                                        frontendVersion: '1.25.11'
+                                    },
+                                    version: 0.4
+                                }
+                            };
+                            
+                            const wrappedJsonStr = JSON.stringify(wrappedJsonObj, null, 2);
+                            
+                            // 先保存为文件
+                            const saveBody = {
+                                type: currentWorkflowType,
+                                json: wrappedJsonStr
+                            };
+                            
+                            const saveResponse = await fetch('/workflows/preset/save', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: JSON.stringify(saveBody)
+                            });
+                            
+                            if (saveResponse.ok) {
+                                const saveResult = await saveResponse.json();
+                                if (saveResult.success) {
+                                    // 获取保存的文件名
+                                    const newFileName = saveResult.workflowName;
+                                    
+                                    // 构建应用工作流的请求数据（使用保存的文件名）
+                                    const setRequestData = {
+                                        type: currentWorkflowType,
+                                        workflow: newFileName
+                                    };
+                                    
+                                    console.log('应用工作流文件:', setRequestData);
+                                    
+                                    const applyResponse = await fetch('/workflows/preset/set', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        },
+                                        body: JSON.stringify(setRequestData)
+                                    });
+                                    
+                                    if (applyResponse.ok) {
+                                        const applyResult = await applyResponse.json();
+                                        if (applyResult.success) {
+                                            // 显示成功消息
+                                            if (window.showAutoCloseNotification) {
+                                                window.showAutoCloseNotification('工作流文件已保存并应用', 'success', 3000);
+                                            } else {
+                                                alert('工作流文件已保存并应用');
+                                            }
+                                        } else {
+                                            jsonError.textContent = `应用工作流失败: ${applyResult.message || '未知错误'}`;
+                                            jsonError.style.display = 'block';
+                                        }
+                                    } else {
+                                        jsonError.textContent = '应用工作流失败，请重试';
+                                        jsonError.style.display = 'block';
+                                    }
+                                } else {
+                                    jsonError.textContent = `保存工作流失败: ${saveResult.message || '未知错误'}`;
+                                    jsonError.style.display = 'block';
+                                }
+                            } else {
+                                jsonError.textContent = '保存工作流失败，请重试';
+                                jsonError.style.display = 'block';
+                            }
+                        } catch (jsonError) {
+                            jsonError.textContent = `JSON格式错误: ${jsonError.message}`;
                             jsonError.style.display = 'block';
                         }
                     } else {
-                        jsonError.textContent = '清空工作流失败，请重试';
-                        jsonError.style.display = 'block';
+                        // 文本框没有内容，清空workflow节点值
+                        const setRequestData = {
+                            type: currentWorkflowType,
+                            workflow: ''
+                        };
+                        
+                        console.log('清空workflow节点值:', setRequestData);
+                        
+                        const applyResponse = await fetch('/workflows/preset/set', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify(setRequestData)
+                        });
+                        
+                        if (applyResponse.ok) {
+                            const applyResult = await applyResponse.json();
+                            if (applyResult.success) {
+                                // 显示成功消息
+                                if (window.showAutoCloseNotification) {
+                                    window.showAutoCloseNotification('工作流已清空', 'success', 3000);
+                                } else {
+                                    alert('工作流已清空');
+                                }
+                            } else {
+                                jsonError.textContent = `清空工作流失败: ${applyResult.message || '未知错误'}`;
+                                jsonError.style.display = 'block';
+                            }
+                        } else {
+                            jsonError.textContent = '清空工作流失败，请重试';
+                            jsonError.style.display = 'block';
+                        }
                     }
                 } catch (error) {
-                    console.error('清空工作流失败:', error);
-                    jsonError.textContent = `清空工作流失败: ${error.message}`;
+                    console.error('操作工作流失败:', error);
+                    jsonError.textContent = `操作工作流失败: ${error.message}`;
                     jsonError.style.display = 'block';
                 } finally {
                     // 恢复按钮状态
@@ -424,6 +531,36 @@
                     jsonError.style.display = 'block';
                     return;
                 }
+                
+                // 包装JSON：添加prompt、client_id、extra_data节点
+                // 生成唯一的client_id
+                const clientId = 'hengline-' + Date.now().toString(36) + Math.random().toString(36).substr(2);
+                
+                // 构建包装后的JSON对象
+                const wrappedJsonObj = {
+                    client_id: clientId,
+                    prompt: jsonObj,
+                    extra_data: {
+                        groups: [],
+                        config: {},
+                        extra: {
+                            ds: {
+                                scale: 0.6734062593544803,
+                                offset: [
+                                    -219.35580451797807,
+                                    53.27316285543402
+                                ]
+                            },
+                            frontendVersion: '1.25.11'
+                        },
+                        version: 0.4
+                    }
+                };
+                
+                // 转换回字符串
+                const wrappedJsonStr = JSON.stringify(wrappedJsonObj, null, 2);
+                
+                console.log('包装后的工作流JSON:', wrappedJsonObj);
             } catch (error) {
                 jsonError.textContent = `JSON格式错误: ${error.message}`;
                 jsonError.style.display = 'block';
@@ -451,7 +588,7 @@
                 // 调用API保存工作流
                 const saveBody = {
                     type: currentWorkflowType,
-                    json: jsonStr
+                    json: wrappedJsonStr
                 };
                 
                 // 如果不是新增工作流，则添加name字段用于更新
@@ -494,6 +631,7 @@
                                 console.log('保存结果:', result);
                                 
                                 // 构建应用工作流的请求数据
+                                // 确保使用完整的文件名，以便更新到workflow_presets.json的workflow节点
                                 const setRequestData = {
                                     type: currentWorkflowType,
                                     workflow: workflowValue
