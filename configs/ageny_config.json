@@ -1,6 +1,6 @@
 {
   "settings": {
-    "llm_provider": "openai",
+    "llm_provider": "ollama",
     "llm_config": {
       "openai": {
         "api_key": "",
@@ -25,18 +25,28 @@
       "vllm": {
         "api_key": "",
         "api_url": "http://localhost:8000/v1",
-        "models": "qwen3"
+        "models": "llama3"
       },
       "ollama": {
         "api_key": "",
         "api_url": "http://localhost:11434/api",
-        "models": "llama3"
+        "models": "qwen3"
       },
       "custom": {
         "api_key": "",
         "api_url": "",
         "auth_type": "apikey",
         "models": ""
+      }
+    },
+    "api": {
+      "medical": {
+        "url": "http://localhost:8000",
+        "timeout": 600
+      },
+      "stocks": {
+        "url": "http://localhost:8001",
+        "timeout": 600
       }
     }
   }

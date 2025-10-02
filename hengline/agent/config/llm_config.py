@@ -12,7 +12,15 @@ def _get_agent_config_path():
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     return os.path.join(project_root, 'configs', 'ageny_config.json')
 
+
+# 加载代理配置
+_agent_config = None
 def load_agent_config():
+    """加载代理配置文件"""
+    global _agent_config
+    if _agent_config is not None:
+        return _agent_config
+
     """加载智能体配置文件"""
     config_path = _get_agent_config_path()
     try:
@@ -65,9 +73,10 @@ def load_agent_config():
             return default_config
         
         with open(config_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
+            _agent_config = json.load(f)
             debug(f"成功加载智能体配置文件: {config_path}")
-            return config
+            return _agent_config
+
     except Exception as e:
         error(f"加载智能体配置文件失败: {str(e)}")
         # 返回默认配置
@@ -284,3 +293,18 @@ def get_all_llm_providers():
     config = load_agent_config()
     llm_config = config.get('settings', {}).get('llm_config', {})
     return list(llm_config.keys())
+
+
+def get_api_config(agent_name):
+    """获取指定智能体的API配置
+    
+    Args:
+        agent_name (str): 智能体名称
+        
+    Returns:
+        dict: API配置
+    """
+    config = load_agent_config()
+    api_config = config.get('settings', {}).get('api', {})
+    return api_config.get(agent_name, {})
+    
