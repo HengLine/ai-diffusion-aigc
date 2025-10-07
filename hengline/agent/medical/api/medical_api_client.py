@@ -1,4 +1,10 @@
 import logging
+"""
+@FileName: medical_api_client.py
+@Description: 医疗API客户端，用于对接外部医疗问答API接口，提供医疗问题查询功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import sys
 import json
 import requests

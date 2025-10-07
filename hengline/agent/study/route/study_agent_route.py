@@ -1,3 +1,9 @@
+"""
+@FileName: study_agent_route.py
+@Description: 教育学习Agent路由模块，提供教育学习相关的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 from flask import Blueprint, render_template, request, jsonify
 import logging
 import time

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-使用Flask + Jinja2构建的AIGC Web界面
+@FileName: app_flask.py
+@Description: Flask应用主文件，负责创建Flask应用实例、注册路由和配置Web服务
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 # 然后导入其他标准库和第三方库

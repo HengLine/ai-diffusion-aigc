@@ -1,3 +1,9 @@
+"""
+@FileName: image_to_video_route.py
+@Description: 图生视频功能路由模块，提供图片到视频转换的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 # 导入必要的模块
 import os
 import sys

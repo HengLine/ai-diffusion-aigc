@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-运行ComfyUI工作流的主脚本
+@FileName: workflow_node.py
+@Description: 工作流节点处理模块，提供工作流文件加载、节点参数更新等功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import json

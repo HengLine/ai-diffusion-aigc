@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-任务监控器模块
-用于定期检查任务状态并处理失败重试
+@FileName: task_monitor.py
+@Description: 任务监控器模块，用于定期检查任务状态并处理失败重试逻辑
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import functools
 import os

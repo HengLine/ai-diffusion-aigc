@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-工作流工具模块，包含WorkflowAudioManager类，用于处理AI音频生成任务
+@FileName: workflow_audio.py
+@Description: 音频工作流管理器，负责处理AI音频生成任务的工作流
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import os
 import sys

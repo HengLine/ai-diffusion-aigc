@@ -1,4 +1,9 @@
-import os
+"""
+@FileName: llm_config.py
+@Description: 大语言模型配置模块，负责加载和管理智能体配置
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import json
 import os
 

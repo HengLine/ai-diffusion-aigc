@@ -1,4 +1,10 @@
 # 配置工具模块，统一管理配置获取
+"""
+@FileName: config_utils.py
+@Description: 配置文件处理工具，负责加载、解析和获取配置信息
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import json
 import os
 

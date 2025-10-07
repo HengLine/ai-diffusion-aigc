@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-邮件发送工具模块
-提供邮件发送功能，支持主题、邮箱地址、昵称和信息字段
+@FileName: email_utils.py
+@Description: 邮件发送工具模块，提供邮件发送功能，支持主题、邮箱地址、昵称和信息字段
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import smtplib

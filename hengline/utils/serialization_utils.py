@@ -1,3 +1,9 @@
+"""
+@FileName: serialization_utils.py
+@Description: 序列化工具模块，提供数据序列化和反序列化功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import json
 from datetime import datetime, date
 from decimal import Decimal

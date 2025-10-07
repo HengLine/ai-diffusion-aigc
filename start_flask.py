@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Flask应用启动脚本（优化版）
+@FileName: start_flask.py
+@Description: Flask服务器启动脚本，负责提供API接口
+    功能：
+        1. 检查Python环境是否安装
+        2. 检查虚拟环境是否存在，不存在则创建
+        3. 根据不同系统激活虚拟环境
+        4. 安装项目依赖
+        5. 启动Flask应用
 
-功能：
-1. 检查Python环境是否安装
-2. 检查虚拟环境是否存在，不存在则创建
-3. 根据不同系统激活虚拟环境
-4. 安装项目依赖
-5. 启动Flask应用
-
-步骤严格按顺序执行，只有上一步成功才执行下一步
+    步骤严格按顺序执行，只有上一步成功才执行下一步
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import os
 import subprocess

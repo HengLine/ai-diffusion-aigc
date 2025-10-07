@@ -1,3 +1,9 @@
+"""
+@FileName: rabbitmq_producer.py
+@Description: RabbitMQ生产者类，负责初始化生产者并发送消息到RabbitMQ队列
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import logging
 from typing import Optional, Dict, Any, Callable
 import json

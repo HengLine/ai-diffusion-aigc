@@ -1,3 +1,9 @@
+"""
+@FileName: movie_agent_route.py
+@Description: 电影剧本创作Agent路由模块，提供剧本创作相关的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 from flask import Blueprint, render_template, request, jsonify
 import logging
 import time

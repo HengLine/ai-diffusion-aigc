@@ -1,3 +1,9 @@
+"""
+@FileName: rabbitmq_consumer.py
+@Description: RabbitMQ消费者类，负责初始化消费者并接收RabbitMQ队列中的消息
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import logging
 import traceback
 import threading

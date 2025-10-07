@@ -1,3 +1,9 @@
+"""
+@FileName: change_hair_style_route.py
+@Description: 换发型功能路由模块，提供发型更换相关的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import sys
 import time
 import os

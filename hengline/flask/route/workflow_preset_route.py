@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-工作流预设路由模块
-负责处理自定义工作流的保存、获取和管理
+@FileName: workflow_preset_route.py
+@Description: 工作流预设路由模块，负责处理自定义工作流的保存、获取和管理
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import json

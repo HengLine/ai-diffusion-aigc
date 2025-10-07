@@ -1,3 +1,9 @@
+"""
+@FileName: stocks_agent_route.py
+@Description: 股票分析Agent路由模块，提供股票分析相关的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 from flask import Blueprint, render_template, request, jsonify
 import logging
 import time

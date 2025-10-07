@@ -1,5 +1,12 @@
 from flask import Blueprint, render_template, request, jsonify
+"""
+@FileName: medical_agent_route.py
+@Description: 医疗问答Agent的Flask路由，提供医疗问答页面和API接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import time
+from flask import Blueprint, jsonify, request
 
 from hengline.logger import debug, error, warning, info
 from hengline.agent.medical.api.medical_api_client import get_medical_api_client

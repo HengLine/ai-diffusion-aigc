@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-封装ComfyUI API的类，提供图片上传、工作流执行等接口功能
+@FileName: workflow_comfyui.py
+@Description: ComfyUI API封装模块，提供图片上传、工作流执行等接口功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import json

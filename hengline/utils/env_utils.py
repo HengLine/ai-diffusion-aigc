@@ -1,3 +1,9 @@
+"""
+@FileName: env_utils.py
+@Description: 环境变量处理工具，负责加载.env文件中的环境变量
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import os
 from pathlib import Path
 

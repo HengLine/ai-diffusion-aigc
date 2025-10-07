@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-工作流工具模块，包含WorkflowManager类和配置加载功能
+@FileName: workflow_manage.py
+@Description: 工作流管理器基类，提供工作流的通用管理功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import os
 import random

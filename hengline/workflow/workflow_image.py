@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-工作流工具模块，包含WorkflowImageManager类，用于处理AI图像生成任务
+@FileName: workflow_image.py
+@Description: 图像工作流管理器，负责处理AI图像生成任务的工作流
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import os
 import sys

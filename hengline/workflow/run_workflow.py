@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-运行ComfyUI工作流的主脚本
+@FileName: run_workflow.py
+@Description: ComfyUI工作流运行器主脚本，负责执行和管理AI生成任务工作流
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import json
 import os

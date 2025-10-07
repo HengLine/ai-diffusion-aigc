@@ -1,3 +1,9 @@
+"""
+@FileName: agent_config_route.py
+@Description: 智能体配置路由模块，提供智能体配置相关的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import logging
 from flask import Blueprint, render_template, request, jsonify
 from hengline.agent.config.llm_config import get_llm_config, save_llm_config

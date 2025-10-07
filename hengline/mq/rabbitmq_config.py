@@ -1,4 +1,10 @@
 from typing import Dict, Optional
+"""
+@FileName: rabbitmq_config.py
+@Description: RabbitMQ配置类，负责存储和管理RabbitMQ的连接配置信息
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import os
 
 from hengline.utils.config_utils import get_settings_config

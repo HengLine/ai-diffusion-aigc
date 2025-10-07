@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-工作流状态检查器模块
-用于异步定时检查ComfyUI工作流的执行状态
+@FileName: workflow_status_checker.py
+@Description: 工作流状态检查器，用于异步定时检查ComfyUI工作流的执行状态
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import functools
 import threading

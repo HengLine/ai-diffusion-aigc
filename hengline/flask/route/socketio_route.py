@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-WebSocket路由模块，用于实时推送任务状态更新
+@FileName: socketio_route.py
+@Description: WebSocket路由模块，用于实时推送任务状态更新和系统消息
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 from flask import Blueprint, request

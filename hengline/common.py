@@ -1,4 +1,10 @@
 # 导入asyncio用于处理协程
+"""
+@FileName: common.py
+@Description: 通用工具函数，包含任务类型名称转换、任务执行时间估算等功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 from typing import Any
 
 from hengline.logger import debug, error

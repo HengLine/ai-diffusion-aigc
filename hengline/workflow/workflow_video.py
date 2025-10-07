@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-工作流工具模块，包含WorkflowVideoManager类，用于处理AI视频生成任务
+@FileName    : workflow_video.py
+@Description : 工作流工具模块，包含WorkflowVideoManager类，用于处理AI视频生成任务
+@Author      : heng
+@Time        : 2024-09
 """
 import os
 import sys

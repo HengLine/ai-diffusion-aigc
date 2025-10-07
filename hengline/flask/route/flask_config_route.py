@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-配置页面路由模块
-负责处理配置页面的显示和提交逻辑
+@FileName: flask_config_route.py
+@Description: 配置页面路由模块，负责处理系统配置页面的显示和提交逻辑
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import json
