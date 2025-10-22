@@ -37,9 +37,6 @@ def api_medical_agent():
         if not question or not question.strip():
             return jsonify({'success': False, 'message': '请输入您的医疗问题'}), 400
         
-        # 模拟处理时间
-        time.sleep(1)
-        
         # 调用医疗问答API客户端
         response = get_medical_api_client().query_medical_question(question)
         # response = get_medical_api_client().generate_medical_answer(question)

@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>换脸 - AIGC创意平台</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        h1 {
+            color: #4a6fa5;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+        h2 {
+            color: #333;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            min-height: 100px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        .form-group input[type="file"] {
+            display: block;
+            margin-top: 0.5rem;
+        }
+        .file-input {
+            position: relative;
+            display: inline-block;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .file-input:hover {
+            background-color: #e9ecef;
+        }
+        .file-input input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .file-name {
+            display: inline-block;
+            margin-left: 0.5rem;
+            font-style: italic;
+            color: #6c757d;
+        }
+        .form-button {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .form-button:hover {
+            background-color: #3a5a85;
+        }
+        /* 参数控制样式 */
+        .parameter-group {
+            margin-bottom: 1.5rem;
+            padding: 1.25rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .parameter-group h3 {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #495057;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .parameter-group h3::after {
+            content: '▼';
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+        .parameter-group.collapsed h3::after {
+            transform: rotate(-90deg);
+        }
+        .parameter-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .parameter-group.collapsed .parameter-content {
+            max-height: 0;
+        }
+        /* 滑块样式 */
+        .slider-container {
+            margin-bottom: 1rem;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+        }
+        .slider-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .slider {
+            flex: 1;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4a6fa5;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .slider::-webkit-slider-thumb:hover {
+            width: 22px;
+            height: 22px;
+            background: #3a5a85;
+        }
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #4a6fa5;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        .slider::-moz-range-thumb:hover {
+            width: 22px;
+            height: 22px;
+            background: #3a5a85;
+        }
+        .slider-value {
+            display: inline-block;
+            width: 70px;
+            padding: 0.375rem 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            text-align: center;
+            background-color: white;
+            margin-left: 0.5rem;
+        }
+        .parameter-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .parameter-control label {
+            flex: 1;
+        }
+        .number-input {
+            width: 70px;
+            padding: 0.375rem 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+        .parameter-description {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+        /* 状态框样式 */
+        .status-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #28a745;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #dc3545;
+        }
+        /* 队列状态区域 */
+        .queue-status {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        .queue-status h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+        .queue-status p {
+            margin: 5px 0;
+            color: #6c757d;
+        }
+        /* 任务进度条 */
+        .task-progress {
+            margin-top: 15px;
+        }
+        .task-progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .task-progress-fill {
+            height: 100%;
+            background-color: #4a6fa5;
+            transition: width 0.3s ease;
+        }
+        .task-progress-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        /* 图标样式 */
+        .icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        /* 返回首页链接 */
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #4a6fa5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        /* 提示词编写指南 */
+        .tips {
+            background-color: #fff3cd;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #ffc107;
+        }
+        .tips h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .tips ul {
+            margin-bottom: 0;
+            padding-left: 1.5rem;
+        }
+        .tips li {
+            margin-bottom: 0.5rem;
+        }
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+        }
+        
+       /* 页脚样式 */
+        footer {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 2rem 0;
+            margin-top: 3rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        
+        .footer-info,
+        .footer-links,
+        .footer-contact {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 2rem;
+            padding: 0 15px;
+        }
+        
+        /* 统一标题样式 */
+        .footer-title {
+            color: white;
+            margin-top: 0;
+            margin-bottom: 1.2rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            width: 100%;
+            text-align: center !important;
+        }
+        
+        /* 标题居中 - 使用继承方式让标题居中 */
+        .footer-info, .footer-links, .footer-contact {
+            text-align: left;
+        }
+        
+        /* 确保标题居中显示 */
+        .footer-info h3,
+        .footer-info h4,
+        .footer-links h3,
+        .footer-links h4,
+        .footer-contact h3,
+        .footer-contact h4,
+        .footer-title {
+            text-align: center;
+        }
+        
+        /* 统一段落样式 */
+        .footer-text {
+            color: #bdc3c7;
+            font-size: 0.95rem;
+        }
+        
+        /* 链接样式优化 - 每行显示三个链接 */
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem 1rem;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0;
+        }
+        
+        .footer-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            position: relative;
+            padding-left: 12px;
+            white-space: nowrap;
+        }
+        
+        .footer-links a:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+            font-size: 0.7rem;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .footer-links a:hover:before {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        /* 底部版权信息 */
+        .footer-bottom {
+            background-color: #34495e;
+            padding: 1.2rem 0;
+            text-align: center;
+            border-top: 1px solid #4a5f7a;
+        }
+        
+        .footer-bottom p {
+            margin: 0;
+            color: #bdc3c7;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        
+        /* 响应式设计优化 */
+        @media (max-width: 768px) {
+            .footer-container {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .footer-info,
+            .footer-links,
+            .footer-contact {
+                margin-bottom: 2rem;
+                padding: 0 10px;
+            }
+            
+            .footer-title {
+                font-size: 1.2rem;
+            }
+            
+            .footer-links a {
+                padding-left: 0;
+            }
+            
+            .footer-links ul {
+                grid-template-columns: 1fr;
+                gap: 0.8rem 0;
+            }
+            
+            .footer-links a:before {
+                display: none;
+            }
+            
+            .footer-links a:hover {
+                transform: none;
+            }
+        }	
+
+
+        /* 导航栏样式 */
+        nav {
+            background-color: #4b5460;
+            color: white;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+        .nav-menu {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-item a {
+            color: rgb(210, 239, 216);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+        }
+        .nav-item a:hover {
+            opacity: 0.8;
+        }
+        /* 当前选中菜单高亮样式 */
+        .nav-item a.active {
+            font-weight: 700;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #11d8cf;
+            font-size: large;
+            border-bottom: 2px solid white;
+        }
+        /* 其他按钮特定样式 */
+        .nav-item.dropdown a.nav-link {
+            position: relative;
+        }
+        /* 其他按钮点击后高亮样式 */
+        .nav-item.dropdown a.nav-link.clicked {
+            border-bottom: 2px solid white;
+            font-weight: 700;
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .tasks-button {
+            background-color: #ffffff;
+            color: #4a6fa5;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        .tasks-button:hover {
+            background-color: #f8f9fa;
+        }
+        .task-badge {
+            background-color: #dc3545;
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+            font-weight: 600;
+        }
+        /* 移动端导航菜单 */
+        .mobile-menu-button {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .mobile-menu {
+            background-color: #4a6fa5;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 20px;
+            border-radius: 0 0 8px 8px;
+            display: none;
+        }
+        .mobile-menu ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .mobile-menu li {
+            margin-bottom: 0.5rem;
+        }
+        .mobile-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+            padding: 0.5rem 0;
+        }
+        /* 移动端选中菜单高亮样式 - 保持与桌面端一致的下划线效果 */
+        .mobile-menu a.active {
+            font-weight: 700;
+            font-size: large;
+            background-color: #856404;
+            border-bottom: 2px solid white;
+            padding-left: 10px;
+        }
+        /* 下拉菜单样式 - 垂直展示优化 */
+        .dropdown-menu {
+            position: absolute;
+            background-color: #36647d;
+            border: none;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 0.5rem 0;
+            min-width: 120px;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .dropdown-item {
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            display: block;
+            white-space: nowrap;
+            font-size: 0.95rem;
+            border-left: 3px solid transparent;
+        }
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: rgba(255, 255, 255, 0.5);
+        }
+        /* 不同颜色标注的下拉菜单项 */
+        .dropdown-item.change-clothes {
+            color: #ffd700;
+        }
+        .dropdown-item.change-clothes:hover {
+            color: #fff9c4;
+            border-left-color: #ffd700;
+        }
+        .dropdown-item.change-face {
+            color: #ff80ab;
+        }
+        .dropdown-item.change-face:hover {
+            color: #ffc1e0;
+            border-left-color: #ff80ab;
+        }
+        .dropdown-item.change-hairstyle {
+            color: #81d4fa;
+        }
+        .dropdown-item.change-hairstyle:hover {
+            color: #b3e5fc;
+            border-left-color: #81d4fa;
+        }
+        /* 桌面端下拉菜单位置调整 */
+        .nav-item.dropdown {
+            position: relative;
+        }
+        .nav-item.dropdown .dropdown-menu {
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+        }
+        /* 移动端下拉菜单样式优化 */
+        .mobile-nav-item.dropdown {
+            position: relative;
+        }
+        .mobile-menu .dropdown-menu {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.05);
+            box-shadow: none;
+            margin: 0.25rem 0 0.5rem 1rem;
+            padding: 0;
+            min-width: auto;
+            border-radius: 4px;
+        }
+        .mobile-menu .dropdown-item {
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-left: 2px solid transparent;
+        }
+        .mobile-menu .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: white;
+        }
+        /* 下拉箭头动画 */
+        .ml-1 {
+            transition: transform 0.2s ease;
+            display: inline-block;
+        }
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+            .mobile-menu-button {
+                display: block;
+            }
+            .filter-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-header {
+            padding-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #2c3e50;
+        }
+        .modal-footer {
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+            margin-top: 20px;
+            text-align: right;
+        }
+        .close-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .close-button:hover {
+            background-color: #5a6268;
+        }
+        
+        /* 筛选器样式 */
+        .task-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .filter-group label {
+            font-size: 0.875rem;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        /* 任务列表样式 */
+        .task-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .task-item {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: white;
+            transition: box-shadow 0.3s ease;
+        }
+        .task-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .task-type {
+            font-weight: 600;
+            color: #495057;
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-queued {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .status-processing {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        .status-completed {
+            background-color: #e8f5e8;
+            color: #388e3c;
+        }
+        .status-error {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        .task-info {
+            margin-bottom: 10px;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        .task-info p {
+            margin: 5px 0;
+        }
+        .task-params {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 0.875rem;
+            color: #495057;
+        }
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .view-result-btn {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .view-result-btn:hover {
+            background-color: #3a5a85;
+        }
+        .no-tasks {
+            text-align: center;
+            color: #6c757d;
+            padding: 40px;
+        }
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+        }
+        /* 任务队列状态样式 */
+        .task-queue-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+        }
+        .queue-count {
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: bold;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            min-width: 30px;
+            text-align: center;
+        }
+        /* 加载动画 */
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4a6fa5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .global-loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            background-image: 
+                radial-gradient(#e0e0e0 1px, transparent 1px),
+                radial-gradient(#e0e0e0 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: 0 0, 25px 25px;
+        }
+
+        .global-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 页面布局 */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem 0;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+        }
+
+        .form-container {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .textarea-container {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .textarea-word-count {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.75rem;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        .file-input-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #f9f9f9;
+        }
+
+        .file-input-label:hover {
+            border-color: #3498db;
+            background-color: #f0f8ff;
+        }
+
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            word-break: break-all;
+        }
+
+        .form-button {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .form-button:hover:not(:disabled) {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .form-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .form-button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
+        /* 参数控制样式优化 */
+        .parameter-group {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e0e0e0;
+        }
+
+        .parameter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .parameter-header h3 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+
+        .parameter-content {
+            display: none;
+        }
+
+        .parameter-group.expanded .parameter-content {
+            display: block;
+        }
+
+        .parameter-toggle {
+            transition: transform 0.3s ease;
+        }
+
+        .parameter-group.expanded .parameter-toggle {
+            transform: rotate(180deg);
+        }
+
+        /* 滑块样式 */
+        .slider-container {
+            margin-bottom: 1rem;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .slider-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .slider-value {
+            font-weight: 600;
+            color: #3498db;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .slider-number-input {
+            width: 60px;
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .slider-tooltip {
+            position: relative;
+            margin-left: 0.5rem;
+            cursor: help;
+        }
+
+        .slider-tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2c3e50;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            z-index: 100;
+            margin-bottom: 5px;
+        }
+
+        .slider-tooltip:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2c3e50 transparent transparent transparent;
+            z-index: 100;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #2980b9;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            background: #2980b9;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+
+        /* 选择器样式 */
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        /* 状态框样式 */
+        .status-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status-box.success {
+            background-color: #d5f4e6;
+            border: 1px solid #85d6c6;
+            color: #0f866e;
+            display: block;
+        }
+
+        .status-box.error {
+            background-color: #ffe6e6;
+            border: 1px solid #ffadad;
+            color: #c0392b;
+            display: block;
+        }
+
+        /* 队列状态样式 */
+        .queue-status {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .queue-status h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        /* 任务进度条样式 */
+        .task-progress {
+            margin-top: 1rem;
+        }
+
+        .task-progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .task-progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .task-progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.75rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        /* 提示框样式 */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            margin-left: 0.5rem;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2c3e50;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            z-index: 100;
+            margin-bottom: 5px;
+        }
+
+        .tooltip:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2c3e50 transparent transparent transparent;
+            z-index: 100;
+        }
+
+        /* 预览区域样式 */
+        .preview-container {
+            margin-top: 1rem;
+            display: none;
+            text-align: center;
+        }
+
+        .preview-container.show {
+            display: block;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            header {
+                padding: 1.5rem 0;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .form-container {
+                padding: 1.5rem;
+            }
+
+            .form-button {
+                width: 100%;
+                padding: 1rem;
+            }
+        }
+
+        /* 通知组件样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 350px;
+            word-wrap: break-word;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: #27ae60;
+        }
+
+        .notification.error {
+            background-color: #e74c3c;
+        }
+
+        .notification.warning {
+            background-color: #f39c12;
+        }
+
+        .notification.info {
+            background-color: #3498db;
+        }
+
+        /* 任务模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover, .close:focus {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        /* 加载动画 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+     <!-- 导航栏组件 -->
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">AIGC 创意平台</a>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="./index.html">首页</a></li>
+                <li class="nav-item"><a href="./config.html">配置</a></li>
+                <li class="nav-item"><a href="./text_to_image.html">文生图</a></li>
+                <li class="nav-item"><a href="./image_to_image.html">图生图</a></li>
+                <li class="nav-item"><a href="./text_to_video.html">文生视频</a></li>
+                <li class="nav-item"><a href="./image_to_video.html">图生视频</a></li>
+                <li class="nav-item"><a href="./text_to_audio.html">文生音频</a></li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link dropdown-toggle active" id="otherMenuBtn" onclick="toggleOtherMenu()">
+                        换脸
+                        <span id="otherMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="otherMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="./change_clothes.html" class="dropdown-item change-clothes">换装</a>
+                        <a href="./change_face.html" class="dropdown-item change-face">换脸</a>
+                        <a href="./change_hair_style.html" class="dropdown-item change-hairstyle">换发型</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="agentMenuBtn" onclick="toggleAgentMenu()">
+                        智能体|Agent
+                        <span id="agentMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="agentMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="./agent/agent_config.html" class="dropdown-item agent-config">智能体配置</a>
+                    <a href="./agent/medical_agent.html" class="dropdown-item agent-medical">医疗问答Agent</a>
+                    <a href="./agent/stocks_agent.html" class="dropdown-item agent-stocks">股票分析Agent</a>
+                    <a href="./agent/study_agent.html" class="dropdown-item agent-study">教育学习Agent</a>
+                    <a href="./agent/movie_agent.html" class="dropdown-item agent-movie">剧本创作Agent</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="nav-right">
+                <button id="tasksButton" class="tasks-button">
+                    我的任务 <span id="queueTaskBadge" class="task-badge" style="display: inline; visibility: visible; opacity: 1;">0</span>
+                </button>
+                <button id="mobileMenuButton" class="mobile-menu-button">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 12H21M3 6H21M3 18H21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="mobile-menu" style="display: none;">
+            <ul>
+                <li><a href="./index.html">首页</a></li>
+                <li><a href="./text_to_image.html">文生图</a></li>
+                <li><a href="./image_to_image">图生图</a></li>
+                <li><a href="./text_to_video.html">文生视频</a></li>
+                <li><a href="./image_to_video.html">图生视频</a></li>
+                <li><a href="./text_to_audio.html">文生音频</a></li>
+                <li class="mobile-nav-item dropdown">
+                    <a href="#" class="mobile-nav-link dropdown-toggle active" id="mobileOtherMenuBtn" onclick="toggleMobileOtherMenu()">
+                        换脸
+                        <span id="mobileOtherMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="mobileOtherMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="./change_clothes.html" class="dropdown-item change-clothes">换装</a>
+                        <a href="./change_face.html" class="dropdown-item change-face">换脸</a>
+                        <a href="./change_hair_style.html" class="dropdown-item change-hairstyle">换发型</a>
+                    </div>
+                </li>
+                <li class="mobile-nav-item dropdown">
+                    <a href="#" class="mobile-nav-link dropdown-toggle" id="mobileAgentMenuBtn" onclick="toggleMobileAgentMenu()">
+                        智能体|Agent
+                        <span id="mobileAgentMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="mobileAgentMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="./agent/config.html" class="dropdown-item agent-config">智能体配置</a>
+                        <a href="./agent/medical.html" class="dropdown-item agent-medical">医疗问答Agent</a>
+                        <a href="./agent/stocks.html" class="dropdown-item agent-stocks">股票分析Agent</a>
+                        <a href="./agent/study.html" class="dropdown-item agent-study">教育学习Agent</a>
+                        <a href="./agent/movie.html" class="dropdown-item agent-movie">剧本创作Agent</a>
+                    </div>
+                </li>
+                <li><a href="./config.html">配置</a></li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <div class="container">
+        <div class="tips">
+            <h3>换脸指南</h3>
+            <ul>
+                <li>上传一张包含目标人物的清晰照片作为基础</li>
+                <li>上传一张包含源人脸的清晰照片</li>
+                <li>确保两张照片中人脸占比较大且无遮挡</li>
+                <li>支持的图片格式：PNG、JPG、JPEG、GIF</li>
+            </ul>
+        </div>
+
+        <form id="changeFaceForm">
+            <div class="form-group">
+                <label for="target_image">目标图片 (必填) - 包含要替换的人脸</label>
+                <div class="file-input">
+                    选择文件
+                    <input type="file" id="target_image" name="target_image" accept="image/*">
+                </div>
+                <span class="file-name" id="targetFileName"></span>
+                <div class="preview-container" id="targetPreviewContainer">
+                    <img class="preview-image" id="targetPreviewImage" src="" alt="目标图片预览">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="source_image">源图片 (必填) - 提供要替换的人脸</label>
+                <div class="file-input">
+                    选择文件
+                    <input type="file" id="source_image" name="source_image" accept="image/*">
+                </div>
+                <span class="file-name" id="sourceFileName"></span>
+                <div class="preview-container" id="sourcePreviewContainer">
+                    <img class="preview-image" id="sourcePreviewImage" src="" alt="源图片预览">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="prompt">提示词</label>
+                <textarea id="prompt" name="prompt" placeholder="请输入额外的提示词，例如：保持光线一致，自然融合"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="negative_prompt">负面提示词</label>
+                <textarea id="negative_prompt" name="negative_prompt" placeholder="请输入不想要的效果">low quality, blurry, bad anatomy, disfigured, worst quality, lowres, unrealistic lighting, mismatched skin tone</textarea>
+            </div>
+            
+            <!-- 模型参数设置 -->
+            <div class="parameter-group collapsed">
+                <h3>模型参数设置</h3>
+                <div class="parameter-content">
+                <div class="slider-container">
+                    <label for="stepsSlider">生成步数</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="30">
+                        <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="30" class="slider-value">
+                    </div>
+                    <p class="parameter-description">步数越多，细节越丰富，但生成时间越长，建议值：20-40</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="cfgSlider">提示引导强度（CFG Scale）</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="cfgSlider" class="slider" min="1" max="30" step="0.01" value="8.0">
+                        <input type="number" id="cfg" name="cfg" min="1" max="30" step="0.01" value="8.0" class="slider-value">
+                    </div>
+                    <p class="parameter-description">值越高，越严格遵循提示词，建议值：4.0-12.0</p>
+                    <div class="parameter-description">
+                        <li>1-3：非常弱的提示引导，图像更"自由"，可能偏离提示，但风格更自然、有创意。实验性创作、抽象艺术、想获得意外效果时</li>
+                        <li>4 ~ 7推荐范围（平衡点）：提示有明显影响，同时保留自然细节和多样性。大多数通用场景，如人物、风景、插画等</li>
+                        <li>8 ~ 12：强烈遵循提示，细节更贴合文字，但可能出现过度锐化、不自然或伪影。需要精确控制构图、文字、物体位置的场景</li>
+                        <li>13 ~ 20+：极强引导，极易产生"过拟合"：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <label for="denoiseSlider">降噪强度（Denoise）</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="denoiseSlider" class="slider" min="0" max="1" step="0.05" value="0.6">
+                        <input type="number" id="denoise" name="denoise" min="0" max="1" step="0.05" value="0.6" class="slider-value">
+                    </div>
+                    <p class="parameter-description">值越低保留原图特征越多，值越高变化越大，建议值：0.4-0.7</p>
+                    <div class="parameter-description">
+                        <li>0.1 ~ 0.3：极轻微修改，几乎保留原图结构、色彩、构图。照片修复、细节锐化、轻微调色、去除小噪点</li>
+                        <li>0.4 ~ 0.6 推荐起点（黄金区间）：有明显风格转变，但仍保留主体结构。风格迁移（如油画、动漫风）、调整光影、换背景但保留人物</li>
+                        <li>0.7 ~ 0.85：强烈重构，主体可能被重新绘制，创意空间大。想彻底改变氛围（如白天→夜晚）、艺术再创作、大幅风格转换</li>
+                        <li>0.85 ~ 1.0：几乎完全重绘，相当于"用原图当提示"进行文生图。仅保留轮廓/颜色分布，内容基本由 prompt 决定（慎用）</li>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="face_fusion_strengthSlider">人脸融合强度</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="face_fusion_strengthSlider" class="slider" min="0" max="1" step="0.05" value="0.7">
+                        <input type="number" id="face_fusion_strength" name="face_fusion_strength" min="0" max="1" step="0.05" value="0.7" class="slider-value">
+                    </div>
+                    <p class="parameter-description">值越高，源人脸特征越明显，建议值：0.6-0.8</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="sampler_name">采样算法</label>
+                    <div class="slider-input-group">
+                        <select id="sampler_name" name="sampler_name" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler">⚡ Euler (快速基础)</option>
+                            <option value="euler_ancestral">Euler Ancestral</option>
+                            <option value="heun">Heun</option>
+                            <option value="dpm_2">DPM2</option>
+                            <option value="dpm_2_ancestral">DPM2 Ancestral</option>
+                            <option value="dpmpp_2s_ancestral">DPM++ 2S Ancestral</option>
+                            <option value="dpmpp_2m" selected>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_2m_sde">DPM++ 2M SDE</option>
+                            <option value="dpmpp_3m_sde">🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu">🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                            <option value="uni_pc">UniPC</option>
+                        </select>
+                    </div>
+                    <div class="parameter-description">
+                        选择用于生成图像的采样算法，不同的算法会产生不同的效果和速度。
+                    </div>
+                    <div class="parameter-description">
+                        <li>Euler：基础算法，适合大多数场景，生成速度快</li>
+                        <li>DPM++ 2M：高质量算法，平衡速度和质量</li>
+                        <li>DPM++ 3M SDE：高质量算法，适合需要精细细节的场景</li>
+                        <li>DPM++ 3M SDE GPU：GPU优化版本，速度更快</li>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            <div class="parameter-group collapsed">
+                <h3>图像生成设置</h3>
+                <div class="parameter-content">
+                <div class="slider-container">
+                    <label for="widthSlider">输出宽度 (像素)</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="widthSlider" class="slider" min="128" max="2048" step="16" value="512">
+                        <input type="number" id="width" name="width" min="128" max="2048" step="16" value="512" class="slider-value">
+                    </div>
+                    <p class="parameter-description">建议值：512, 768, 1024</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="heightSlider">输出高度 (像素)</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="heightSlider" class="slider" min="128" max="2048" step="16" value="512">
+                        <input type="number" id="height" name="height" min="128" max="2048" step="16" value="512" class="slider-value">
+                    </div>
+                    <p class="parameter-description">建议值：512, 768, 1024</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="numImagesSlider">生成数量</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="numImagesSlider" class="slider" min="1" max="8" step="1" value="1">
+                        <input type="number" id="batch_size" name="batch_size" min="1" max="8" step="1" value="1" class="slider-value">
+                    </div>
+                    <p class="parameter-description">一次生成的图像数量，最多8张，建议值：1-5</p>
+                </div>
+            </div>
+            </div>
+            <button type="submit" class="form-button" id="generateButton">生成换脸图像</button>
+            <div id="loadingIndicator" style="display: none; margin-top: 10px; color: #4a6fa5;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #4a6fa5; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <span style="margin-left: 10px;">正在生成换脸图像，请稍候...</span>
+                </div>
+            </div>
+            
+            <!-- 结果显示区域 -->
+            <div class="result-container" id="resultContainer" style="margin-top: 20px; padding: 15px; border: 1px solid #e9ecef; border-radius: 4px; background-color: #f8f9fa; display: none;">
+                <h3>生成结果</h3>
+                <div class="generated-images" id="generatedImages" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+                <div class="result-actions" id="resultActions" style="margin-top: 15px; display: flex; gap: 10px;"></div>
+            </div>
+	
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // 防止重复点击功能
+                    const generateButton = document.getElementById('generateButton');
+                    const loadingIndicator = document.getElementById('loadingIndicator');
+                    const form = document.getElementById('changeFaceForm');
+                    
+                    // 初始化数字输入框
+                    if (form) {
+                        initNumberInputs(form);
+                    }
+                    
+                    // 设置所有滑块的同步
+                    setupSliderSync('denoiseSlider', 'denoise');
+                    setupSliderSync('stepsSlider', 'steps');
+                    setupSliderSync('cfgSlider', 'cfg');
+                    setupSliderSync('widthSlider', 'width');
+                    setupSliderSync('heightSlider', 'height');
+                    setupSliderSync('numImagesSlider', 'batch_size');
+                    setupSliderSync('face_fusion_strengthSlider', 'face_fusion_strength');
+                    
+                    // 设置参数折叠功能
+                    setupParameterFolding();
+                    
+                    // 设置目标图片预览
+                    const targetFileInput = document.getElementById('target_image');
+                    const targetPreviewImage = document.getElementById('targetPreviewImage');
+                    const targetFileName = document.getElementById('targetFileName');
+                    const targetPreviewContainer = document.getElementById('targetPreviewContainer');
+                    
+                    if (targetFileInput && targetPreviewImage) {
+                        targetFileInput.addEventListener('change', function(e) {
+                            if (e.target.files && e.target.files[0]) {
+                                // 显示文件名
+                                if (targetFileName) {
+                                    targetFileName.textContent = e.target.files[0].name;
+                                }
+                                
+                                // 显示预览图片
+                                const reader = new FileReader();
+                                reader.onload = function(event) {
+                                    targetPreviewImage.src = event.target.result;
+                                    targetPreviewImage.style.display = 'block';
+                                    // 显示预览容器
+                                    if (targetPreviewContainer) {
+                                        targetPreviewContainer.classList.add('show');
+                                    }
+                                }
+                                reader.readAsDataURL(e.target.files[0]);
+                            } else {
+                                // 清除预览
+                                if (targetFileName) {
+                                    targetFileName.textContent = '';
+                                }
+                                targetPreviewImage.src = '';
+                                targetPreviewImage.style.display = 'none';
+                                if (targetPreviewContainer) {
+                                    targetPreviewContainer.classList.remove('show');
+                                }
+                            }
+                        });
+                    }
+                    
+                    // 设置源图片预览
+                    const sourceFileInput = document.getElementById('source_image');
+                    const sourcePreviewImage = document.getElementById('sourcePreviewImage');
+                    const sourceFileName = document.getElementById('sourceFileName');
+                    const sourcePreviewContainer = document.getElementById('sourcePreviewContainer');
+                    
+                    if (sourceFileInput && sourcePreviewImage) {
+                        sourceFileInput.addEventListener('change', function(e) {
+                            if (e.target.files && e.target.files[0]) {
+                                // 显示文件名
+                                if (sourceFileName) {
+                                    sourceFileName.textContent = e.target.files[0].name;
+                                }
+                                
+                                // 显示预览图片
+                                const reader = new FileReader();
+                                reader.onload = function(event) {
+                                    sourcePreviewImage.src = event.target.result;
+                                    sourcePreviewImage.style.display = 'block';
+                                    // 显示预览容器
+                                    if (sourcePreviewContainer) {
+                                        sourcePreviewContainer.classList.add('show');
+                                    }
+                                }
+                                reader.readAsDataURL(e.target.files[0]);
+                            } else {
+                                // 清除预览
+                                if (sourceFileName) {
+                                    sourceFileName.textContent = '';
+                                }
+                                sourcePreviewImage.src = '';
+                                sourcePreviewImage.style.display = 'none';
+                                if (sourcePreviewContainer) {
+                                    sourcePreviewContainer.classList.remove('show');
+                                }
+                            }
+                        });
+                    }
+                    
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault(); // 阻止默认表单提交
+                        
+                        // 检查必填项
+                        const targetImageFile = document.getElementById('target_image').files[0];
+                        const sourceImageFile = document.getElementById('source_image').files[0];
+                        
+                        if (!targetImageFile) {
+                            showNotification('请上传目标图片！', 'warning', 3000);
+                            return;
+                        }
+                        
+                        if (!sourceImageFile) {
+                            showNotification('请上传源图片！', 'warning', 3000);
+                            return;
+                        }
+                        
+                        // 显示加载状态
+                        showLoading(true);
+                        generateButton.disabled = true;
+                        generateButton.textContent = '生成中...';
+                        
+                        // 准备表单数据
+                        const formData = new FormData(form);
+                        
+                        // 模拟API调用
+                        setTimeout(() => {
+                            // 模拟成功响应
+                            showNotification('任务提交成功，请在"我的任务"中查看进度', 'success', 3000);
+                            
+                            // 重置按钮状态
+                            showLoading(false);
+                            generateButton.disabled = false;
+                            generateButton.textContent = '生成换脸图像';
+                            
+                            // 刷新任务队列状态
+                            updateQueueStatus();
+                        }, 1500);
+                    });
+                });
+                
+                // 初始化数字输入框
+                function initNumberInputs(form) {
+                    const numberInputs = form.querySelectorAll('input[type="number"]');
+                    
+                    numberInputs.forEach(input => {
+                        const min = parseFloat(input.min);
+                        const max = parseFloat(input.max);
+                        const step = parseFloat(input.step) || 1;
+                        
+                        input.addEventListener('keydown', function(e) {
+                            // 允许数字、退格键、删除键、方向键和制表符
+                            if (!((e.key >= '0' && e.key <= '9') || 
+                                  e.key === '.' || 
+                                  e.key === '-' || 
+                                  e.key === 'Backspace' || 
+                                  e.key === 'Delete' || 
+                                  e.key === 'ArrowUp' || 
+                                  e.key === 'ArrowDown' || 
+                                  e.key === 'Tab')) {
+                                e.preventDefault();
+                            }
+                            
+                            // 防止多个小数点
+                            if (e.key === '.' && this.value.includes('.')) {
+                                e.preventDefault();
+                            }
+                            
+                            // 防止多个负号
+                            if (e.key === '-' && this.value.includes('-')) {
+                                e.preventDefault();
+                            }
+                        });
+                        
+                        input.addEventListener('change', function() {
+                            let value = parseFloat(this.value);
+                            
+                            if (isNaN(value)) {
+                                this.value = this.defaultValue;
+                            } else {
+                                if (value < min) this.value = min;
+                                if (value > max) this.value = max;
+                                
+                                // 确保值符合步长
+                                if (step % 1 !== 0) {
+                                    // 非整数步长，保留相应小数位
+                                    const decimalPlaces = step.toString().split('.')[1].length;
+                                    this.value = parseFloat(value.toFixed(decimalPlaces));
+                                } else {
+                                    // 整数步长
+                                    this.value = Math.round(value / step) * step;
+                                }
+                            }
+                        });
+                    });
+                }
+                
+                // 设置滑块同步
+                function setupSliderSync(sliderId, inputId) {
+                    const slider = document.getElementById(sliderId);
+                    const input = document.getElementById(inputId);
+                    
+                    if (slider && input) {
+                        // 滑块同步到输入框
+                        slider.addEventListener('input', function() {
+                            input.value = this.value;
+                        });
+                        
+                        // 输入框同步到滑块
+                        input.addEventListener('change', function() {
+                            slider.value = this.value;
+                        });
+                    }
+                }
+                
+                // 设置参数折叠功能
+                function setupParameterFolding() {
+                    const parameterGroups = document.querySelectorAll('.parameter-group');
+                    
+                    parameterGroups.forEach(group => {
+                        const header = group.querySelector('h3');
+                        const content = group.querySelector('.parameter-content');
+                        
+                        if (header && content) {
+                            header.addEventListener('click', function() {
+                                group.classList.toggle('collapsed');
+                            });
+                        }
+                    });
+                }
+                
+                // 显示加载状态
+                function showLoading(show) {
+                    const globalLoading = document.getElementById('globalLoading');
+                    const loadingIndicator = document.getElementById('loadingIndicator');
+                    
+                    if (globalLoading) {
+                        globalLoading.style.display = show ? 'flex' : 'none';
+                    }
+                    
+                    if (loadingIndicator) {
+                        loadingIndicator.style.display = show ? 'block' : 'none';
+                    }
+                }
+                
+                // 显示通知
+                function showNotification(message, type, duration = 3000) {
+                    // 创建通知元素
+                    const notification = document.createElement('div');
+                    notification.className = `notification ${type}`;
+                    notification.textContent = message;
+                    
+                    // 添加到body
+                    document.body.appendChild(notification);
+                    
+                    // 显示通知
+                    setTimeout(() => {
+                        notification.classList.add('show');
+                    }, 10);
+                    
+                    // 自动关闭
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                        setTimeout(() => {
+                            document.body.removeChild(notification);
+                        }, 300);
+                    }, duration);
+                }
+                
+                // 显示自动关闭的成功提示
+                function showAutoCloseNotification(message, duration = 2000) {
+                    showNotification(message, 'success', duration);
+                }
+            </script>
+        </form>
+
+        <a href="index.html" class="back-link">← 返回首页</a>
+        
+        <!-- 任务队列状态显示区域 -->
+        <div id="queueStatusContainer" class="queue-status" style="display: none;">
+            <h3>任务队列状态</h3>
+            <div id="queueStatus"></div>
+            <div class="task-progress">
+                <div class="task-progress-bar">
+                    <div class="task-progress-fill"></div>
+                    <div class="task-progress-text">等待中</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 打开任务模态框
+        function openTaskModal() {
+            // 显示模态框
+            const modal = document.getElementById('taskModal');
+            modal.style.display = 'block';
+            
+            // 添加关闭事件
+            const closeSpan = modal.querySelector('.close');
+            const closeButton = modal.querySelector('.close-button');
+            
+            if (closeSpan) {
+                closeSpan.onclick = function() {
+                    modal.style.display = 'none';
+                };
+            }
+            
+            if (closeButton) {
+                closeButton.onclick = function() {
+                    modal.style.display = 'none';
+                };
+            }
+            
+            // 点击模态框外部关闭
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            
+            // 首次加载任务列表
+            loadTaskList();
+        }
+        
+        // 加载任务列表
+        async function loadTaskList() {
+            try {
+                // 模拟加载任务列表
+                const tasks = [
+                    {
+                        task_id: 'task_54321',
+                        task_type: '换脸',
+                        status: 'success',
+                        timestamp: new Date().getTime() - 180000, // 3分钟前
+                        duration: 55,
+                        params: { prompt: '保持光线一致，自然融合', steps: 30, face_fusion_strength: 0.7 }
+                    },
+                    {
+                        task_id: 'task_09876',
+                        task_type: '换脸',
+                        status: 'running',
+                        timestamp: new Date().getTime() - 60000, // 1分钟前
+                        params: { prompt: '高清细节，真实感强', steps: 40, face_fusion_strength: 0.65 }
+                    }
+                ];
+                
+                const taskListElement = document.getElementById('taskList');
+                taskListElement.innerHTML = '';
+                
+                if (tasks.length === 0) {
+                    taskListElement.innerHTML = '<p class="no-tasks">暂无任务记录</p>';
+                    return;
+                }
+                
+                tasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'task-item';
+                    
+                    // 格式化任务信息
+                    const statusClass = getStatusClass(task.status);
+                    const formattedTime = new Date(task.timestamp).toLocaleString('zh-CN');
+                    let resultHtml = '';
+                    
+                    if (task.status === 'success') {
+                        resultHtml = '<button class="view-result-btn" onclick="viewTaskResult(\'' + task.task_id + '\')">查看结果</button>';
+                    }
+                    
+                    taskItem.innerHTML = `
+                        <div class="task-header">
+                            <span class="task-type">${task.task_type}</span>
+                            <span class="status-badge ${statusClass}">${getStatusText(task.status)}</span>
+                        </div>
+                        <div class="task-info">
+                            <p class="task-id">ID: ${task.task_id}</p>
+                            <p class="task-time">时间: ${formattedTime}</p>
+                            ${task.duration ? `<p class="task-duration">耗时: ${task.duration}秒</p>` : ''}
+                        </div>
+                        <div class="task-params">
+                            ${formatTaskParams(task.params)}
+                        </div>
+                        <div class="task-actions">
+                            ${resultHtml}
+                        </div>
+                    `;
+                    
+                    taskListElement.appendChild(taskItem);
+                });
+            } catch (error) {
+                console.error('加载任务列表失败:', error);
+                document.getElementById('taskList').innerHTML = '<p class="error-message">加载任务列表失败</p>';
+            }
+        }
+        
+        // 辅助函数：获取状态样式类
+        function getStatusClass(status) {
+            const statusClasses = {
+                'queued': 'status-queued',
+                'running': 'status-processing',
+                'success': 'status-completed',
+                'failed': 'status-error'
+            };
+            return statusClasses[status] || '';
+        }
+        
+        // 辅助函数：获取状态文本
+        function getStatusText(status) {
+            const statusTexts = {
+                'queued': '排队中',
+                'running': '处理中',
+                'success': '完成',
+                'failed': '失败'
+            };
+            return statusTexts[status] || status;
+        }
+        
+        // 辅助函数：格式化任务参数
+        function formatTaskParams(params) {
+            if (!params) return '';
+            
+            const paramItems = [];
+            for (const [key, value] of Object.entries(params)) {
+                // 将参数名转换为更友好的显示名称
+                const displayKey = key.replace(/_/g, ' ');
+                paramItems.push(`${displayKey}: ${value}`);
+            }
+            
+            return `<p>${paramItems.join(' | ')}</p>`;
+        }
+        
+        // 查看任务结果
+        function viewTaskResult(taskId) {
+            showNotification(`正在查看任务 ${taskId} 的结果`, 'info', 2000);
+            // 在实际项目中，这里应该跳转到结果页面或显示结果
+        }
+        
+        // 任务队列状态轮询
+        function startQueueStatusPolling() {
+            const queueStatusContainer = document.getElementById('queueStatusContainer');
+            const queueStatus = document.getElementById('queueStatus');
+            const progressBar = document.querySelector('.task-progress-fill');
+            const progressText = document.querySelector('.task-progress-text');
+            
+            if (!queueStatusContainer || !queueStatus || !progressBar || !progressText) return;
+            
+            // 显示队列状态容器
+            queueStatusContainer.style.display = 'block';
+            
+            // 模拟轮询过程
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                
+                if (progress <= 100) {
+                    progressBar.style.width = `${progress}%`;
+                    
+                    if (progress < 30) {
+                        progressText.textContent = '排队中...';
+                        queueStatus.textContent = '您的任务正在排队等待处理...';
+                    } else if (progress < 80) {
+                        progressText.textContent = '处理中...';
+                        queueStatus.textContent = 'AI正在为您生成换脸图像，请稍候...';
+                    } else {
+                        progressText.textContent = '即将完成...';
+                        queueStatus.textContent = '图像生成即将完成，正在进行最后的优化...';
+                    }
+                } else {
+                    clearInterval(interval);
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '完成';
+                    queueStatus.textContent = '您的换脸图像已生成完成！';
+                    
+                    // 任务完成后显示结果
+                    setTimeout(() => {
+                        showNotification('换脸图像已生成完成！', 'success', 3000);
+                        
+                        // 5秒后隐藏队列状态
+                        setTimeout(() => {
+                            queueStatusContainer.style.display = 'none';
+                        }, 5000);
+                    }, 1000);
+                }
+            }, 500);
+        }
+        
+        // 更新队列状态
+        function updateQueueStatus() {
+            // 模拟更新队列状态
+            startQueueStatusPolling();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 启动任务队列状态轮询
+            if (typeof startQueueStatusPolling === 'function') {
+                startQueueStatusPolling();
+            }
+        });
+    </script>
+    
+    <!-- 任务模态框 -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">任务列表</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div id="taskList">
+                <!-- 任务列表将通过JavaScript动态加载 -->
+            </div>
+            <button class="close-button" style="margin-top: 1rem;">关闭</button>
+        </div>
+    </div>
+            <!-- 页脚 -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-info">
+                <h3 class="footer-title">AI Diffusion</h3>
+                <p class="footer-text">一个集成了文生图、图生图、文生视频、图生视频、文生音频等AIGC功能的创意平台，同时包含医疗问答、股票分析、教育学习、剧本创作等<em><b>智能体</b></em>，为您提供全方位的AI创作体验。</p>
+                <p class="footer-text">使用说明可查看<a href="https://github.com/PengLine/ai-diffusion-aigc" target="_blank" style="color:rgba(18, 198, 221, 0.948);">帮助文档</a></p>
+            </div>
+            <div class="footer-links">
+                <h4 class="footer-title">快速链接</h4>
+                <ul>
+                    <li><a href="./index.html"><b><font color="#ff80ab">首页</font></b></a></li>
+                    <li><a href="./config.html"><b><font color="#d63031">配置</font></b></a></li>
+                    <li><a href="./text_to_image.html">文生图</a></li>
+                    <li><a href="./image_to_image.html">图生图</a></li>
+                    <li><a href="./text_to_video.html">文生视频</a></li>
+                    <li><a href="./image_to_video.html">图生视频</a></li>
+                    <li><a href="./text_to_audio.html">文生音频</a></li>
+                    <li><a href="./medical_agent.html"><em><b>医疗问答</b></em></a></li>
+                    <li><a href="./"><em><b>股票分析</b></em></a></li>
+                    <li><a href="./"><em><b>教育学习</b></em></a></li>
+                    <li><a href="./"><em><b>剧本创作</b></em></a></li>
+                    <li><a href="./agent_config.html"><em><b>智能体配置</b></em></a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4 class="footer-title">联系我</h4>
+                <p class="footer-text">如有任何问题或建议，请随时联系我。</p>
+                <p class="footer-text">如果需要定制化功能，请随时联系我。</p>
+                <p class="footer-text"><a href="mailto:haeng2030@gmail.com" target="_blank" style="color:rgba(174, 183, 19, 0.945);">我的邮箱</a>  |  <a href="https://pengline.github.io" target="_blank" style="color:rgba(18, 198, 221, 0.948);">我的博客</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 AI Diffusion. HengLine 保留所有权利.</p>
+        </div>
+    </footer>	
+   
+</body>
+</html>

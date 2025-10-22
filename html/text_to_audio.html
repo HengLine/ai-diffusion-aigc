@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文生音频 - AI Diffusion</title>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+            sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin: 1.5rem 0 1rem;
+            color: #444;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            margin: 1.2rem 0 0.8rem;
+            color: #555;
+        }
+
+        /* 导航栏样式 */
+        nav {
+            background-color: #4b5460;
+            color: white;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+        .nav-menu {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-item a {
+            color: rgb(210, 239, 216);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+        }
+        .nav-item a:hover {
+            opacity: 0.8;
+        }
+        /* 当前选中菜单高亮样式 */
+        .nav-item a.active {
+            font-weight: 700;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #11d8cf;
+            font-size: large;
+            border-bottom: 2px solid white;
+        }
+        /* 其他按钮特定样式 */
+        .nav-item.dropdown a.nav-link {
+            position: relative;
+        }
+        /* 其他按钮点击后高亮样式 */
+        .nav-item.dropdown a.nav-link.clicked {
+            border-bottom: 2px solid white;
+            font-weight: 700;
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .tasks-button {
+            background-color: #ffffff;
+            color: #4a6fa5;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        .tasks-button:hover {
+            background-color: #f8f9fa;
+        }
+        .task-badge {
+            background-color: #dc3545;
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+            font-weight: 600;
+        }
+        /* 移动端导航菜单 */
+        .mobile-menu-button {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .mobile-menu {
+            background-color: #4a6fa5;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 20px;
+            border-radius: 0 0 8px 8px;
+            display: none;
+        }
+        .mobile-menu ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .mobile-menu li {
+            margin-bottom: 0.5rem;
+        }
+        .mobile-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+            padding: 0.5rem 0;
+        }
+        /* 移动端选中菜单高亮样式 - 保持与桌面端一致的下划线效果 */
+        .mobile-menu a.active {
+            font-weight: 700;
+            font-size: large;
+            background-color: #856404;
+            border-bottom: 2px solid white;
+            padding-left: 10px;
+        }
+        /* 下拉菜单样式 - 垂直展示优化 */
+        .dropdown-menu {
+            position: absolute;
+            background-color: #36647d;
+            border: none;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 0.5rem 0;
+            min-width: 120px;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .dropdown-item {
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            display: block;
+            white-space: nowrap;
+            font-size: 0.95rem;
+            border-left: 3px solid transparent;
+        }
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: rgba(255, 255, 255, 0.5);
+        }
+        /* 不同颜色标注的下拉菜单项 */
+        .dropdown-item.change-clothes {
+            color: #ffd700;
+        }
+        .dropdown-item.change-clothes:hover {
+            color: #fff9c4;
+            border-left-color: #ffd700;
+        }
+        .dropdown-item.change-face {
+            color: #ff80ab;
+        }
+        .dropdown-item.change-face:hover {
+            color: #ffc1e0;
+            border-left-color: #ff80ab;
+        }
+        .dropdown-item.change-hairstyle {
+            color: #81d4fa;
+        }
+        .dropdown-item.change-hairstyle:hover {
+            color: #b3e5fc;
+            border-left-color: #81d4fa;
+        }
+        /* 桌面端下拉菜单位置调整 */
+        .nav-item.dropdown {
+            position: relative;
+        }
+        .nav-item.dropdown .dropdown-menu {
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+        }
+        /* 移动端下拉菜单样式优化 */
+        .mobile-nav-item.dropdown {
+            position: relative;
+        }
+        .mobile-menu .dropdown-menu {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.05);
+            box-shadow: none;
+            margin: 0.25rem 0 0.5rem 1rem;
+            padding: 0;
+            min-width: auto;
+            border-radius: 4px;
+        }
+        .mobile-menu .dropdown-item {
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-left: 2px solid transparent;
+        }
+        .mobile-menu .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: white;
+        }
+        /* 下拉箭头动画 */
+        .ml-1 {
+            transition: transform 0.2s ease;
+            display: inline-block;
+        }
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+            .mobile-menu-button {
+                display: block;
+            }
+            .filter-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 2rem 0;
+            margin-top: 3rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        
+        .footer-info,
+        .footer-links,
+        .footer-contact {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 2rem;
+            padding: 0 15px;
+        }
+        
+        /* 统一标题样式 */
+        .footer-title {
+            color: white;
+            margin-top: 0;
+            margin-bottom: 1.2rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            width: 100%;
+            text-align: center !important;
+        }
+        
+        /* 标题居中 - 使用继承方式让标题居中 */
+        .footer-info, .footer-links, .footer-contact {
+            text-align: left;
+        }
+        
+        /* 确保标题居中显示 */
+        .footer-info h3,
+        .footer-info h4,
+        .footer-links h3,
+        .footer-links h4,
+        .footer-contact h3,
+        .footer-contact h4,
+        .footer-title {
+            text-align: center;
+        }
+        
+        /* 统一段落样式 */
+        .footer-text {
+            color: #bdc3c7;
+            font-size: 0.95rem;
+        }
+        
+        /* 链接样式优化 - 每行显示三个链接 */
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem 1rem;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0;
+        }
+        
+        .footer-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            position: relative;
+            padding-left: 12px;
+            white-space: nowrap;
+        }
+        
+        .footer-links a:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+            font-size: 0.7rem;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .footer-links a:hover:before {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        /* 底部版权信息 */
+        .footer-bottom {
+            background-color: #34495e;
+            padding: 1.2rem 0;
+            text-align: center;
+            border-top: 1px solid #4a5f7a;
+        }
+        
+        .footer-bottom p {
+            margin: 0;
+            color: #bdc3c7;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        
+        /* 响应式设计优化 */
+        @media (max-width: 768px) {
+            .footer-container {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .footer-info,
+            .footer-links,
+            .footer-contact {
+                margin-bottom: 2rem;
+                padding: 0 10px;
+            }
+            
+            .footer-title {
+                font-size: 1.2rem;
+            }
+            
+            .footer-links a {
+                padding-left: 0;
+            }
+            
+            .footer-links ul {
+                grid-template-columns: 1fr;
+                gap: 0.8rem 0;
+            }
+            
+            .footer-links a:before {
+                display: none;
+            }
+            
+            .footer-links a:hover {
+                transform: none;
+            }
+        }	
+
+        /* 表单样式 */
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            height: 120px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        .form-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+        }
+
+        .form-button:hover {
+            background-color: #0056b3;
+        }
+
+        .form-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 参数控制优化 */
+        .parameter-group {
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .parameter-group h3 {
+            background-color: #f1f1f1;
+            padding: 0.75rem 1rem;
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .parameter-group h3:after {
+            content: "▼";
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+        }
+
+        .parameter-group.collapsed h3:after {
+            transform: rotate(-90deg);
+        }
+
+        .parameter-content {
+            padding: 1rem;
+        }
+
+        .parameter-group.collapsed .parameter-content {
+            display: none;
+        }
+
+        .slider-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .slider-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .slider {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-value {
+            width: 70px;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .parameter-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        /* 状态框样式 */
+        .status-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .status-box.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status-box.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .status-box.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+
+        .status-box.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        /* 队列状态区域样式 */
+        .queue-status {
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .queue-status h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        /* 任务进度条样式 */
+        .task-progress {
+            margin-top: 1rem;
+        }
+
+        .task-progress-bar {
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .task-progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        .task-progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8rem;
+            color: #333;
+        }
+
+        /* 提示框样式 */
+        .tip-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .tip-box h4 {
+            margin-top: 0;
+            color: #1565c0;
+        }
+
+        .tip-box ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        /* 返回首页链接 */
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 加载指示器 */
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 123, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #007bff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .form-container {
+                padding: 1rem;
+            }
+
+            .slider-input-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .slider {
+                width: 100%;
+            }
+
+            .slider-value {
+                width: 100%;
+                max-width: 100px;
+            }
+        }
+
+        
+    </style>
+</head>
+<body>
+    <!-- 导航栏组件 -->
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">AIGC 创意平台</a>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="./index.html">首页</a></li>
+                <li class="nav-item"><a href="./config.html">配置</a></li>
+                <li class="nav-item"><a href="./text_to_image.html">文生图</a></li>
+                <li class="nav-item"><a href="./image_to_image.html" class="active">图生图</a></li>
+                <li class="nav-item"><a href="./text_to_video.html">文生视频</a></li>
+                <li class="nav-item"><a href="./image_to_video.html">图生视频</a></li>
+                <li class="nav-item"><a href="./text_to_audio.html">文生音频</a></li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="otherMenuBtn" onclick="toggleOtherMenu()">
+                        其他
+                        <span id="otherMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="otherMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="./change_clothes.html" class="dropdown-item change-clothes">换装</a>
+                        <a href="./change_face.html" class="dropdown-item change-face">换脸</a>
+                        <a href="./change_hair_style.html" class="dropdown-item change-hairstyle">换发型</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="agentMenuBtn" onclick="toggleAgentMenu()">
+                        智能体|Agent
+                        <span id="agentMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="agentMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="./agent/agent_config.html" class="dropdown-item agent-config">智能体配置</a>
+                    <a href="./agent/medical_agent.html" class="dropdown-item agent-medical">医疗问答Agent</a>
+                    <a href="./agent/stocks_agent.html" class="dropdown-item agent-stocks">股票分析Agent</a>
+                    <a href="./agent/study_agent.html" class="dropdown-item agent-study">教育学习Agent</a>
+                    <a href="./agent/movie_agent.html" class="dropdown-item agent-movie">剧本创作Agent</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="nav-right">
+                <button id="tasksButton" class="tasks-button">
+                    我的任务 <span id="queueTaskBadge" class="task-badge" style="display: inline; visibility: visible; opacity: 1;">0</span>
+                </button>
+                <button id="mobileMenuButton" class="mobile-menu-button">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 12H21M3 6H21M3 18H21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="mobile-menu" style="display: none;">
+            <ul>
+                <li><a href="./index.html">首页</a></li>
+                <li><a href="./text_to_image.html">文生图</a></li>
+                <li><a href="./image_to_image" class="active">图生图</a></li>
+                <li><a href="./text_to_video.html">文生视频</a></li>
+                <li><a href="./image_to_video.html">图生视频</a></li>
+                <li><a href="./text_to_audio.html">文生音频</a></li>
+                <li class="mobile-nav-item dropdown">
+                    <a href="#" class="mobile-nav-link dropdown-toggle" id="mobileOtherMenuBtn" onclick="toggleMobileOtherMenu()">
+                        其他
+                        <span id="mobileOtherMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="mobileOtherMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="./change_clothes.html" class="dropdown-item change-clothes">换装</a>
+                        <a href="./change_face.html" class="dropdown-item change-face">换脸</a>
+                        <a href="./change_hair_style.html" class="dropdown-item change-hairstyle">换发型</a>
+                    </div>
+                </li>
+                <li class="mobile-nav-item dropdown">
+                    <a href="#" class="mobile-nav-link dropdown-toggle" id="mobileAgentMenuBtn" onclick="toggleMobileAgentMenu()">
+                        智能体|Agent
+                        <span id="mobileAgentMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="mobileAgentMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="./agent/config.html" class="dropdown-item agent-config">智能体配置</a>
+                        <a href="./agent/medical.html" class="dropdown-item agent-medical">医疗问答Agent</a>
+                        <a href="./agent/stocks.html" class="dropdown-item agent-stocks">股票分析Agent</a>
+                        <a href="./agent/study.html" class="dropdown-item agent-study">教育学习Agent</a>
+                        <a href="./agent/movie.html" class="dropdown-item agent-movie">剧本创作Agent</a>
+                    </div>
+                </li>
+                <li><a href="./config.html">配置</a></li>
+            </ul>
+        </div>
+    </nav>
+
+
+
+    <!-- 全局加载动画 -->
+    <div id="globalLoader" class="global-loader" style="display: none;">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p>加载中...</p>
+        </div>
+    </div>
+
+    <!-- 主要内容 -->
+    <div class="container">
+        <h1>文生音频</h1>
+        <div class="form-container">
+            <form id="textToAudioForm">
+                <!-- 文生音频指南提示框 -->
+                <div class="tip-box">
+                    <h4>💡 文生音频指南</h4>
+                    <p>请输入详细的音频描述，包括音色、节奏、风格等要素。</p>
+                    <ul>
+                        <li>示例："一段轻快的钢琴旋律，节奏明快，适合用作背景音乐"</li>
+                        <li>示例："低沉浑厚的男声旁白，语速适中，富有情感"</li>
+                    </ul>
+                </div>
+
+                <!-- 提示词输入 -->
+                <div class="form-group">
+                    <label for="prompt">提示词</label>
+                    <textarea id="prompt" name="prompt" placeholder="请输入详细的音频描述...">一段轻快的钢琴旋律，节奏明快，适合用作背景音乐</textarea>
+                </div>
+
+                <!-- 负面提示词 -->
+                <div class="form-group">
+                    <label for="negative_prompt">负面提示词</label>
+                    <textarea id="negative_prompt" name="negative_prompt" placeholder="请输入不希望出现的特征..."></textarea>
+                </div>
+
+                <!-- 模型参数设置 -->
+                <div class="parameter-group collapsed">
+                    <h3>模型参数设置</h3>
+                    <div class="parameter-content">
+                        <div class="slider-container">
+                            <label for="stepsSlider">生成步数</label>
+                            <div class="slider-input-group">
+                                <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="30">
+                                <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="30" class="slider-value">
+                            </div>
+                            <p class="parameter-description">步数越多，细节越丰富，但生成时间越长，建议值：20-40</p>
+                        </div>
+
+                        <div class="slider-container">
+                            <label for="cfgSlider">提示引导强度（CFG Scale）</label>
+                            <div class="slider-input-group">
+                                <input type="range" id="cfgSlider" class="slider" min="1" max="30" step="0.01" value="8.0">
+                                <input type="number" id="cfg" name="cfg" min="1" max="30" step="0.01" value="8.0" class="slider-value">
+                            </div>
+                            <p class="parameter-description">值越高，越严格遵循提示词，建议值：5.0-10.0</p>
+                            <div class="parameter-description">
+                                <li>1-3：非常弱的提示引导，图像更"自由"，可能偏离提示，但风格更自然、有创意。实验性创作、抽象艺术、想获得意外效果时</li>
+                                <li>4 ~ 7推荐范围（平衡点）：提示有明显影响，同时保留自然细节和多样性。大多数通用场景，如人物、风景、插画等</li>
+                                <li>8 ~ 12：强烈遵循提示，细节更贴合文字，但可能出现过度锐化、不自然或伪影。需要精确控制构图、文字、物体位置的场景</li>
+                                <li>13 ~ 20+：极强引导，极易产生"过拟合"：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
+                            </div>
+                        </div>
+
+                        <div class="slider-container">
+                            <label for="sampler_name">采样算法</label>
+                            <div class="slider-input-group">
+                                <select id="sampler_name" name="sampler_name" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                                    <option value="euler">⚡ Euler (快速基础)</option>
+                                    <option value="euler_ancestral">Euler Ancestral</option>
+                                    <option value="heun">Heun</option>
+                                    <option value="dpm_2">DPM2</option>
+                                    <option value="dpm_2_ancestral">DPM2 Ancestral</option>
+                                    <option value="dpmpp_2s_ancestral">DPM++ 2S Ancestral</option>
+                                    <option value="dpmpp_2m" selected>⚖️ DPM++ 2M (平衡)</option>
+                                    <option value="dpmpp_2m_sde">DPM++ 2M SDE</option>
+                                    <option value="dpmpp_3m_sde">🔍 DPM++ 3M SDE (精细细节)</option>
+                                    <option value="dpmpp_3m_sde_gpu">🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                                    <option value="uni_pc">UniPC</option>
+                                </select>
+                            </div>
+                            <div class="parameter-description">
+                                选择用于生成音频的采样算法，不同的算法会产生不同的效果和速度。
+                            </div>
+                            <div class="parameter-description">
+                                <li>Euler：基础算法，适合大多数场景，生成速度快</li>
+                                <li>DPM++ 2M：高质量算法，平衡速度和质量</li>
+                                <li>DPM++ 3M SDE：高质量算法，适合需要精细细节的场景</li>
+                                <li>DPM++ 3M SDE GPU：GPU优化版本，速度更快</li>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 音频生成设置 -->
+                <div class="parameter-group collapsed">
+                    <h3>音频生成设置</h3>
+                    <div class="parameter-content">
+                        <div class="slider-container">
+                            <label for="secondsSlider">音频时长（秒）</label>
+                            <div class="slider-input-group">
+                                <input type="range" id="secondsSlider" class="slider" min="5" max="60" step="1" value="20">
+                                <input type="number" id="seconds" name="seconds" min="5" max="60" step="1" value="20" class="slider-value">
+                            </div>
+                            <p class="parameter-description">音频时长，建议值：10-30秒</p>
+                        </div>
+
+                        <div class="slider-container">
+                            <label for="batchSizeSlider">生成数量</label>
+                            <div class="slider-input-group">
+                                <input type="range" id="batchSizeSlider" class="slider" min="1" max="5" step="1" value="1">
+                                <input type="number" id="batch_size" name="batch_size" min="1" max="5" step="1" value="1" class="slider-value">
+                            </div>
+                            <p class="parameter-description">生成的音频数量，最多5个，建议值：1</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="form-button" id="generateButton">生成音频</button>
+                <!-- 加载指示器 -->
+                <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <span>处理中...</span>
+                </div>
+            </form>
+
+            <!-- 任务队列状态显示区域 -->
+            <div id="queueStatusContainer" class="queue-status" style="display: none;">
+                <h3>任务队列状态</h3>
+                <div id="queueStatus"></div>
+                <div class="task-progress">
+                    <div class="task-progress-bar">
+                        <div class="task-progress-fill"></div>
+                        <div class="task-progress-text">等待中</div>
+                    </div>
+                </div>
+                <!-- 连接状态指示器 -->
+                <div id="connectionStatus" class="connection-status" style="font-size: 12px; margin-top: 5px; color: #666;">
+                    <span id="statusIcon" class="status-icon" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #ccc; margin-right: 5px;"></span>
+                    <span id="statusText">加载中...</span>
+                </div>
+            </div>
+
+            <a href="index.html" class="back-link">← 返回首页</a>
+        </div>
+    </div>
+
+    <!-- 通知组件 -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- 任务模态框 -->
+    <div id="taskModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 10000; overflow-y: auto;">
+        <div class="modal-content" style="background-color: #fff; margin: 10% auto; padding: 2rem; border-radius: 8px; max-width: 800px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0;">我的任务</h2>
+                <button id="closeTaskModal" class="modal-close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- 任务筛选器 -->
+                <div class="filter-container" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                    <div class="filter-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label>日期范围</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="date" id="taskDateFrom" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <input type="date" id="taskDateTo" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <div class="filter-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label>状态</label>
+                        <select id="taskStatusFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="all">全部</option>
+                            <option value="pending">等待中</option>
+                            <option value="running">运行中</option>
+                            <option value="success">成功</option>
+                            <option value="failed">失败</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label>任务类型</label>
+                        <select id="taskTypeFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="all">全部</option>
+                            <option value="text_to_image">文生图</option>
+                            <option value="text_to_audio">文生音频</option>
+                        </select>
+                    </div>
+                    <div style="align-self: flex-end;">
+                        <button id="applyTaskFilters" class="form-button" style="padding: 0.5rem 1rem; font-size: 0.9rem;">应用筛选</button>
+                    </div>
+                </div>
+                <!-- 任务列表 -->
+                <div id="taskList" style="max-height: 500px; overflow-y: auto;">
+                    <!-- 任务列表将通过JavaScript动态生成 -->
+                    <div style="text-align: center; padding: 2rem; color: #666;">加载任务列表中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-info">
+                <h3 class="footer-title">AI Diffusion</h3>
+                <p class="footer-text">一个集成了文生图、图生图、文生视频、图生视频、文生音频等AIGC功能的创意平台，同时包含医疗问答、股票分析、教育学习、剧本创作等<em><b>智能体</b></em>，为您提供全方位的AI创作体验。</p>
+                <p class="footer-text">使用说明可查看<a href="https://github.com/PengLine/ai-diffusion-aigc" target="_blank" style="color:rgba(18, 198, 221, 0.948);">帮助文档</a></p>
+            </div>
+            <div class="footer-links">
+                <h4 class="footer-title">快速链接</h4>
+                <ul>
+                    <li><a href="./index.html"><b><font color="#ff80ab">首页</font></b></a></li>
+                    <li><a href="./config.html"><b><font color="#d63031">配置</font></b></a></li>
+                    <li><a href="./text_to_image.html">文生图</a></li>
+                    <li><a href="./image_to_image.html">图生图</a></li>
+                    <li><a href="./text_to_video.html">文生视频</a></li>
+                    <li><a href="./image_to_video.html">图生视频</a></li>
+                    <li><a href="./text_to_audio.html">文生音频</a></li>
+                    <li><a href="./medical_agent.html"><em><b>医疗问答</b></em></a></li>
+                    <li><a href="./"><em><b>股票分析</b></em></a></li>
+                    <li><a href="./"><em><b>教育学习</b></em></a></li>
+                    <li><a href="./"><em><b>剧本创作</b></em></a></li>
+                    <li><a href="./agent_config.html"><em><b>智能体配置</b></em></a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4 class="footer-title">联系我</h4>
+                <p class="footer-text">如有任何问题或建议，请随时联系我。</p>
+                <p class="footer-text">如果需要定制化功能，请随时联系我。</p>
+                <p class="footer-text"><a href="mailto:haeng2030@gmail.com" target="_blank" style="color:rgba(174, 183, 19, 0.945);">我的邮箱</a>  |  <a href="https://pengline.github.io" target="_blank" style="color:rgba(18, 198, 221, 0.948);">我的博客</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 AI Diffusion. HengLine 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <!-- 引入Socket.IO客户端库 -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js" integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI" crossorigin="anonymous"></script>
+
+    <script>
+        // 导航栏相关函数
+        function toggleOtherMenu() {
+            const menuContent = document.getElementById('otherMenuContent');
+            const menuIcon = document.getElementById('otherMenuIcon');
+            
+            if (menuContent) {
+                menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
+                menuIcon.textContent = menuContent.style.display === 'block' ? '▲' : '▼';
+            }
+        }
+        
+        function toggleAgentMenu() {
+            const menuContent = document.getElementById('agentMenuContent');
+            const menuIcon = document.getElementById('agentMenuIcon');
+            
+            if (menuContent) {
+                menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
+                menuIcon.textContent = menuContent.style.display === 'block' ? '▲' : '▼';
+            }
+        }
+        
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu) {
+                mobileMenu.style.display = mobileMenu.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+        
+        function toggleMobileOtherMenu() {
+            const menuContent = document.getElementById('mobileOtherMenuContent');
+            const menuIcon = document.getElementById('mobileOtherMenuIcon');
+            
+            if (menuContent) {
+                menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
+                menuIcon.textContent = menuContent.style.display === 'block' ? '▲' : '▼';
+            }
+        }
+        
+        function toggleMobileAgentMenu() {
+            const menuContent = document.getElementById('mobileAgentMenuContent');
+            const menuIcon = document.getElementById('mobileAgentMenuIcon');
+            
+            if (menuContent) {
+                menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
+                menuIcon.textContent = menuContent.style.display === 'block' ? '▲' : '▼';
+            }
+        }
+        
+        // 确保路径匹配
+        function ensurePathMatch() {
+            const currentPath = window.location.pathname;
+            const basePath = '/html/';
+            
+            // 检查当前路径是否以basePath开头
+            if (!currentPath.startsWith(basePath)) {
+                // 重新构造正确的URL
+                const filename = currentPath.split('/').pop();
+                const correctPath = basePath + filename;
+                
+                // 重定向到正确的路径
+                window.location.href = correctPath;
+            }
+        }
+        
+        // 确保任务按钮正确更新未完成任务数
+        function loadUnfinishedTasksCount() {
+            try {
+                // 模拟加载未完成任务数
+                const taskBadge = document.getElementById('queueTaskBadge');
+                if (taskBadge) {
+                    // 这里应该从API获取实际的未完成任务数
+                    const unfinishedTasksCount = 0;
+                    
+                    if (unfinishedTasksCount > 0) {
+                        taskBadge.textContent = unfinishedTasksCount;
+                        taskBadge.style.display = 'inline';
+                    } else {
+                        taskBadge.textContent = '0';
+                        taskBadge.style.display = 'inline';
+                        taskBadge.style.visibility = 'visible';
+                        taskBadge.style.opacity = '1';
+                    }
+                }
+            } catch (error) {
+                console.error('加载未完成任务数失败:', error);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 确保路径匹配
+            if (typeof ensurePathMatch === 'function') {
+                ensurePathMatch();
+            }
+            
+            // 加载未完成任务数
+            loadUnfinishedTasksCount();
+            
+            // 定时更新未完成任务数
+            setInterval(loadUnfinishedTasksCount, 10000);
+            
+            // 初始化数字输入框
+            const form = document.querySelector('form');
+            if (form) {
+                initNumberInputs(form);
+            }
+
+            // 设置所有滑块的同步
+            setupSliderSync('stepsSlider', 'steps');
+            setupSliderSync('cfgSlider', 'cfg');
+            setupSliderSync('secondsSlider', 'seconds');
+            setupSliderSync('batchSizeSlider', 'batch_size');
+
+            // 设置参数折叠功能
+            setupParameterFolding();
+
+            // 表单提交处理
+            const promptTextarea = document.getElementById('prompt');
+            const generateButton = document.getElementById('generateButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const progressInfo = document.querySelector('.progress-info');
+
+            // 表单提交前的处理
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // 处理所有数字输入框的值
+                const numberInputs = document.querySelectorAll('input[type="number"]');
+                numberInputs.forEach(input => {
+                    if (input.value && !isNaN(parseFloat(input.value))) {
+                        const step = parseFloat(input.step) || 1;
+                        const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+                        input.value = parseFloat(input.value).toFixed(decimalPlaces);
+                    }
+                });
+
+                // 表单验证
+                if (!promptTextarea.value.trim()) {
+                    showAutoCloseNotification('请输入提示词', 'error');
+                    return;
+                }
+
+                // 构建JSON数据
+                const formData = {
+                    prompt: document.getElementById('prompt').value.trim(),
+                    negative_prompt: document.getElementById('negative_prompt').value,
+                    steps: document.getElementById('steps').value,
+                    cfg: document.getElementById('cfg').value,
+                    sampler_name: document.getElementById('sampler_name').value,
+                    seconds: document.getElementById('seconds').value,
+                    batch_size: document.getElementById('batch_size').value,
+                };
+
+                // 显示加载状态
+                generateButton.disabled = true;
+                generateButton.textContent = '生成中...';
+                loadingIndicator.style.display = 'block';
+            });
+
+            // 启动任务队列状态轮询
+            if (typeof startQueueStatusPolling === 'function') {
+                startQueueStatusPolling();
+            } else {
+                console.warn('startQueueStatusPolling function not available');
+            }
+        });
+
+        // 初始化数字输入框
+        function initNumberInputs(form) {
+            const numberInputs = form.querySelectorAll('input[type="number"]');
+            numberInputs.forEach(input => {
+                // 限制输入范围
+                input.addEventListener('change', function() {
+                    const min = parseFloat(this.min) || 0;
+                    const max = parseFloat(this.max) || Infinity;
+                    const step = parseFloat(this.step) || 1;
+                    
+                    if (this.value < min) this.value = min;
+                    if (this.value > max) this.value = max;
+                });
+            });
+        }
+
+        // 设置滑块同步
+        function setupSliderSync(sliderId, inputId) {
+            const slider = document.getElementById(sliderId);
+            const input = document.getElementById(inputId);
+            
+            if (slider && input) {
+                // 滑块变化时更新输入框
+                slider.addEventListener('input', function() {
+                    input.value = this.value;
+                });
+                
+                // 输入框变化时更新滑块
+                input.addEventListener('change', function() {
+                    slider.value = this.value;
+                });
+            }
+        }
+
+        // 设置参数折叠功能
+        function setupParameterFolding() {
+            const parameterGroups = document.querySelectorAll('.parameter-group');
+            parameterGroups.forEach(group => {
+                const header = group.querySelector('h3');
+                if (header) {
+                    header.addEventListener('click', function() {
+                        group.classList.toggle('collapsed');
+                    });
+                }
+            });
+        }
+
+        // 显示自动关闭的通知
+        function showAutoCloseNotification(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            container.appendChild(notification);
+
+            // 动画效果
+            setTimeout(() => {
+                notification.style.transition = 'opacity 0.3s, transform 0.3s';
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 300);
+            }, duration);
+        }
+
+        // AJAX请求函数
+        function ajaxRequest(method, url, data, successCallback, errorCallback) {
+            const xhr = new XMLHttpRequest();
+            xhr.open(method, url, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (successCallback) successCallback(response);
+                    } catch (e) {
+                        console.error('解析响应失败:', e);
+                        if (errorCallback) errorCallback(new Error('解析响应失败'));
+                    }
+                } else {
+                    console.error('请求失败:', xhr.status, xhr.statusText);
+                    if (errorCallback) errorCallback(new Error(`请求失败: ${xhr.status} ${xhr.statusText}`));
+                }
+            };
+            
+            xhr.onerror = function() {
+                console.error('网络错误');
+                if (errorCallback) errorCallback(new Error('网络错误'));
+            };
+            
+            xhr.send(JSON.stringify(data));
+        }
+
+        // 任务队列状态更新逻辑
+        let pollingInterval = null;
+        let socket = null;
+        let useWebSocket = true; // 默认优先使用WebSocket
+        let lastUpdateTime = 0;
+        const MIN_POLLING_INTERVAL = 20000; // 最小轮询间隔，单位毫秒
+
+        // 更新连接状态指示器
+        function updateConnectionStatus(connected, message) {
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            
+            if (statusIcon && statusText) {
+                if (connected) {
+                    statusIcon.style.backgroundColor = '#28a745'; // 绿色表示已连接
+                    statusText.textContent = message || '已连接WebSocket';
+                } else {
+                    statusIcon.style.backgroundColor = '#dc3545'; // 红色表示未连接
+                    statusText.textContent = message || '正在使用轮询模式';
+                }
+            }
+        }
+
+        // 初始化WebSocket连接
+        function initWebSocket() {
+            try {
+                // 检查浏览器是否支持WebSocket
+                if (!window.io || !('WebSocket' in window)) {
+                    console.warn('当前浏览器不支持WebSocket，将使用轮询模式');
+                    useWebSocket = false;
+                    updateConnectionStatus(false, '浏览器不支持WebSocket');
+                    return;
+                }
+                
+                // 尝试建立WebSocket连接
+                // 在实际应用中，这里应该连接到真实的WebSocket服务器
+                // socket = io('/queue-status');
+                
+                // 模拟WebSocket连接状态
+                console.log('WebSocket初始化模拟');
+                updateConnectionStatus(false, '演示模式 - 模拟连接');
+                
+                // 模拟连接超时，降级到轮询
+                setTimeout(() => {
+                    if (socket && !socket.connected) {
+                        console.warn('WebSocket连接超时，将使用轮询模式');
+                        useWebSocket = false;
+                        updateConnectionStatus(false, 'WebSocket连接超时');
+                        startQueueStatusPolling();
+                    }
+                }, 5000);
+            } catch (error) {
+                console.error('初始化WebSocket失败:', error);
+                useWebSocket = false;
+                updateConnectionStatus(false, '初始化WebSocket失败');
+            }
+        }
+
+        // 处理队列状态数据
+        function processQueueStatusData(queueData) {
+            const queueStatusContainer = document.getElementById('queueStatusContainer');
+            const queueStatus = document.getElementById('queueStatus');
+            const taskProgressFill = document.querySelector('.task-progress-fill');
+            const taskProgressText = document.querySelector('.task-progress-text');
+            const queueTaskBadge = document.getElementById('queueTaskBadge');
+            
+            // 更新任务计数徽章
+            if (queueTaskBadge) {
+                const displayCount = queueData.unfinished_tasks_count || queueData.total_tasks || 0;
+                queueTaskBadge.style.display = 'inline-block';
+                queueTaskBadge.textContent = displayCount;
+            }
+            
+            if (queueData.in_queue && queueData.in_queue > 0 || queueData.total_tasks && queueData.total_tasks > 0) {
+                // 有排队任务或执行中任务，显示队列状态
+                if (queueStatusContainer) {
+                    queueStatusContainer.style.display = 'block';
+                }
+                
+                if (queueStatus) {
+                    const position = queueData.position || 0;
+                    const total = queueData.in_queue || 0;
+                    const estimatedTime = queueData.estimated_time || 0;
+                    
+                    // 确保显示状态信息
+                    queueStatus.innerHTML = `
+                        <p>当前位置/等待任务: ${position}/${total}</p>
+                        <p>预计等待时间: ${estimatedTime} </p>
+                        <p>执行中任务: ${queueData.running_tasks || 0}</p>
+                        <p>总任务数: ${queueData.total_tasks || 0}</p>
+                    `;
+                }
+                
+                if (taskProgressFill && taskProgressText) {
+                    const progress = queueData.progress || 0;
+                    taskProgressFill.style.width = `${progress}%`;
+                    taskProgressText.textContent = progress > 0 ? `${progress}%` : '等待中';
+                }
+            } else if (queueStatusContainer) {
+                // 没有排队任务，隐藏队列状态
+                queueStatusContainer.style.display = 'none';
+            }
+        }
+
+        // 处理单个任务状态数据
+        function processTaskStatusData(taskData) {
+            const queueStatusContainer = document.getElementById('queueStatusContainer');
+            const queueStatus = document.getElementById('queueStatus');
+            const taskProgressFill = document.querySelector('.task-progress-fill');
+            const taskProgressText = document.querySelector('.task-progress-text');
+            const queueTaskBadge = document.getElementById('queueTaskBadge');
+            
+            // 更新任务计数徽章
+            if (queueTaskBadge) {
+                queueTaskBadge.style.display = 'inline-block';
+                // 如果有其他任务，显示总任务数，否则显示1
+                queueTaskBadge.textContent = '1';
+            }
+            
+            // 显示队列状态
+            if (queueStatusContainer) {
+                queueStatusContainer.style.display = 'block';
+            }
+            
+            if (queueStatus) {
+                const position = taskData.queue_position || 0;
+                const total = position > 0 ? position : 0;
+                
+                // 构建任务状态信息
+                let statusInfo = `
+                    <p>任务ID: ${taskData.task_id}</p>
+                    <p>任务类型: ${taskData.task_type}</p>
+                    <p>当前状态: ${getStatusText(taskData.status)}</p>
+                `;
+                
+                if (position > 0) {
+                    statusInfo += `<p>当前队列位置: ${position}</p>`;
+                }
+                
+                if (taskData.start_time && taskData.end_time) {
+                    const duration = Math.round((taskData.end_time - taskData.start_time) / 60);
+                    statusInfo += `<p>执行时间: ${duration} 分钟</p>`;
+                } else if (taskData.start_time) {
+                    statusInfo += `<p>开始时间: ${new Date(taskData.start_time * 1000).toLocaleString()}</p>`;
+                }
+                
+                queueStatus.innerHTML = statusInfo;
+            }
+            
+            if (taskProgressFill && taskProgressText) {
+                // 根据任务状态设置进度条
+                let progress = 0;
+                if (taskData.status === 'running') {
+                    progress = 50; // 运行中显示50%
+                } else if (taskData.status === 'success') {
+                    progress = 100; // 成功显示100%
+                } else if (taskData.status === 'failed') {
+                    progress = 0; // 失败显示0%
+                }
+                
+                taskProgressFill.style.width = `${progress}%`;
+                taskProgressText.textContent = getStatusText(taskData.status);
+            }
+        }
+
+        // 启动轮询（作为WebSocket的备用方案）
+        function startQueueStatusPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            // 如果正在使用WebSocket，则不启动轮询
+            if (useWebSocket && socket && socket.connected) {
+                return;
+            }
+            
+            // 设置轮询间隔
+            pollingInterval = setInterval(updateQueueStatus, MIN_POLLING_INTERVAL);
+            
+            // 立即执行一次
+            updateQueueStatus();
+        }
+
+        function stopQueueStatusPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        function updateQueueStatus() {
+            // 使用ajaxRequest获取真实的队列状态数据
+            ajaxRequest('GET', '/api/queue/status', { task_type: getCurrentTaskType() }, function(response) {
+                if (response.data) {
+                    processQueueStatusData(response.data);
+                }
+            }, function(error) {
+                console.error('更新任务队列状态失败:', error);
+                // 如果失败，显示加载中状态
+                const queueStatus = document.getElementById('queueStatus');
+                const taskProgressText = document.querySelector('.task-progress-text');
+                
+                if (queueStatus) {
+                    queueStatus.innerHTML = '<p>加载队列状态中...</p>';
+                }
+                
+                if (taskProgressText) {
+                    taskProgressText.textContent = '加载中';
+                }
+            });
+        }
+
+        function openTaskStatusModal(data) {
+            try {
+                // 获取DOM元素
+                const queueStatusContainer = document.getElementById('queueStatusContainer');
+                const queueStatus = document.getElementById('queueStatus');
+                const taskProgressFill = document.querySelector('.task-progress-fill');
+                const taskProgressText = document.querySelector('.task-progress-text');
+                const queueTaskBadge = document.getElementById('queueTaskBadge');
+                
+                // 如果没有传入数据，使用默认数据
+                const taskData = data || {
+                    total_tasks: 0,
+                    in_queue: 0,
+                    position: 0,
+                    estimated_time: 0,
+                    progress: 0
+                };
+                
+                // 更新任务计数徽章
+                if (queueTaskBadge) {
+                    // 始终显示徽章，确保用户知道有任务系统
+                    queueTaskBadge.style.display = 'inline-block';
+                    queueTaskBadge.textContent = taskData.total_tasks || 0;
+                }
+                
+                // 有排队任务，显示队列状态
+                if (queueStatusContainer) {
+                    queueStatusContainer.style.display = 'block';
+                }
+                
+                if (queueStatus) {
+                    const position = taskData.position || 0;
+                    const total = taskData.in_queue || 0;
+                    const estimatedTime = taskData.estimated_time || 0;
+                    
+                    // 如果是模拟数据，显示模拟的任务队列信息
+                    if (!data) {
+                        queueStatus.innerHTML = `
+                            <p>任务队列演示</p>
+                            <p>当前队列位置: 模拟数据</p>
+                            <p>预计等待时间: 模拟数据</p>
+                        `;
+                    } else {
+                        queueStatus.innerHTML = `
+                            <p>当前队列位置: ${position}/${total}</p>
+                            <p>预计等待时间: ${estimatedTime} </p>
+                        `;
+                    }
+                }
+                
+                if (taskProgressFill && taskProgressText) {
+                    const progress = taskData.progress || 0;
+                    taskProgressFill.style.width = `${progress}%`;
+                    taskProgressText.textContent = progress > 0 ? `${progress}%` : '等待中';
+                }
+            } catch (error) {
+                console.error('打开任务状态模态框失败:', error);
+                
+                // 显示错误信息
+                const queueStatusContainer = document.getElementById('queueStatusContainer');
+                const queueStatus = document.getElementById('queueStatus');
+                
+                if (queueStatusContainer && queueStatus) {
+                    queueStatusContainer.style.display = 'block';
+                    queueStatus.innerHTML = `<p style="color: #dc3545;">无法获取队列状态，请刷新页面重试</p>`;
+                }
+            }
+        }
+
+        // 获取当前页面路径
+        function getCurrentPath() {
+            return window.location.pathname;
+        }
+
+        // 设置当前菜单高亮
+        function setCurrentMenuHighlight() {
+            const path = getCurrentPath();
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.href.includes(path)) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // 切换移动端菜单
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('show');
+        }
+
+        // 切换智能体菜单项显示/隐藏
+        function toggleAgentMenu() {
+            const agentDropdown = document.querySelector('.dropdown:has(.dropdown-item:contains("Agent"))');
+            if (agentDropdown) {
+                agentDropdown.classList.toggle('show');
+            }
+        }
+
+        // 切换移动端其他菜单项显示/隐藏
+        function toggleMobileOtherMenu() {
+            const otherDropdown = document.querySelector('.dropdown:has(.dropdown-item:contains("修复"))');
+            if (otherDropdown) {
+                otherDropdown.classList.toggle('show');
+            }
+        }
+
+        // 切换移动端智能体菜单项显示/隐藏
+        function toggleMobileAgentMenu() {
+            toggleAgentMenu();
+        }
+
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '等待中',
+                'running': '运行中',
+                'success': '成功',
+                'failed': '失败',
+                'cancelled': '已取消'
+            };
+            return statusMap[status] || status;
+        }
+
+
+        // 打开任务模态框
+        function openTaskModalWrapper() {
+            const taskModal = document.getElementById('taskModal');
+            if (taskModal) {
+                taskModal.style.display = 'block';
+                // 加载任务列表
+                loadTaskList();
+            }
+        }
+
+        // 关闭任务模态框
+        function closeTaskModalWrapper() {
+            const taskModal = document.getElementById('taskModal');
+            if (taskModal) {
+                taskModal.style.display = 'none';
+            }
+        }
+
+        // 加载未完成任务数
+        function loadUnfinishedTaskCount() {
+            // 使用ajaxRequest获取真实的未完成任务数
+            ajaxRequest('GET', '/api/tasks/unfinished_count', { task_type: getCurrentTaskType() }, function(response) {
+                const queueTaskBadge = document.getElementById('queueTaskBadge');
+                if (queueTaskBadge) {
+                    const count = response.data || 0;
+                    if (count > 0) {
+                        queueTaskBadge.style.display = 'inline-block';
+                        queueTaskBadge.textContent = count > 99 ? '99+' : count;
+                    } else {
+                        queueTaskBadge.style.display = 'none';
+                    }
+                }
+            }, function(error) {
+                console.error('加载未完成任务数失败:', error);
+                // 保持现有状态不变
+            });
+        }
+
+        // 查看任务结果
+        function viewTaskResult(taskId) {
+            // 使用ajaxRequest获取任务结果
+            ajaxRequest('GET', '/api/tasks/result', { task_id: taskId }, function(response) {
+                if (response.data && response.data.audio_url) {
+                    // 创建音频播放区域
+                    const audioResultModal = document.createElement('div');
+                    audioResultModal.className = 'modal';
+                    audioResultModal.style.display = 'block';
+                    audioResultModal.innerHTML = `
+                        <div class="modal-content" style="max-width: 500px;">
+                            <div class="modal-header">
+                                <h3>任务结果 - ${taskId}</h3>
+                                <span class="close-modal" style="cursor: pointer; font-size: 28px; font-weight: bold;">&times;</span>
+                            </div>
+                            <div class="modal-body" style="text-align: center; padding: 20px;">
+                                <audio controls style="width: 100%; margin-bottom: 20px;">
+                                    <source src="${response.data.audio_url}" type="audio/mpeg">
+                                    您的浏览器不支持音频播放。
+                                </audio>
+                                <a href="${response.data.audio_url}" download class="btn btn-primary" style="margin-top: 10px;">下载音频</a>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(audioResultModal);
+                    
+                    // 关闭模态框
+                    const closeModal = audioResultModal.querySelector('.close-modal');
+                    closeModal.addEventListener('click', function() {
+                        document.body.removeChild(audioResultModal);
+                    });
+                    
+                    // 点击模态框外部关闭
+                    audioResultModal.addEventListener('click', function(e) {
+                        if (e.target === audioResultModal) {
+                            document.body.removeChild(audioResultModal);
+                        }
+                    });
+                } else {
+                    showAutoCloseNotification('获取任务结果失败，无法播放音频', 'error');
+                }
+            }, function(error) {
+                console.error('获取任务结果失败:', error);
+                showAutoCloseNotification('获取任务结果失败，请稍后重试', 'error');
+            });
+        }
+        
+        // 页面加载完成事件处理
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置当前菜单高亮
+            setCurrentMenuHighlight();
+            
+            // 移动端菜单按钮事件
+            const mobileMenuButton = document.getElementById('mobileMenuButton');
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', toggleMobileMenu);
+            }
+            
+            // 任务按钮点击事件
+            const myTasksButton = document.getElementById('myTasksButton');
+            if (myTasksButton) {
+                myTasksButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openTaskModalWrapper();
+                });
+            }
+            
+            // 关闭任务模态框按钮
+            const closeTaskModalButton = document.getElementById('closeTaskModal');
+            if (closeTaskModalButton) {
+                closeTaskModalButton.addEventListener('click', closeTaskModalWrapper);
+            }
+            
+            // 点击模态框外部关闭
+            window.addEventListener('click', function(e) {
+                const taskModal = document.getElementById('taskModal');
+                if (taskModal && e.target === taskModal) {
+                    closeTaskModalWrapper();
+                }
+            });
+            
+            // 初始化WebSocket并启动轮询
+            initWebSocket();
+            startQueueStatusPolling();
+            
+            // 加载未完成任务数
+            loadUnfinishedTaskCount();
+            
+            // 每30秒刷新一次任务数量
+            setInterval(loadUnfinishedTaskCount, 30000);
+            
+            // 监听任务列表中的"查看结果"按钮点击事件
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('view-result-btn')) {
+                    const taskElement = e.target.closest('[style*="border: 1px solid #ddd"]');
+                    if (taskElement) {
+                        const taskId = taskElement.querySelector('[style*="font-weight: 600"]').textContent;
+                        viewTaskResult(taskId);
+                    }
+                }
+            });
+        });
+
+        // 页面卸载时停止轮询
+        window.addEventListener('beforeunload', function() {
+            stopQueueStatusPolling();
+        });
+    </script>
+
+
+</body>
+</html>

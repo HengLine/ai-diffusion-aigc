@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剧本创作Agent - HengLine AIGC创意平台</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 导航栏样式 */
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-item {
+            margin-left: 20px;
+        }
+
+        .nav-item a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-item a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item a.active {
+            background-color: #3498db;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white;
+            color: #333;
+            min-width: 180px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 10px 0;
+            display: none;
+            flex-direction: column;
+            z-index: 1001;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 移动端菜单按钮 */
+        .mobile-menu-button {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .tasks-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+
+        .tasks-button:hover {
+            background-color: #2980b9;
+        }
+
+        .task-badge {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 5px;
+        }
+
+        /* 移动端菜单 */
+        .mobile-menu {
+            background-color: #2c3e50;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            display: none;
+            z-index: 999;
+        }
+
+        .mobile-menu ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .mobile-menu li {
+            margin-bottom: 10px;
+        }
+
+        .mobile-menu a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .mobile-menu a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-menu a.active {
+            background-color: #3498db;
+        }
+
+        .mobile-nav-item.dropdown .dropdown-menu {
+            position: static;
+            background-color: #34495e;
+            margin-top: 10px;
+            box-shadow: none;
+        }
+
+        .mobile-nav-item.dropdown .dropdown-item {
+            color: white;
+            padding: 8px 15px;
+        }
+
+        .mobile-nav-item.dropdown .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-button {
+                display: block;
+            }
+        }
+
+        /* 页脚样式 */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 40px 0;
+            margin-top: 40px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .footer-info, .footer-links, .footer-contact {
+            flex: 1;
+        }
+
+        .footer-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .footer-text {
+            margin-bottom: 10px;
+            line-height: 1.8;
+            color: #ecf0f1;
+        }
+
+        .footer-links ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #3498db;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid #34495e;
+            color: #bdc3c7;
+        }
+
+        /* 响应式页脚 */
+        @media (max-width: 768px) {
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .footer-links ul {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 通知组件 */
+        #notificationContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .notification {
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 300px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+        }
+
+        .notification.success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .notification.error {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .notification.warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .notification.info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #9b59b6;
+            box-shadow: 0 0 0 2px rgba(155, 89, 182, 0.2);
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+            background-color: #fff;
+        }
+        select:focus {
+            outline: none;
+            border-color: #9b59b6;
+            box-shadow: 0 0 0 2px rgba(155, 89, 182, 0.2);
+        }
+        .number-input {
+            width: 80px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .number-input:focus {
+            outline: none;
+            border-color: #9b59b6;
+            box-shadow: 0 0 0 2px rgba(155, 89, 182, 0.2);
+        }
+        .form-button {
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            margin: 0 auto;
+            display: flex;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .form-button:hover {
+            background-color: #8e44ad;
+        }
+        .form-button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .result-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+            border-left: 3px solid #9b59b6;
+            padding-left: 20px;
+        }
+        .loading-indicator {
+            display: none;
+            margin-left: 10px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #9b59b6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .creative-tip {
+            background-color: #f3e5f5;
+            border: 1px solid #e1bee7;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #4a148c;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .form-container, .result-container {
+                padding: 20px;
+            }
+        }
+        
+        /* 导航栏样式 */
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links li {
+            margin-left: 20px;
+        }
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .nav-links a:hover {
+            background-color: #f5f5f5;
+        }
+        .nav-links a.active {
+            background-color: #9b59b6;
+            color: white;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 40px 0;
+            margin-top: 40px;
+        }
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .footer-links {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 20px;
+        }
+        .footer-links h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #ecf0f1;
+        }
+        .footer-links ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+        .footer-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer-links a:hover {
+            color: white;
+        }
+        .footer-contact {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 20px;
+        }
+        .footer-contact h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #ecf0f1;
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid #34495e;
+            width: 100%;
+        }
+        
+        /* 通知组件样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .notification.error {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .notification.warning {
+            background-color: #f39c12;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">HengLine AIGC</a>
+            <ul class="nav-links">
+                <li><a href="../index.html">首页</a></li>
+                <li><a href="../text_to_image.html">文生图</a></li>
+                <li><a href="../image_to_image.html">图生图</a></li>
+                <li><a href="../text_to_video.html">文生视频</a></li>
+                <li><a href="../image_to_video.html">图生视频</a></li>
+                <li><a href="../change_clothes.html">服装变换</a></li>
+                <li><a href="../config.html">配置</a></li>
+                <li><a href="../agent/index.html">智能体</a></li>
+            </ul>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="form-container">
+            <h1>剧本创作Agent</h1>
+            
+            <div class="creative-tip">
+                <strong>创作提示：</strong>输入您的剧本主题，选择剧本类型和角色数量，我们的AI创作助手将为您生成创意剧本内容。
+            </div>
+            
+            <form id="movieForm">
+                <div class="form-group">
+                    <label for="scriptTheme">剧本主题：</label>
+                    <input type="text" id="scriptTheme" name="scriptTheme" placeholder="请输入剧本主题（如：未来科幻、爱情故事、悬疑推理）" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scriptType">剧本类型：</label>
+                    <select id="scriptType" name="scriptType">
+                        <option value="dialogue">对话剧本</option>
+                        <option value="scene">场景剧本</option>
+                        <option value="outline">剧本大纲</option>
+                        <option value="comprehensive">综合剧本</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="characterCount">角色数量：</label>
+                    <input type="number" id="characterCount" name="characterCount" class="number-input" min="1" max="10" value="2" required>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" id="submitButton" class="form-button">
+                        创作剧本
+                        <span id="loadingIndicator" class="loading-indicator">⟳</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 结果显示区域 -->
+        <div id="resultContainer" class="result-container">
+            <h2>剧本内容</h2>
+            <div id="resultContent" class="result-content">
+                <!-- 结果将在这里显示 -->
+            </div>
+        </div>
+        
+        <a href="../index.html" class="back-link">← 返回首页</a>
+    </div>
+    
+    <!-- 通知组件 -->
+    <div id="notification" class="notification"></div>
+    
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-links">
+                <h3>快速链接</h3>
+                <ul>
+                    <li><a href="../index.html">首页</a></li>
+                    <li><a href="../text_to_image.html">文生图</a></li>
+                    <li><a href="../image_to_image.html">图生图</a></li>
+                    <li><a href="../text_to_video.html">文生视频</a></li>
+                    <li><a href="../image_to_video.html">图生视频</a></li>
+                    <li><a href="../change_clothes.html">服装变换</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h3>智能体服务</h3>
+                <ul>
+                    <li><a href="medical_agent.html">医疗问答</a></li>
+                    <li><a href="movie_agent.html" class="active">剧本创作</a></li>
+                    <li><a href="stocks_agent.html">股票分析</a></li>
+                    <li><a href="study_agent.html">教育学习</a></li>
+                    <li><a href="agent_config.html">智能体配置</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h3>联系我们</h3>
+                <p>邮箱：contact@hengline.com</p>
+                <p>微信：HengLineAI</p>
+                <p>GitHub：github.com/hengline</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 HengLine AIGC创意平台. 保留所有权利.</p>
+        </div>
+    </footer>
+    
+    <script>
+        // 通知函数
+        function showNotification(message, type = 'success', duration = 3000) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+        
+        function showAutoCloseNotification(message, duration = 2000) {
+            showNotification(message, 'success', duration);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('movieForm');
+            const submitButton = document.getElementById('submitButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // 获取表单数据
+                const scriptTheme = document.getElementById('scriptTheme').value;
+                const scriptType = document.getElementById('scriptType').value;
+                const characterCount = parseInt(document.getElementById('characterCount').value);
+                
+                // 验证剧本主题不能为空
+                if (!scriptTheme.trim()) {
+                    showNotification('请输入剧本主题！', 'warning', 3000);
+                    return;
+                }
+                
+                // 验证角色数量在有效范围内
+                if (isNaN(characterCount) || characterCount < 1 || characterCount > 10) {
+                    showNotification('角色数量必须在1-10之间！', 'warning', 3000);
+                    return;
+                }
+                
+                // 禁用按钮防止重复提交
+                submitButton.disabled = true;
+                submitButton.textContent = '正在创作剧本...';
+                loadingIndicator.style.display = 'inline-block';
+                
+                try {
+                    // 模拟API响应
+                    setTimeout(() => {
+                        const mockScript = `# ${scriptTheme} - ${getScriptTypeName(scriptType)}\n\n`;
+                        
+                        // 根据角色数量生成剧本
+                        let characters = [];
+                        for (let i = 1; i <= characterCount; i++) {
+                            characters.push(`角色${i}`);
+                        }
+                        
+                        let scriptContent = mockScript;
+                        
+                        if (scriptType === 'dialogue') {
+                            scriptContent += "## 对话内容\n\n";
+                            scriptContent += `${characters[0]}: 这里是一个关于${scriptTheme}的对话开始...\n`;
+                            scriptContent += `${characters[1]}: 我对这个主题很感兴趣，可以详细说说吗？\n`;
+                            if (characters.length > 2) {
+                                scriptContent += `${characters[2]}: 我认为这个话题需要更多角度的探讨...\n`;
+                            }
+                        } else if (scriptType === 'scene') {
+                            scriptContent += "## 场景描述\n\n";
+                            scriptContent += `**场景一**：${characters[0]}和${characters[1]}在一个与${scriptTheme}相关的环境中相遇...\n\n`;
+                            scriptContent += "【环境描写】这里是一个充满未来感/浪漫/悬疑氛围的空间...\n\n";
+                        } else if (scriptType === 'outline') {
+                            scriptContent += "## 剧本大纲\n\n";
+                            scriptContent += "### 第一幕：\n- 介绍主要角色\n- 引入${scriptTheme}的核心冲突\n\n";
+                            scriptContent += "### 第二幕：\n- 冲突升级\n- 角色面临挑战\n\n";
+                        } else {
+                            scriptContent += "## 综合剧本\n\n";
+                            scriptContent += "### 场景设置\n地点：相关场景\n时间：适当的时间点\n\n";
+                            scriptContent += "### 角色介绍\n";
+                            characters.forEach((char, index) => {
+                                scriptContent += `- ${char}：${getCharacterDescription(index)}\n`;
+                            });
+                            scriptContent += "\n### 对话内容\n";
+                            scriptContent += `${characters[0]}: 这是关于${scriptTheme}的故事...\n`;
+                        }
+                        
+                        // 显示结果
+                        resultContent.textContent = scriptContent;
+                        resultContainer.style.display = 'block';
+                        
+                        // 显示成功通知
+                        showAutoCloseNotification('剧本创作完成！', 2000);
+                        
+                        // 恢复按钮状态
+                        submitButton.disabled = false;
+                        submitButton.textContent = '创作剧本';
+                        loadingIndicator.style.display = 'none';
+                    }, 1500);
+                    
+                } catch (error) {
+                    showNotification(`请求失败: ${error.message}`, 'error', 3000);
+                    submitButton.disabled = false;
+                    submitButton.textContent = '创作剧本';
+                    loadingIndicator.style.display = 'none';
+                }
+            });
+            
+            // 辅助函数
+            function getScriptTypeName(type) {
+                const types = {
+                    'dialogue': '对话剧本',
+                    'scene': '场景剧本',
+                    'outline': '剧本大纲',
+                    'comprehensive': '综合剧本'
+                };
+                return types[type] || type;
+            }
+            
+            function getCharacterDescription(index) {
+                const descriptions = [
+                    '主角，具有鲜明的个性',
+                    '重要配角，推动剧情发展',
+                    '反派角色，制造冲突',
+                    '支持角色，提供帮助',
+                    '线索角色，揭示关键信息'
+                ];
+                return descriptions[index % descriptions.length];
+            }
+        });
+    </script>
+
+    <!-- 导航栏 -->
+    <header>
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo">AI Diffusion</a>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="../index.html">首页</a></li>
+                <li class="nav-item"><a href="../config.html">配置</a></li>
+                <li class="nav-item"><a href="../text_to_image.html">文生图</a></li>
+                <li class="nav-item"><a href="../image_to_image.html">图生图</a></li>
+                <li class="nav-item"><a href="../text_to_video.html">文生视频</a></li>
+                <li class="nav-item"><a href="../image_to_video.html">图生视频</a></li>
+                <li class="nav-item"><a href="../text_to_audio.html">文生音频</a></li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link dropdown-toggle active" id="agentMenuBtn" onclick="toggleAgentMenu()">
+                        智能体|Agent
+                        <span id="agentMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="agentMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="agent_config.html" class="dropdown-item agent-config">智能体配置</a>
+                        <a href="medical_agent.html" class="dropdown-item agent-medical">医疗问答Agent</a>
+                        <a href="stocks_agent.html" class="dropdown-item agent-stocks">股票分析Agent</a>
+                        <a href="study_agent.html" class="dropdown-item agent-study">教育学习Agent</a>
+                        <a href="movie_agent.html" class="dropdown-item agent-movie active">剧本创作Agent</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="nav-right">
+                <button id="tasksButton" class="tasks-button">
+                    我的任务 <span id="queueTaskBadge" class="task-badge" style="display: inline; visibility: visible; opacity: 1;">0</span>
+                </button>
+                <button id="mobileMenuButton" class="mobile-menu-button">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 12H21M3 6H21M3 18H21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="mobile-menu" style="display: none;">
+            <ul>
+                <li><a href="../index.html">首页</a></li>
+                <li><a href="../config.html">配置</a></li>
+                <li><a href="../text_to_image.html">文生图</a></li>
+                <li><a href="../image_to_image.html">图生图</a></li>
+                <li><a href="../text_to_video.html">文生视频</a></li>
+                <li><a href="../image_to_video.html">图生视频</a></li>
+                <li><a href="../text_to_audio.html">文生音频</a></li>
+                <li class="mobile-nav-item dropdown">
+                    <a href="#" class="mobile-nav-link dropdown-toggle active" id="mobileAgentMenuBtn" onclick="toggleMobileAgentMenu()">
+                        智能体|Agent
+                        <span id="mobileAgentMenuIcon" class="ml-1">▼</span>
+                    </a>
+                    <div id="mobileAgentMenuContent" class="dropdown-menu" style="display: none;">
+                        <a href="agent_config.html" class="dropdown-item agent-config">智能体配置</a>
+                        <a href="medical_agent.html" class="dropdown-item agent-medical">医疗问答Agent</a>
+                        <a href="stocks_agent.html" class="dropdown-item agent-stocks">股票分析Agent</a>
+                        <a href="study_agent.html" class="dropdown-item agent-study">教育学习Agent</a>
+                        <a href="movie_agent.html" class="dropdown-item agent-movie active">剧本创作Agent</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-info">
+                <h3 class="footer-title">AI Diffusion</h3>
+                <p class="footer-text">一个集成了文生图、图生图、文生视频、图生视频、文生音频等AIGC功能的创意平台，同时包含医疗问答、股票分析、教育学习、剧本创作等<em><b>智能体</b></em>，为您提供全方位的AI创作体验。</p>
+                <p class="footer-text">使用说明可查看<a href="https://github.com/PengLine/ai-diffusion-aigc" target="_blank" style="color:rgba(18, 198, 221, 0.948);">帮助文档</a></p>
+            </div>
+            <div class="footer-links">
+                <h4 class="footer-title">快速链接</h4>
+                <ul>
+                    <li><a href="../index.html"><b><font color="#ff80ab">首页</font></b></a></li>
+                    <li><a href="../config.html"><b><font color="#d63031">配置</font></b></a></li>
+                    <li><a href="../text_to_image.html">文生图</a></li>
+                    <li><a href="../image_to_image.html">图生图</a></li>
+                    <li><a href="../text_to_video.html">文生视频</a></li>
+                    <li><a href="../image_to_video.html">图生视频</a></li>
+                    <li><a href="../text_to_audio.html">文生音频</a></li>
+                    <li><a href="medical_agent.html"><em><b>医疗问答</b></em></a></li>
+                    <li><a href="stocks_agent.html"><em><b>股票分析</b></em></a></li>
+                    <li><a href="study_agent.html"><em><b>教育学习</b></em></a></li>
+                    <li><a href="movie_agent.html"><em><b>剧本创作</b></em></a></li>
+                    <li><a href="agent_config.html"><em><b>智能体配置</b></em></a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4 class="footer-title">联系我</h4>
+                <p class="footer-text">如有任何问题或建议，请随时联系我。</p>
+                <p class="footer-text">如果需要定制化功能，请随时联系我。</p>
+                <p class="footer-text"><a href="mailto:haeng2030@gmail.com" target="_blank" style="color:rgba(174, 183, 19, 0.945);">我的邮箱</a>  |  <a href="https://pengline.github.io" target="_blank" style="color:rgba(18, 198, 221, 0.948);">我的博客</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 AI Diffusion. HengLine 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <!-- 导航栏脚本 -->
+    <script>
+        // 显示通知函数
+        function showNotification(message, type = 'success', duration = 3000) {
+            // 检查通知元素是否存在，不存在则创建
+            let notificationContainer = document.getElementById('notificationContainer');
+            if (!notificationContainer) {
+                notificationContainer = document.createElement('div');
+                notificationContainer.id = 'notificationContainer';
+                document.body.appendChild(notificationContainer);
+            }
+            
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            
+            // 添加到容器并显示
+            notificationContainer.appendChild(notification);
+            // 触发重排后应用过渡效果
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // 设置自动关闭
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                // 过渡结束后移除元素
+                setTimeout(() => {
+                    if (notification.parentNode === notificationContainer) {
+                        notificationContainer.removeChild(notification);
+                    }
+                }, 300);
+            }, duration);
+        }
+
+        // 切换移动端菜单
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.style.display = mobileMenu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // 切换智能体菜单项显示/隐藏
+        function toggleAgentMenu() {
+            const menuContent = document.getElementById('agentMenuContent');
+            const menuIcon = document.getElementById('agentMenuIcon');
+            
+            if (menuContent && menuIcon) {
+                const isVisible = menuContent.style.display === 'flex';
+                menuContent.style.display = isVisible ? 'none' : 'flex';
+                menuIcon.style.transform = isVisible ? '' : 'rotate(180deg)';
+            }
+        }
+
+        // 切换移动端智能体菜单项显示/隐藏
+        function toggleMobileAgentMenu() {
+            const menuContent = document.getElementById('mobileAgentMenuContent');
+            const menuIcon = document.getElementById('mobileAgentMenuIcon');
+            
+            if (menuContent && menuIcon) {
+                const isVisible = menuContent.style.display === 'flex';
+                menuContent.style.display = isVisible ? 'none' : 'flex';
+                menuIcon.style.transform = isVisible ? '' : 'rotate(180deg)';
+            }
+        }
+
+        // 点击页面其他地方关闭下拉菜单
+        document.addEventListener('click', function(event) {
+            // 关闭智能体菜单
+            if (!event.target.closest('#agentMenuBtn') && !event.target.closest('#agentMenuContent')) {
+                const agentMenuContent = document.getElementById('agentMenuContent');
+                const agentMenuIcon = document.getElementById('agentMenuIcon');
+                
+                if (agentMenuContent && agentMenuIcon) {
+                    agentMenuContent.style.display = 'none';
+                    agentMenuIcon.style.transform = '';
+                }
+            }
+
+            // 关闭移动智能体菜单
+            if (!event.target.closest('#mobileAgentMenuBtn') && !event.target.closest('#mobileAgentMenuContent')) {
+                const mobileAgentMenuContent = document.getElementById('mobileAgentMenuContent');
+                const mobileAgentMenuIcon = document.getElementById('mobileAgentMenuIcon');
+                
+                if (mobileAgentMenuContent && mobileAgentMenuIcon) {
+                    mobileAgentMenuContent.style.display = 'none';
+                    mobileAgentMenuIcon.style.transform = '';
+                }
+            }
+        });
+
+        // 添加移动端菜单按钮事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobileMenuButton');
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', toggleMobileMenu);
+            }
+        });
+    </script>
+</body>
+</html>
