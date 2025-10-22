@@ -1,8 +1,8 @@
 """
 @FileName: task_callback.py
-@Description:
+@Description: 任务回调处理器，负责处理任务完成、失败等状态变更时的回调逻辑
 @Author: HengLine
-@Time: 2025/9/17 21:11
+@Time: 2025/08 - 2025/11
 """
 import os
 import time

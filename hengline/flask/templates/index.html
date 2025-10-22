@@ -77,6 +77,8 @@
             color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 4px;
+            display: flex;
+            justify-content: center;
             text-decoration: none;
             font-weight: 500;
             transition: background-color 0.3s ease;
@@ -227,6 +229,26 @@
                 <a href="{{ url_for('text_to_video.text_to_video') }}" class="card-button">创建视频</a>
             </div>
         </div>
+        <div class="card">
+            <div class="card-image">
+                🎵
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">文生音频</h3>
+                <p class="card-text">通过文字描述生成高质量音频，支持多种风格和参数调节。</p>
+                <a href="{{ url_for('text_to_audio.text_to_audio') }}" class="card-button">生成音频</a>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-image">
+                👕
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">换装</h3>
+                <p class="card-text">将人物图片中的人物替换为其他人物，支持多种风格。</p>
+                <a href="{{ url_for('change_clothes.change_clothes') }}" class="card-button">开始换装</a>
+            </div>
+        </div>
     </div>
 
     <div class="features">
@@ -251,6 +273,75 @@
                 <div class="feature-icon">🔧</div>
                 <h3 class="feature-title">灵活配置</h3>
                 <p class="feature-text">可自定义ComfyUI路径和模型设置，适应不同的硬件环境。</p>
+            </div>
+        </div>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-icon">🧠</div>
+                <h3 class="feature-title">智能体助手</h3>
+                <p class="feature-text">医疗问答、股票分析、教育学习、剧本创作等多种专业智能体。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">⚙️</div>
+                <h3 class="feature-title">参数化控制</h3>
+                <p class="feature-text">提供丰富的参数选项，精确控制生成结果的各个方面。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🎭</div>
+                <h3 class="feature-title">多种风格</h3>
+                <p class="feature-text">支持多种艺术风格和模型，满足不同创作需求。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">📱</div>
+                <h3 class="feature-title">响应式设计</h3>
+                <p class="feature-text">适配各种设备屏幕，随时随地进行创作。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 智能体区域 -->
+    <div class="container">
+        <div class="card">
+            <div class="card-image">⚕️</div>
+            <div class="card-content">
+                <h3 class="card-title">医疗问答Agent</h3>
+                <p class="card-text">提供专业的健康咨询和医疗知识问答服务。</p>
+                <a href="{{ url_for('medical_agent.medical_agent_page') }}" class="card-button">开始咨询</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-image">📈</div>
+            <div class="card-content">
+                <h3 class="card-title">股票分析Agent</h3>
+                <p class="card-text">提供股票市场分析和投资建议。</p>
+                <a href="{{ url_for('stocks_agent.stocks_agent_page') }}" class="card-button">查看分析</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-image">📚</div>
+            <div class="card-content">
+                <h3 class="card-title">教育学习Agent</h3>
+                <p class="card-text">提供个性化学习辅导和知识解答。</p>
+                <a href="{{ url_for('study_agent.study_agent_page') }}" class="card-button">开始学习</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-image">🎥</div>
+            <div class="card-content">
+                <h3 class="card-title">剧本创作Agent</h3>
+                <p class="card-text">辅助创作电影、电视剧和小说剧本。</p>
+                <a href="{{ url_for('movie_agent.movie_agent_page') }}" class="card-button">开始创作</a>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-image">🎬</div>
+            <div class="card-content">
+                <h3 class="card-title">视频混剪Agent</h3>
+                <p class="card-text">辅助创作视频内容，包括视频混剪、编辑和合成。</p>
+                <a href="{{ url_for('video_agent.video_agent_page') }}" class="card-button">开始剪辑</a>
             </div>
         </div>
     </div>

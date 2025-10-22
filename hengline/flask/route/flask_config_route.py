@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-配置页面路由模块
-负责处理配置页面的显示和提交逻辑
+@FileName: flask_config_route.py
+@Description: 配置页面路由模块，负责处理系统配置页面的显示和提交逻辑
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import json
@@ -82,6 +84,15 @@ def configure():
 
         if not image_to_image_width or not image_to_image_height or not image_to_image_steps or not image_to_image_cfg:
             validation_errors.append('图生图：请填写所有必填字段（宽度、高度、步数、CFG值）！')
+
+        # 验证文生音频参数
+        text_to_audio_steps = request.form.get('settings[text_to_audio][steps]', '').strip()
+        text_to_audio_cfg = request.form.get('settings[text_to_audio][cfg]', '').strip()
+        text_to_audio_seconds = request.form.get('settings[text_to_audio][seconds]', '').strip()
+        text_to_audio_batch_size = request.form.get('settings[text_to_audio][batch_size]', '').strip()
+
+        if not text_to_audio_steps or not text_to_audio_cfg or not text_to_audio_seconds or not text_to_audio_batch_size:
+            validation_errors.append('文生音频：请填写所有必填字段（步数、CFG值、音频时长、生成数量）！')
 
         # 验证文生视频参数
         text_to_video_width = request.form.get('settings[text_to_video][width]', '').strip()
@@ -184,6 +195,25 @@ def configure():
         text_to_video_params['negative_prompt'] = request.form.get('settings[text_to_video][negative_prompt]',
                                                                    text_to_video_params.get('negative_prompt', ''))
 
+        # 处理文生音频参数
+        text_to_audio_params = get_task_settings('text_to_audio')
+        # 添加设备参数
+        text_to_audio_params['device'] = 'default' if comfyui_device == 'gpu' else comfyui_device
+        text_to_audio_params['steps'] = int(
+            request.form.get('settings[text_to_audio][steps]', text_to_audio_params.get('steps', 30)))
+        text_to_audio_params['cfg'] = float(
+            request.form.get('settings[text_to_audio][cfg]', text_to_audio_params.get('cfg', 7.0)))
+        text_to_audio_params['seconds'] = int(
+            request.form.get('settings[text_to_audio][seconds]', text_to_audio_params.get('seconds', 20)))
+        text_to_audio_params['batch_size'] = int(
+            request.form.get('settings[text_to_audio][batch_size]', text_to_audio_params.get('batch_size', 1)))
+        text_to_audio_params['seed'] = int(
+            request.form.get('settings[text_to_audio][seed]', text_to_audio_params.get('seed', -1)))
+        text_to_audio_params['prompt'] = request.form.get('settings[text_to_audio][prompt]',
+                                                          text_to_audio_params.get('prompt', ''))
+        text_to_audio_params['negative_prompt'] = request.form.get('settings[text_to_audio][negative_prompt]',
+                                                                   text_to_audio_params.get('negative_prompt', ''))
+
         # 处理图生视频参数
         image_to_video_params = get_task_settings('image_to_video')
         # 添加设备参数
@@ -238,6 +268,9 @@ def configure():
         
         # 保存图生视频预设
         save_workflow_preset('image_to_video', image_to_video_params)
+        
+        # 保存文生音频预设
+        save_workflow_preset('text_to_audio', text_to_audio_params)
 
         # 重新加载配置
         reload_config()
@@ -262,11 +295,12 @@ def configure():
     
     # 获取配置，get_workflow_preset已经实现了setting节点优先的逻辑
     settings = {
-        'text_to_image': get_workflow_preset('text_to_image'),
-        'image_to_image': get_workflow_preset('image_to_image'),
-        'text_to_video': get_workflow_preset('text_to_video'),
-        'image_to_video': get_workflow_preset('image_to_video')
-    }
+            'text_to_image': get_workflow_preset('text_to_image'),
+            'image_to_image': get_workflow_preset('image_to_image'),
+            'text_to_video': get_workflow_preset('text_to_video'),
+            'image_to_video': get_workflow_preset('image_to_video'),
+            'text_to_audio': get_workflow_preset('text_to_audio')
+        }
 
     return render_template('config.html',
                            comfyui_api_url=comfyui_api_url,
@@ -368,6 +402,16 @@ def api_config():
                     text_to_video_params = get_task_settings('text_to_video')
                     text_to_video_params.update(text_to_video)
 
+                # 验证并更新文生音频参数
+                if settings_data.get('text_to_audio'):
+                    text_to_audio = settings_data['text_to_audio']
+                    if not text_to_audio.get('steps') or text_to_audio.get('cfg') is None or not text_to_audio.get(
+                            'seconds') or not text_to_audio.get('batch_size'):
+                        validation_errors.append('文生音频：请填写所有必填字段（步数、CFG值、音频时长、生成数量）！')
+
+                    text_to_audio_params = get_task_settings('text_to_audio')
+                    text_to_audio_params.update(text_to_audio)
+
                 # 验证并更新图生视频参数
                 if settings_data.get('image_to_video'):
                     image_to_video = settings_data['image_to_video']
@@ -419,7 +463,7 @@ def reset_preset(preset_type):
     from hengline.utils.config_utils import reset_workflow_preset
     
     # 验证预设类型
-    valid_types = ['text_to_image', 'image_to_image', 'text_to_video', 'image_to_video']
+    valid_types = ['text_to_image', 'image_to_image', 'text_to_video', 'image_to_video', 'text_to_audio']
     if preset_type not in valid_types:
         flash('无效的预设类型', 'error')
         return redirect(url_for('config.configure'))

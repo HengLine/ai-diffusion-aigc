@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教育学习Agent - HengLine AIGC创意平台</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #27ae60;
+            box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2);
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+            background-color: #fff;
+        }
+        select:focus {
+            outline: none;
+            border-color: #27ae60;
+            box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2);
+        }
+        .form-button {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            margin: 0 auto;
+            display: flex;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .form-button:hover {
+            background-color: #219a52;
+        }
+        .form-button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .result-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+            border-left: 3px solid #27ae60;
+            padding-left: 20px;
+        }
+        .loading-indicator {
+            display: none;
+            margin-left: 10px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #27ae60;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .learning-tip {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #0c5460;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .form-container, .result-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入头部组件 -->
+    {% include 'components/header.html' %}
+    
+    <div class="container">
+        <div class="form-container">
+            <h1>教育学习Agent</h1>
+            
+            <div class="learning-tip">
+                <strong>学习提示：</strong>输入您想学习的主题，选择学习方式，我们的AI学习助手将为您提供定制化的学习内容。
+            </div>
+            
+            <form id="studyForm">
+                <div class="form-group">
+                    <label for="learningTopic">学习主题：</label>
+                    <input type="text" id="learningTopic" name="learningTopic" placeholder="请输入您想学习的主题（如：机器学习基础、Python编程）" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="learningStyle">学习方式：</label>
+                    <select id="learningStyle" name="learningStyle">
+                        <option value="explanatory">详细解释</option>
+                        <option value="quiz">知识测验</option>
+                        <option value="summary">核心总结</option>
+                        <option value="comprehensive">综合学习</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" id="submitButton" class="form-button">
+                        开始学习
+                        <span id="loadingIndicator" class="loading-indicator">⟳</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 结果显示区域 -->
+        <div id="resultContainer" class="result-container">
+            <h2>学习内容</h2>
+            <div id="resultContent" class="result-content">
+                <!-- 结果将在这里显示 -->
+            </div>
+        </div>
+        
+        <a href="{{ url_for('index') }}" class="back-link">← 返回首页</a>
+    </div>
+    
+    <!-- 引入通知组件 -->
+    {% include 'components/notification.html' %}
+    
+    <!-- 引入页脚组件 -->
+    {% include 'components/footer.html' %}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('studyForm');
+            const submitButton = document.getElementById('submitButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // 获取表单数据
+                const learningTopic = document.getElementById('learningTopic').value;
+                const learningStyle = document.getElementById('learningStyle').value;
+                
+                // 验证学习主题不能为空
+                if (!learningTopic.trim()) {
+                    showNotification('请输入学习主题！', 'warning', 3000);
+                    return;
+                }
+                
+                // 禁用按钮防止重复提交
+                submitButton.disabled = true;
+                submitButton.textContent = '正在准备学习内容...';
+                loadingIndicator.style.display = 'inline-block';
+                
+                try {
+                    // 发送API请求
+                    const response = await fetch('/api/study_agent', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            learning_topic: learningTopic,
+                            learning_style: learningStyle 
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // 显示结果
+                        resultContent.textContent = data.data.learning_content;
+                        resultContainer.style.display = 'block';
+                        
+                        // 显示成功通知
+                        showAutoCloseNotification('学习内容准备完成！', 2000);
+                        
+                    } else {
+                        // 显示错误通知
+                        showNotification(data.message || '学习内容准备失败，请重试', 'error', 3000);
+                    }
+                    
+                } catch (error) {
+                    showNotification(`请求失败: ${error.message}`, 'error', 3000);
+                } finally {
+                    // 恢复按钮状态
+                    submitButton.disabled = false;
+                    submitButton.textContent = '开始学习';
+                    loadingIndicator.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

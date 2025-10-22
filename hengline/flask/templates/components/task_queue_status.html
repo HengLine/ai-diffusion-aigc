@@ -8,18 +8,243 @@
             <div class="task-progress-text">等待中</div>
         </div>
     </div>
+    <!-- 连接状态指示器 -->
+    <div id="connectionStatus" class="connection-status" style="font-size: 12px; margin-top: 5px; color: #666;">
+        <span id="statusIcon" class="status-icon" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #ccc; margin-right: 5px;"></span>
+        <span id="statusText">加载中...</span>
+    </div>
 </div>
 
-<script>
-// 任务队列状态轮询逻辑
-let pollingInterval = null;
+<!-- 引入Socket.IO客户端库 -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js" integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI" crossorigin="anonymous"></script>
 
+<script>
+// 任务队列状态更新逻辑
+let pollingInterval = null;
+let socket = null;
+let useWebSocket = true; // 默认优先使用WebSocket
+let lastUpdateTime = 0;
+const MIN_POLLING_INTERVAL = 20000; // 最小轮询间隔，单位毫秒
+
+// 更新连接状态指示器
+function updateConnectionStatus(connected, message) {
+    const statusIcon = document.getElementById('statusIcon');
+    const statusText = document.getElementById('statusText');
+    
+    if (statusIcon && statusText) {
+        if (connected) {
+            statusIcon.style.backgroundColor = '#28a745'; // 绿色表示已连接
+            statusText.textContent = message || '已连接WebSocket';
+        } else {
+            statusIcon.style.backgroundColor = '#dc3545'; // 红色表示未连接
+            statusText.textContent = message || '正在使用轮询模式';
+        }
+    }
+}
+
+// 初始化WebSocket连接
+function initWebSocket() {
+    try {
+        // 检查浏览器是否支持WebSocket
+        if (!window.io || !('WebSocket' in window)) {
+            console.warn('当前浏览器不支持WebSocket，将使用轮询模式');
+            useWebSocket = false;
+            updateConnectionStatus(false, '浏览器不支持WebSocket');
+            return;
+        }
+        
+        // 获取当前页面的URL，构建WebSocket连接URL
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        const socketUrl = `${protocol}//${host}`;
+        
+        // 创建Socket.IO连接
+        socket = io(socketUrl, {
+            transports: ['websocket', 'polling'],
+            timeout: 5000
+        });
+        
+        // 连接成功事件
+        socket.on('connect', () => {
+            console.log('WebSocket连接成功');
+            updateConnectionStatus(true);
+            
+            // 连接成功后，获取当前任务类型并加入对应的任务房间
+            let taskType = 'all';
+            if (typeof getCurrentTaskType === 'function') {
+                taskType = getCurrentTaskType();
+            }
+            
+            // 请求初始队列状态
+            socket.emit('request_task_status', { task_type: taskType });
+        });
+        
+        // 连接错误事件
+        socket.on('connect_error', (error) => {
+            console.warn('WebSocket连接失败，将使用轮询模式:', error);
+            useWebSocket = false;
+            updateConnectionStatus(false, 'WebSocket连接失败');
+            startQueueStatusPolling();
+        });
+        
+        // 断开连接事件
+        socket.on('disconnect', (reason) => {
+            console.warn('WebSocket连接断开:', reason);
+            updateConnectionStatus(false);
+            // 如果断开连接，自动回退到轮询模式
+            if (!pollingInterval) {
+                startQueueStatusPolling();
+            }
+        });
+        
+        // 接收队列状态更新
+        socket.on('queue_status_update', (data) => {
+            if (data.success && data.data) {
+                processQueueStatusData(data.data);
+                lastUpdateTime = Date.now();
+            }
+        });
+        
+        // 接收任务状态更新
+        socket.on('task_status_update', (data) => {
+            if (data.success && data.status) {
+                processTaskStatusData(data.status);
+                lastUpdateTime = Date.now();
+            }
+        });
+        
+        // 连接建立确认
+        socket.on('connection_established', (data) => {
+            console.log('WebSocket连接确认:', data.message);
+        });
+        
+    } catch (error) {
+        console.error('初始化WebSocket失败:', error);
+        useWebSocket = false;
+        updateConnectionStatus(false, '初始化WebSocket失败');
+    }
+}
+
+// 处理队列状态数据
+function processQueueStatusData(queueData) {
+    const queueStatusContainer = document.getElementById('queueStatusContainer');
+    const queueStatus = document.getElementById('queueStatus');
+    const taskProgressFill = document.querySelector('.task-progress-fill');
+    const taskProgressText = document.querySelector('.task-progress-text');
+    const queueTaskBadge = document.getElementById('queueTaskBadge');
+    
+    // 更新任务计数徽章
+    if (queueTaskBadge) {
+        const displayCount = queueData.unfinished_tasks_count || queueData.total_tasks || 0;
+        queueTaskBadge.style.display = 'inline-block';
+        queueTaskBadge.textContent = displayCount;
+    }
+    
+    if (queueData.in_queue && queueData.in_queue > 0 || queueData.total_tasks && queueData.total_tasks > 0) {
+        // 有排队任务或执行中任务，显示队列状态
+        if (queueStatusContainer) {
+            queueStatusContainer.style.display = 'block';
+        }
+        
+        if (queueStatus) {
+            const position = queueData.position || 0;
+            const total = queueData.in_queue || 0;
+            const estimatedTime = queueData.estimated_time || 0;
+            
+            // 确保显示状态信息
+            queueStatus.innerHTML = `
+                <p>当前位置/等待任务: ${position}/${total}</p>
+                <p>预计等待时间: ${estimatedTime} </p>
+                <p>执行中任务: ${queueData.running_tasks || 0}</p>
+                <p>总任务数: ${queueData.total_tasks || 0}</p>
+            `;
+        }
+        
+        if (taskProgressFill && taskProgressText) {
+            const progress = queueData.progress || 0;
+            taskProgressFill.style.width = `${progress}%`;
+            taskProgressText.textContent = progress > 0 ? `${progress}%` : '等待中';
+        }
+    } else if (queueStatusContainer) {
+        // 没有排队任务，隐藏队列状态
+        queueStatusContainer.style.display = 'none';
+    }
+}
+
+// 处理单个任务状态数据
+function processTaskStatusData(taskData) {
+    const queueStatusContainer = document.getElementById('queueStatusContainer');
+    const queueStatus = document.getElementById('queueStatus');
+    const taskProgressFill = document.querySelector('.task-progress-fill');
+    const taskProgressText = document.querySelector('.task-progress-text');
+    const queueTaskBadge = document.getElementById('queueTaskBadge');
+    
+    // 更新任务计数徽章
+    if (queueTaskBadge) {
+        queueTaskBadge.style.display = 'inline-block';
+        // 如果有其他任务，显示总任务数，否则显示1
+        queueTaskBadge.textContent = '1';
+    }
+    
+    // 显示队列状态
+    if (queueStatusContainer) {
+        queueStatusContainer.style.display = 'block';
+    }
+    
+    if (queueStatus) {
+        const position = taskData.queue_position || 0;
+        const total = position > 0 ? position : 0;
+        
+        // 构建任务状态信息
+        let statusInfo = `
+            <p>任务ID: ${taskData.task_id}</p>
+            <p>任务类型: ${taskData.task_type}</p>
+            <p>当前状态: ${getStatusText(taskData.status)}</p>
+        `;
+        
+        if (position > 0) {
+            statusInfo += `<p>当前队列位置: ${position}</p>`;
+        }
+        
+        if (taskData.start_time && taskData.end_time) {
+            const duration = Math.round((taskData.end_time - taskData.start_time) / 60);
+            statusInfo += `<p>执行时间: ${duration} 分钟</p>`;
+        } else if (taskData.start_time) {
+            statusInfo += `<p>开始时间: ${new Date(taskData.start_time * 1000).toLocaleString()}</p>`;
+        }
+        
+        queueStatus.innerHTML = statusInfo;
+    }
+    
+    if (taskProgressFill && taskProgressText) {
+        // 根据任务状态设置进度条
+        let progress = 0;
+        if (taskData.status === 'running') {
+            progress = 50; // 运行中显示50%
+        } else if (taskData.status === 'success') {
+            progress = 100; // 成功显示100%
+        } else if (taskData.status === 'failed') {
+            progress = 0; // 失败显示0%
+        }
+        
+        taskProgressFill.style.width = `${progress}%`;
+        taskProgressText.textContent = getStatusText(taskData.status);
+    }
+}
+
+// 启动轮询（作为WebSocket的备用方案）
 function startQueueStatusPolling() {
     if (pollingInterval) {
         clearInterval(pollingInterval);
     }
     
-    pollingInterval = setInterval(updateQueueStatus, 20000); // 每5秒更新一次
+    // 如果正在使用WebSocket，则不启动轮询
+    if (useWebSocket && socket && socket.connected) {
+        return;
+    }
+    
+    // 设置轮询间隔
+    pollingInterval = setInterval(updateQueueStatus, MIN_POLLING_INTERVAL);
     
     // 立即执行一次
     updateQueueStatus();
@@ -33,6 +258,11 @@ function stopQueueStatusPolling() {
 }
 
 function updateQueueStatus() {
+    // 如果正在使用WebSocket并且连接正常，则不执行轮询
+    if (useWebSocket && socket && socket.connected) {
+        return;
+    }
+    
     // 获取当前页面的任务类型
     let taskType = 'all';
     if (typeof getCurrentTaskType === 'function') {
@@ -56,53 +286,11 @@ function updateQueueStatus() {
         .then(data => {
             console.log('任务队列API响应:', data);
             
-            const queueStatusContainer = document.getElementById('queueStatusContainer');
-            const queueStatus = document.getElementById('queueStatus');
-            const taskProgressFill = document.querySelector('.task-progress-fill');
-            const taskProgressText = document.querySelector('.task-progress-text');
-            const queueTaskBadge = document.getElementById('queueTaskBadge');
-            
             // 检查数据结构是否正确
             const queueData = data.success && data.data ? data.data : {};
             
-            // 更新任务计数徽章
-            if (queueTaskBadge) {
-                // 使用unfinished_tasks_count作为徽章显示值，这是包含所有历史和当前任务的更准确计数
-                const displayCount = queueData.unfinished_tasks_count || queueData.total_tasks || 0;
-                // 始终显示徽章，确保用户知道有任务系统
-                queueTaskBadge.style.display = 'inline-block';
-                queueTaskBadge.textContent = displayCount;
-            }
-            
-            if (queueData.in_queue && queueData.in_queue > 0 || queueData.total_tasks && queueData.total_tasks > 0) {
-                // 有排队任务或执行中任务，显示队列状态
-                if (queueStatusContainer) {
-                    queueStatusContainer.style.display = 'block';
-                }
-                
-                if (queueStatus) {
-                    const position = queueData.position || 0;
-                    const total = queueData.in_queue || 0;
-                    const estimatedTime = queueData.estimated_time || 0;
-                    
-                    // 确保显示状态信息
-                    queueStatus.innerHTML = `
-                        <p>当前位置/等待任务: ${position}/${total}</p>
-                        <p>预计等待时间: ${estimatedTime} </p>
-                        <p>执行中任务: ${queueData.running_tasks || 0}</p>
-                        <p>总任务数: ${queueData.total_tasks || 0}</p>
-                    `;
-                }
-                
-                if (taskProgressFill && taskProgressText) {
-                    const progress = queueData.progress || 0;
-                    taskProgressFill.style.width = `${progress}%`;
-                    taskProgressText.textContent = progress > 0 ? `${progress}%` : '等待中';
-                }
-            } else if (queueStatusContainer) {
-                // 没有排队任务，隐藏队列状态
-                queueStatusContainer.style.display = 'none';
-            }
+            // 使用统一的处理函数处理数据
+            processQueueStatusData(queueData);
         })
         .catch(error => {
             console.error('更新任务队列状态失败:', error);
@@ -201,9 +389,12 @@ window.addEventListener('beforeunload', function() {
     stopQueueStatusPolling();
 });
 
-// 页面加载完成后自动启动轮询
+// 页面加载完成后初始化WebSocket并启动轮询作为备选
 document.addEventListener('DOMContentLoaded', function() {
-    // 延迟一小段时间启动轮询，确保页面其他元素已经加载完成
+    // 首先尝试初始化WebSocket连接
+    initWebSocket();
+    
+    // 延迟一小段时间启动轮询，作为WebSocket的备选方案
     setTimeout(startQueueStatusPolling, 1000);
 });
 </script>

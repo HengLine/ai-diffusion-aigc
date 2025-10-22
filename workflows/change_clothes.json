@@ -1,0 +1,132 @@
+{
+  "1": {
+    "inputs": {
+      "image": "your_person.jpg",
+      "upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+  "2": {
+    "inputs": {
+      "image": ["1", 0],
+      "width": 512,
+      "height": 768,
+      "crop": "disabled"
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "3": {
+    "inputs": {
+      "image": ["2", 0],
+      "resolution": 512
+    },
+    "class_type": "OpenposePreprocessor"
+  },
+  "4": {
+    "inputs": {
+      "control_net_name": "control_v11p_sd15_openpose.pth"
+    },
+    "class_type": "ControlNetLoader"
+  },
+  "5": {
+    "inputs": {
+      "ckpt_name": "realisticVisionV60B1_v51HyperInpaint.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "6": {
+    "inputs": {
+      "text": "masterpiece, best quality, 1girl, wearing a red silk evening gown, full body, elegant pose, studio lighting",
+      "clip": ["5", 1]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "7": {
+    "inputs": {
+      "text": "nsfw, low quality, bad anatomy, extra limbs, deformed clothes",
+      "clip": ["5", 1]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "8": {
+    "inputs": {
+      "grounding_dino_model": "GroundingDINO_SwinB.cfg.py"
+    },
+    "class_type": "GroundingDinoModelLoader"
+  },
+  "9": {
+    "inputs": {
+      "grounding_dino_model": ["8", 0],
+      "image": ["2", 0],
+      "text": "clothes",
+      "threshold": 0.35
+    },
+    "class_type": "GroundingDinoDetection"
+  },
+  "10": {
+    "inputs": {
+      "sam_model": "sam_vit_h (256px).pth"
+    },
+    "class_type": "SAMModelLoader"
+  },
+  "11": {
+    "inputs": {
+      "sam_model": ["10", 0],
+      "image": ["2", 0],
+      "boxes": ["9", 1]
+    },
+    "class_type": "SAMSegmentation"
+  },
+  "12": {
+    "inputs": {
+      "mask": ["11", 0],
+      "expand": 8
+    },
+    "class_type": "GrowMask"
+  },
+  "13": {
+    "inputs": {
+      "pixels": ["2", 0],
+      "mask": ["12", 0],
+      "vae": ["5", 2]
+    },
+    "class_type": "VAEEncodeForInpaint"
+  },
+  "14": {
+    "inputs": {
+      "conditioning": ["6", 0],
+      "control_net": ["4", 0],
+      "image": ["3", 0],
+      "strength": 0.95
+    },
+    "class_type": "ControlNetApply"
+  },
+  "15": {
+    "inputs": {
+      "seed": 12345,
+      "steps": 25,
+      "cfg": 7,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["5", 0],
+      "positive": ["14", 0],
+      "negative": ["7", 0],
+      "latent_image": ["13", 0]
+    },
+    "class_type": "KSampler"
+  },
+  "16": {
+    "inputs": {
+      "samples": ["15", 0],
+      "vae": ["5", 2]
+    },
+    "class_type": "VAEDecode"
+  },
+  "17": {
+    "inputs": {
+      "images": ["16", 0]
+    },
+    "class_type": "PreviewImage"
+  }
+}

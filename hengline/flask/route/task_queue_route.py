@@ -1,3 +1,9 @@
+"""
+@FileName: task_queue_route.py
+@Description: 任务队列管理路由模块，提供任务状态查询和管理的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 from flask import Blueprint, jsonify, url_for, request
 
 from hengline.common import get_name_by_type

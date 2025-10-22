@@ -1,6 +1,8 @@
 """
-Flask路由公共组件模块
-封装四个AIGC功能模块的共用路由逻辑
+@FileName: common_route.py
+@Description: Flask路由公共组件模块，封装AIGC功能模块的共用路由逻辑
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import os

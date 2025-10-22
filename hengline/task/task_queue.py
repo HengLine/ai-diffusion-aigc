@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-任务队列管理模块
-用于管理生图和生视频任务的排队执行
+@FileName: task_queue.py
+@Description: 任务队列模块，定义任务类和任务状态枚举，为任务管理提供基础数据结构
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import threading

@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-文件处理工具模块
+@FileName: file_utils.py
+@Description: 文件处理工具模块，提供文件上传、保存、类型检查等功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import os
 import time

@@ -1,3 +1,9 @@
+"""
+@FileName: dict_fixed.py
+@Description: 固定大小字典实现，当达到最大大小时会删除最旧的条目
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 class FixedSizeDict:
     """固定大小的字典，当达到最大大小时会删除最旧的条目"""
 

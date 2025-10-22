@@ -1,3 +1,9 @@
+"""
+@FileName: image_to_image_route.py
+@Description: 图生图功能路由模块，提供图片到图片转换的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import os
 import sys
 import time
@@ -92,7 +98,8 @@ def api_image_to_image():
             steps=request.form.get('steps'),
             cfg=request.form.get('cfg'),
             denoise=request.form.get('denoise'),
-            batch_size=request.form.get('batch_size')
+            batch_size=request.form.get('batch_size'),
+            sampler_name=request.form.get('sampler_name')
         )
 
         if result:

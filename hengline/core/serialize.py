@@ -1,3 +1,9 @@
+"""
+@FileName: serialize.py
+@Description: 序列化装饰器模块，提供自动序列化响应对象的功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 from functools import wraps
 
 from flask import jsonify

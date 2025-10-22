@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-任务队列管理模块
-用于管理生图和生视频任务的排队执行
+@FileName: task_manage.py
+@Description: 任务队列管理模块，负责管理和调度各种AI生成任务的执行
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import threading

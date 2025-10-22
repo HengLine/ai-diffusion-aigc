@@ -117,6 +117,8 @@
             color: white;
             padding: 0.75rem 1.5rem;
             border: none;
+            margin: 0 auto;
+            display: flex;
             border-radius: 4px;
             font-size: 1rem;
             font-weight: 500;
@@ -451,8 +453,8 @@
                 <div class="slider-container">
                     <label for="cfgSlider">提示引导强度（CFG Scale）</label>
                     <div class="slider-input-group">
-                        <input type="range" id="cfgSlider" class="slider" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}">
-                        <input type="number" id="cfg" name="cfg" min="1" max="100" step="0.5" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                        <input type="range" id="cfgSlider" class="slider" min="1" max="30" step="0.01" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" id="cfg" name="cfg" min="1" max="30" step="0.01" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
                     </div>
                     <p class="parameter-description">值越高，越严格遵循提示词，建议值：4.0-12.0</p>
                     <div class="parameter-description">
@@ -474,6 +476,34 @@
                         <li>0.4 ~ 0.6 推荐起点（黄金区间）：有明显风格转变，但仍保留主体结构。风格迁移（如油画、动漫风）、调整光影、换背景但保留人物</li>
                         <li>0.7 ~ 0.85：强烈重构，主体可能被重新绘制，创意空间大。想彻底改变氛围（如白天→夜晚）、艺术再创作、大幅风格转换</li>
                         <li>0.85 ~ 1.0：几乎完全重绘，相当于“用原图当提示”进行文生图。仅保留轮廓/颜色分布，内容基本由 prompt 决定（慎用）</li>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="sampler_name">采样算法</label>
+                    <div class="slider-input-group">
+                        <select id="sampler_name" name="sampler_name" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler" {% if default_params.sampler_name == 'euler' %}selected{% endif %}>⚡ Euler (快速基础)</option>
+                            <option value="euler_ancestral" {% if default_params.sampler_name == 'euler_ancestral' %}selected{% endif %}>Euler Ancestral</option>
+                            <option value="heun" {% if default_params.sampler_name == 'heun' %}selected{% endif %}>Heun</option>
+                            <option value="dpm_2" {% if default_params.sampler_name == 'dpm_2' %}selected{% endif %}>DPM2</option>
+                            <option value="dpm_2_ancestral" {% if default_params.sampler_name == 'dpm_2_ancestral' %}selected{% endif %}>DPM2 Ancestral</option>
+                            <option value="dpmpp_2s_ancestral" {% if default_params.sampler_name == 'dpmpp_2s_ancestral' %}selected{% endif %}>DPM++ 2S Ancestral</option>
+                            <option value="dpmpp_2m" {% if default_params.sampler_name == 'dpmpp_2m' %}selected{% endif %}>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_2m_sde" {% if default_params.sampler_name == 'dpmpp_2m_sde' %}selected{% endif %}>DPM++ 2M SDE</option>
+                            <option value="dpmpp_3m_sde" {% if default_params.sampler_name == 'dpmpp_3m_sde' %}selected{% endif %}>🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu" {% if default_params.sampler_name == 'dpmpp_3m_sde_gpu' %}selected{% endif %}>🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                            <option value="uni_pc" {% if default_params.sampler_name == 'uni_pc' %}selected{% endif %}>UniPC</option>
+                        </select>
+                    </div>
+                    <div class="parameter-description">
+                        选择用于生成图像的采样算法，不同的算法会产生不同的效果和速度。
+                    </div>
+                    <div class="parameter-description">
+                        <li>Euler：基础算法，适合大多数场景，生成速度快</li>
+                        <li>DPM++ 2M：高质量算法，平衡速度和质量</li>
+                        <li>DPM++ 3M SDE：高质量算法，适合需要精细细节的场景</li>
+                        <li>DPM++ 3M SDE GPU：GPU优化版本，速度更快</li>
                     </div>
                 </div>
                 </div>
@@ -532,47 +562,9 @@
                 const loadingIndicator = document.getElementById('loadingIndicator');
                 const form = document.querySelector('form');
                 
-                // 参数折叠/展开功能
-                function setupParameterFolding() {
-                    const parameterGroups = document.querySelectorAll('.parameter-group');
-                    parameterGroups.forEach(group => {
-                        const header = group.querySelector('h3');
-                        header.addEventListener('click', () => {
-                            group.classList.toggle('collapsed');
-                        });
-                    });
-                }
-                
-                // 同步滑块和输入框的值
-                function setupSliderSync(sliderId, inputId) {
-                    const slider = document.getElementById(sliderId);
-                    const input = document.getElementById(inputId);
-                    
-                    if (slider && input) {
-                        // 当滑块值变化时更新输入框
-                        slider.addEventListener('input', function() {
-                            input.value = this.value;
-                        });
-                        
-                        // 当输入框值变化时更新滑块
-                        input.addEventListener('input', function() {
-                            // 确保值在有效范围内
-                            const min = parseFloat(this.min);
-                            const max = parseFloat(this.max);
-                            const step = parseFloat(this.step);
-                            let value = parseFloat(this.value);
-                            
-                            if (isNaN(value)) value = min;
-                            if (value < min) value = min;
-                            if (value > max) value = max;
-                            
-                            // 根据步长调整值
-                            value = Math.round(value / step) * step;
-                            
-                            this.value = value;
-                            slider.value = value;
-                        });
-                    }
+                // 初始化数字输入框
+                if (form) {
+                    initNumberInputs(form);
                 }
                 
                 // 设置所有滑块的同步
@@ -815,7 +807,7 @@
                 const statusTexts = {
                     'queued': '排队中',
                     'running': '处理中',
-                    'success': '已完成',
+                    'success': '完成',
                     'failed': '失败'
                 };
                 return statusTexts[status] || status;

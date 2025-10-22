@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-封装ComfyUI API的类，提供图片上传、工作流执行等接口功能
+@FileName: workflow_comfyui.py
+@Description: ComfyUI API封装模块，提供图片上传、工作流执行等接口功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import json
@@ -13,7 +16,7 @@ from typing import Dict, Any, Optional, Callable
 import requests
 
 from hengline.logger import debug, error, warning, info
-from hengline.utils.config_utils import get_task_config
+from hengline.utils.config_utils import get_task_config, get_comfyui_api_url
 from hengline.utils.file_utils import is_valid_image_file
 from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.workflow_node import fill_image_in_workflow
@@ -276,10 +279,10 @@ class ComfyUIApi:
                     error(f"[ComfyUI API] 创建输出目录失败: {str(mkdir_err)}")
                     return False, {}
 
-            # 查找图像或视频输出
+            # 查找图像、视频、GIF或音频输出
             found_output = False
             saved_file_paths = dict[str, str]()  # 保存的文件路径
-            all_output_types = ['images', 'videos', 'gifs']
+            all_output_types = ['images', 'videos', 'gifs', 'audio']
 
             # 生成基本文件名（不带扩展名）和扩展名
             base_name, ext = os.path.splitext(os.path.basename(output_path))
@@ -467,4 +470,4 @@ class ComfyUIApi:
 
 
 # 全局ComfyUIApi实例，方便其他模块直接使用
-comfyui_api = ComfyUIApi()
+comfyui_api = ComfyUIApi(get_comfyui_api_url())

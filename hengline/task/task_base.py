@@ -1,5 +1,11 @@
 from typing import Optional, Dict, Any
 
+"""
+@FileName: task_base.py
+@Description: 任务基类，提供任务管理的基础功能，基于Borg模式实现共享状态
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 from hengline.common import get_timestamp_by_type, estimated_waiting_time
 from hengline.task.task_common import TaskCommonBorg
 from hengline.task.task_queue import Task, TaskStatus

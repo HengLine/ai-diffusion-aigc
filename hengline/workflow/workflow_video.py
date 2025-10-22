@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-工作流工具模块，包含WorkflowVideoManager类，用于处理AI视频生成任务
+@FileName    : workflow_video.py
+@Description : 工作流工具模块，包含WorkflowVideoManager类，用于处理AI视频生成任务
+@Author      : heng
+@Time        : 2024-09
 """
 import os
 import sys
-from typing import Dict, Any
+from typing import Dict, Any, Coroutine
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -18,7 +21,7 @@ from hengline.workflow.workflow_manage import WorkflowManager
 class WorkflowVideoManager(WorkflowManager):
     """工作流视频管理器类，用于处理各种AI视频生成任务"""
 
-    def execute_image_to_video(self, params: Dict[str, Any], task_id: str = None) -> Dict[str, Any]:
+    def execute_image_to_video(self, params: Dict[str, Any], task_id: str = None) -> Coroutine[Any, Any, dict[str, Any]]:
         """
         执行图像到视频的工作流（异步版本）
         
@@ -30,7 +33,7 @@ class WorkflowVideoManager(WorkflowManager):
             Dict[str, Any]: 工作流执行结果
         """
         info(f"执行图生视频工作流...")
-        return self._execute_common(self, "image_to_video", params, task_id)
+        return self._execute_common("image_to_video", params, task_id)
 
     def process_image_to_video(self, image_path: str, prompt: str, negative_prompt: str = "", **kwargs) -> Dict[str, Any]:
         """
@@ -45,9 +48,9 @@ class WorkflowVideoManager(WorkflowManager):
         Returns:
             Dict[str, Any]: 任务提交结果
         """
-        return self._process_common(self, 'image_to_video', image_path, prompt, negative_prompt, **kwargs)
+        return self._process_common('image_to_video', image_path, prompt, negative_prompt, **kwargs)
 
-    def execute_text_to_video(self, params: Dict[str, Any], task_id: str) -> Dict[str, Any]:
+    def execute_text_to_video(self, params: Dict[str, Any], task_id: str) -> Coroutine[Any, Any, dict[str, Any]]:
         """
         执行文本到视频的工作流（异步版本）
         
@@ -59,7 +62,7 @@ class WorkflowVideoManager(WorkflowManager):
             Dict[str, Any]: 工作流执行结果
         """
         info(f"执行文生视频工作流...")
-        return self._execute_common(self, "text_to_video", params, task_id)
+        return self._execute_common("text_to_video", params, task_id)
 
     def process_text_to_video(self, prompt: str, negative_prompt: str = "", **kwargs) -> Dict[str, Any]:
         """

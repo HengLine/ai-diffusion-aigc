@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-使用Flask + Jinja2构建的AIGC Web界面
+@FileName: app_flask.py
+@Description: Flask应用主文件，负责创建Flask应用实例、注册路由和配置Web服务
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
+# 然后导入其他标准库和第三方库
 import datetime
 import os
 import signal
@@ -34,8 +38,19 @@ from route.text_to_image_route import text_to_image_bp
 from route.image_to_image_route import image_to_image_bp
 from route.image_to_video_route import image_to_video_bp
 from route.text_to_video_route import text_to_video_bp
+from route.text_to_audio_route import text_to_audio_bp
 from route.task_queue_route import task_queue_bp
 from route.flask_config_route import config_bp
+from route.socketio_route import socketio_bp, init_socketio
+from route.change_clothes_route import change_clothes_bp
+from route.change_face_route import change_face_bp
+from route.change_hair_style_route import change_hair_style_bp
+from hengline.agent.medical.route.medical_agent_route import medical_agent_bp
+from hengline.agent.stocks.route.stocks_agent_route import stocks_agent_bp
+from hengline.agent.study.route.study_agent_route import study_agent_bp
+from hengline.agent.movie.route.movie_agent_route import movie_agent_bp
+from hengline.agent.config.route.agent_config_route import agent_config_bp
+from route.workflow_preset_route import workflow_preset_bp
 
 # 初始化Flask应用
 app = Flask(__name__, template_folder='templates')
@@ -82,7 +97,18 @@ app.register_blueprint(text_to_image_bp)
 app.register_blueprint(image_to_image_bp)
 app.register_blueprint(image_to_video_bp)
 app.register_blueprint(text_to_video_bp)
+app.register_blueprint(text_to_audio_bp)
 app.register_blueprint(task_queue_bp)
+app.register_blueprint(socketio_bp)
+app.register_blueprint(change_clothes_bp)
+app.register_blueprint(change_face_bp)
+app.register_blueprint(change_hair_style_bp)
+app.register_blueprint(medical_agent_bp)
+app.register_blueprint(stocks_agent_bp)
+app.register_blueprint(study_agent_bp)
+app.register_blueprint(movie_agent_bp)
+app.register_blueprint(agent_config_bp)
+app.register_blueprint(workflow_preset_bp)
 
 
 # 路由定义
@@ -113,9 +139,10 @@ def result():
         flash('结果文件不存在！', 'error')
         return redirect(url_for('index'))
 
-    # 根据文件类型判断是图像还是视频
+    # 根据文件类型判断是图像、视频还是音频
     file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
     is_video = file_ext in ['mp4', 'webm', 'ogg']
+    is_audio = file_ext in ['mp3', 'wav', 'ogg', 'flac', 'aac']
 
     # 获取当前时间
     current_time = datetime.datetime.now()
@@ -124,6 +151,7 @@ def result():
                            filename=filename,
                            task_type=task_type,
                            is_video=is_video,
+                           is_audio=is_audio,
                            current_time=current_time)
 
 
@@ -145,14 +173,24 @@ def handle_shutdown(signum, frame):
     info("接收到终止信号，正在异步关闭任务队列管理器...")
 
     # 停止任务监控器
-    shutdown_thread = threading.Thread(target=task_monitor.stop())
-    shutdown_thread.daemon = True
-    shutdown_thread.start()
+    # 注意：这里不使用线程，直接调用stop方法，因为在eventlet环境中创建线程可能会导致问题
+    task_monitor.stop()
+    info("服务正在关闭，请稍等片刻......")
 
     # 等待一段时间让异步关闭有时间完成
-    time.sleep(3)
+    time.sleep(1)
 
-    info("服务正在关闭，请稍等片刻......")
+    # 关闭RabbitMQ连接池
+    try:
+        from hengline.mq import shutdown_all_pools
+        info("正在关闭RabbitMQ连接池...")
+        shutdown_all_pools()
+        info("RabbitMQ连接池已关闭")
+    except Exception as e:
+        info(f"关闭RabbitMQ连接池时出错: {str(e)}")
+
+    # 再等待一段时间确保资源完全释放
+    time.sleep(2)
 
     # 在信号处理上下文中，我们不应该尝试通过request.environ获取shutdown函数
     # 因为此时没有活跃的HTTP请求上下文，直接退出程序
@@ -178,8 +216,14 @@ def shutdown():
 def run_flask_app():
     """\在独立函数中运行Flask应用，便于信号处理"""
     try:
-        # 启动Flask应用 - 在Windows上强制禁用reloader
-        app.run(debug=True, host='0.0.0.0', port=8000, use_reloader=False)
+        # 直接使用Flask内置服务器启动应用（不使用SocketIO）
+        info("使用Flask内置服务器启动应用...")
+        app.run(
+            debug=True,
+            host='0.0.0.0',
+            port=5000,
+            use_reloader=False
+        )
     except KeyboardInterrupt:
         info("Flask应用被用户中断")
         handle_shutdown(None, None)
@@ -198,8 +242,7 @@ if __name__ == '__main__':
             debug("Windows平台接收到中断信号，准备关闭应用...")
             # 立即调用shutdown函数
             handle_shutdown(signum, frame)
-            # 抛出KeyboardInterrupt异常以终止主循环
-            raise KeyboardInterrupt("Windows平台强制中断应用")
+            # handle_shutdown会调用sys.exit()，这里不需要再抛出异常
 
 
         # 设置信号处理器

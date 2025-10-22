@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+@FileName: app_streamlit.py
+@Description: AIGC演示应用的Streamlit Web界面，提供各种AI生成功能的用户交互
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
+"""
 AIGC演示应用的Web界面
 """
 

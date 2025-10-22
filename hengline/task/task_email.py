@@ -1,3 +1,9 @@
+"""
+@FileName: task_email.py
+@Description: 任务邮件通知模块，负责任务执行状态的邮件通知功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 # 导入asyncio用于处理协程
 import threading
 from datetime import datetime

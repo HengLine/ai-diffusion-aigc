@@ -13,7 +13,8 @@
     "text_to_image": "workflows/text_to_image.json",
     "image_to_image": "workflows/image_to_image.json",
     "image_to_video": "workflows/image_to_video.json",
-    "text_to_video": "workflows/text_to_video.json"
+    "text_to_video": "workflows/text_to_video.json",
+    "text_to_audio": "workflows/text_to_audio.json"
   },
   "paths": {
     "temp_folder": "uploads",
@@ -55,6 +56,18 @@
       "console_level": "DEBUG",
       "file_level": "INFO",
       "disable_unnecessary_logs": true
+    },
+    "rabbitmq": {
+      "host": "localhost",
+      "port": 5672,
+      "username": "guest",
+      "password": "guest",
+      "virtual_host": "/",
+      "exchange_name": "default_exchange",
+      "queue_name": "default_queue",
+      "routing_key": "default_routing_key",
+      "connection_timeout": 30,
+      "heartbeat": 60
     }
   }
 }

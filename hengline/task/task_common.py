@@ -1,3 +1,9 @@
+"""
+@FileName: task_common.py
+@Description: 任务通用模块，提供任务管理的通用功能和共享状态
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import os
 import queue
 import threading
