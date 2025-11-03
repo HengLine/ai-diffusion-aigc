@@ -1,3 +1,9 @@
+"""
+@FileName: task_history.py
+@Description: 任务历史记录管理器，负责存储和管理任务的执行历史
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import json
 import os
 import threading

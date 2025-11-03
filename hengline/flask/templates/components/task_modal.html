@@ -14,7 +14,7 @@
                         <option value="all">全部状态</option>
                         <option value="queued">排队中</option>
                         <option value="running">运行中</option>
-                        <option value="success">已完成</option>
+                        <option value="success">完成</option>
                         <option value="failed">失败</option>
                     </select>
                 </div>
@@ -26,6 +26,10 @@
                         <option value="image_to_image">图生图</option>
                         <option value="text_to_video">文生视频</option>
                         <option value="image_to_video">图生视频</option>
+                        <option value="text_to_audio">文生音频</option>
+                        <option value="change_clothes">换装</option>
+                        <option value="change_face">换脸</option>
+                        <option value="change_hair_style">换发型</option>
                     </select>
                 </div>
             </div>
@@ -322,6 +326,16 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    /* 音频播放器特定样式 */
+    .result-content audio {
+        max-width: 100%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
     }
     
     /* 图片轮播样式 */
@@ -550,7 +564,11 @@
                                 'text_to_image': '文生图',
                                 'image_to_image': '图生图',
                                 'text_to_video': '文生视频',
-                                'image_to_video': '图生视频'
+                                'image_to_video': '图生视频',
+                                'text_to_audio': '文生音频',
+                                'change_clothes': '换装',
+                                'change_face': '换脸',
+                                'change_hair_style': '换发型'
                             };
                             
                             const taskTypeName = taskTypeNames[task.task_type] || task.task_type;
@@ -598,7 +616,7 @@
             const statusTexts = {
                 'queued': '排队中',
                 'running': '运行中',
-                'success': '已完成',
+                'success': '完成',
                 'failed': '失败'
             };
             return statusTexts[status] || status;
@@ -697,6 +715,37 @@
                                         </div>
                                     </div>
                                 `;
+                            } else if (taskType.includes('音频') || taskType.includes('audio')) {
+                                // 音频结果
+                                resultContent = `
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h2>任务结果</h2>
+                                            <span class="close" onclick="document.getElementById('resultModal').remove()">&times;</span>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="result-info">
+                                                <p><strong>任务类型:</strong> ${taskType}</p>
+                                                <p><strong>提示词:</strong> ${prompt}</p>
+                                                <p><strong>生成时间:</strong> ${endTime}</p>
+                                                <p class="result-counter"><strong>当前结果:</strong> 1/${resultCount}</p>
+                                            </div>
+                                            <div class="result-carousel">
+                                                <button class="carousel-button prev-button" onclick="showPreviousResult('${taskId}', this)">&lt;</button>
+                                                <div class="carousel-container">
+                                                    <audio id="result-audio-${taskId}" controls style="width: 100%;">
+                                                        <source src="${mainResultUrl}" type="audio/mpeg">
+                                                        您的浏览器不支持音频播放
+                                                    </audio>
+                                                </div>
+                                                <button class="carousel-button next-button" onclick="showNextResult('${taskId}', this)">&gt;</button>
+                                            </div>
+                                            <div class="result-actions">
+                                                <a id="download-link-${taskId}" href="${mainResultUrl}" class="download-button" download>下载音频</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
                             } else {
                                 // 图像结果 - 支持多图轮播
                                 resultContent = `
@@ -744,7 +793,7 @@
                                 }
                             });
                             
-                            // 如果是图像任务，初始化轮播数据
+                            // 初始化轮播数据（图像和音频任务）
                             if (!taskType.includes('video')) {
                                 try {
                                     // 初始化轮播数据
@@ -934,6 +983,18 @@
             const image = modal.querySelector('[id^="result-image-"]');
             if (image && currentResult.url) {
                 image.src = currentResult.url;
+            }
+            
+            // 更新音频 - 使用taskId查找元素
+            const audio = modal.querySelector('[id^="result-audio-"]');
+            if (audio && currentResult.url) {
+                // 获取source元素
+                const source = audio.querySelector('source');
+                if (source) {
+                    source.src = currentResult.url;
+                    // 触发音频元素加载新资源
+                    audio.load();
+                }
             }
             
             // 更新下载链接 - 使用taskId查找元素

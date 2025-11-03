@@ -1,3 +1,9 @@
+"""
+@FileName: text_to_image_route.py
+@Description: 文生图功能路由模块，提供文本到图像转换的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 # 导入必要的模块
 import os
 import sys
@@ -94,6 +100,7 @@ def api_text_to_image():
         cfg = data.get('cfg', 7.5)
         batch_size = data.get('batch_size', 5)
         denoise = data.get('denoise', 0.75)
+        sampler_name = data.get('sampler_name', None)
 
         # 执行文生图任务，设置任务ID
         result = workflow_image_manager.process_text_to_image(
@@ -104,7 +111,8 @@ def api_text_to_image():
             steps=steps,
             cfg=cfg,
             batch_size=batch_size,
-            denoise=denoise
+            denoise=denoise,
+            sampler_name=sampler_name
         )
 
         if result:

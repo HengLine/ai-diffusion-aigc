@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文生音频 - AIGC创意平台</title>
+    <style>
+        /* 加载状态样式 */
+        .global-loading {
+            display: none;
+        }
+        
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4a6fa5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            min-height: 120px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        .form-button {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            margin: 0 auto;
+            display: flex;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .form-button:hover {
+            background-color: #3a5a85;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #4a6fa5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* 参数控制优化样式 */
+        .parameter-group {
+            margin-bottom: 1.5rem;
+            padding: 1.25rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .parameter-group h3 {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .parameter-group h3::after {
+            content: '▼';
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .parameter-group.collapsed h3::after {
+            transform: rotate(-90deg);
+        }
+        
+        .parameter-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .parameter-group.collapsed .parameter-content {
+            max-height: 0;
+        }
+        
+        .parameter-group h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #495057;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .slider-container {
+            margin-bottom: 1rem;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .slider-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .slider {
+            flex: 1;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4a6fa5;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            width: 22px;
+            height: 22px;
+            background: #3a5a85;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #4a6fa5;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .slider::-moz-range-thumb:hover {
+            width: 22px;
+            height: 22px;
+            background: #3a5a85;
+        }
+        
+        .slider-value {
+            display: inline-block;
+            width: 70px;
+            padding: 0.375rem 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            text-align: center;
+            background-color: white;
+            margin-left: 0.5rem;
+        }
+        
+        .parameter-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .parameter-control label {
+            flex: 1;
+        }
+        
+        .number-input {
+            width: 70px;
+            padding: 0.375rem 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+        
+        .parameter-description {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+        .status-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #28a745;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #dc3545;
+        }
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-color: #ffc107;
+        }
+        .status-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-color: #17a2b8;
+        }
+        .queue-status {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        .queue-status h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+        .queue-status p {
+            margin: 5px 0;
+            color: #6c757d;
+        }
+        .task-progress {
+            margin-top: 15px;
+        }
+        .task-progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .task-progress-fill {
+            height: 100%;
+            background-color: #4a6fa5;
+            transition: width 0.3s ease;
+        }
+        .task-progress-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .tips {
+            background-color: #fff3cd;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #ffc107;
+        }
+        .tips h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .tips ul {
+            margin-bottom: 0;
+            padding-left: 1.5rem;
+        }
+        .tips li {
+            margin-bottom: 0.5rem;
+        }
+        .progress-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            border-left: 4px solid #1976d2;
+            text-align: center;
+            display: none;
+        }
+        .progress-info.show {
+            display: block;
+        }
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入公共组件 -->
+    {% include 'components/header.html' %}
+    {% include 'components/common_scripts.html' %}
+    
+    <script>
+        // 自动显示队列状态轮询已在common_scripts.html中定义
+    </script>
+
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="status-box status-{{ category }}">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="tips">
+            <h3>文生音频指南</h3>
+            <ul>
+                <li>描述要清晰具体，包含声音类型、风格、情感等音频相关元素</li>
+                <li>使用英文分号(;)分隔不同的描述元素</li>
+                <li>例如：relaxing piano music with soft strings, calm atmosphere, 120 BPM, C major</li>
+                <li>音频生成过程可能需要较长时间，请耐心等待</li>
+            </ul>
+        </div>
+
+        <form method="post">
+            <div id="prompt-container">
+                <div class="form-group">
+                    <label for="prompt">提示词 (必填)</label>
+                    <textarea id="prompt" name="prompt" placeholder="请输入音频内容描述，例如：relaxing piano music with soft strings, calm atmosphere">{{ default_params.prompt or '' }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="negative_prompt">负面提示词</label>
+                    <textarea id="negative_prompt" name="negative_prompt" placeholder="请输入不想要的效果，例如：distorted, high pitch, noise">{{ default_params.negative_prompt or 'distorted, high pitch, noise, dissonant, low quality' }}</textarea>
+                </div>
+            </div>
+            
+            <!-- 模型参数设置 -->
+            <div class="parameter-group collapsed">
+                <h3>模型参数设置</h3>
+                <div class="parameter-content">
+                <div class="slider-container">
+                    <label for="stepsSlider">生成步数</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="stepsSlider" class="slider" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}">
+                        <input type="number" id="steps" name="steps" min="5" max="100" step="1" value="{{ default_params.steps or 30 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">步数越多，细节越丰富，但生成时间越长，建议值：20-40</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="cfgSlider">提示引导强度（CFG Scale）</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="cfgSlider" class="slider" min="1" max="30" step="0.01" value="{{ default_params.cfg or 8.0 }}">
+                        <input type="number" id="cfg" name="cfg" min="1" max="30" step="0.01" value="{{ default_params.cfg or 8.0 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">值越高，越严格遵循提示词，建议值：5.0-10.0</p>
+                    <div class="parameter-description">
+                        <li>1-3：非常弱的提示引导，图像更“自由”，可能偏离提示，但风格更自然、有创意。实验性创作、抽象艺术、想获得意外效果时</li>
+                        <li>4 ~ 7推荐范围（平衡点）：提示有明显影响，同时保留自然细节和多样性。大多数通用场景，如人物、风景、插画等</li>
+                        <li>8 ~ 12：强烈遵循提示，细节更贴合文字，但可能出现过度锐化、不自然或伪影。需要精确控制构图、文字、物体位置的场景</li>
+                        <li>13 ~ 20+：极强引导，极易产生“过拟合”：色彩怪异、结构扭曲、纹理重复、噪点增多。仅用于极端需求，如特定品牌Logo、复杂文字渲染（慎用）</li>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="sampler_name">采样算法</label>
+                    <div class="slider-input-group">
+                        <select id="sampler_name" name="sampler_name" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="euler" {% if default_params.sampler_name == 'euler' %}selected{% endif %}>⚡ Euler (快速基础)</option>
+                            <option value="euler_ancestral" {% if default_params.sampler_name == 'euler_ancestral' %}selected{% endif %}>Euler Ancestral</option>
+                            <option value="heun" {% if default_params.sampler_name == 'heun' %}selected{% endif %}>Heun</option>
+                            <option value="dpm_2" {% if default_params.sampler_name == 'dpm_2' %}selected{% endif %}>DPM2</option>
+                            <option value="dpm_2_ancestral" {% if default_params.sampler_name == 'dpm_2_ancestral' %}selected{% endif %}>DPM2 Ancestral</option>
+                            <option value="dpmpp_2s_ancestral" {% if default_params.sampler_name == 'dpmpp_2s_ancestral' %}selected{% endif %}>DPM++ 2S Ancestral</option>
+                            <option value="dpmpp_2m" {% if default_params.sampler_name == 'dpmpp_2m' %}selected{% endif %}>⚖️ DPM++ 2M (平衡)</option>
+                            <option value="dpmpp_2m_sde" {% if default_params.sampler_name == 'dpmpp_2m_sde' %}selected{% endif %}>DPM++ 2M SDE</option>
+                            <option value="dpmpp_3m_sde" {% if default_params.sampler_name == 'dpmpp_3m_sde' %}selected{% endif %}>🔍 DPM++ 3M SDE (精细细节)</option>
+                            <option value="dpmpp_3m_sde_gpu" {% if default_params.sampler_name == 'dpmpp_3m_sde_gpu' %}selected{% endif %}>🚀 DPM++ 3M SDE GPU (GPU加速)</option>
+                            <option value="uni_pc" {% if default_params.sampler_name == 'uni_pc' %}selected{% endif %}>UniPC</option>
+                        </select>
+                    </div>
+                    <div class="parameter-description">
+                        选择用于生成音频的采样算法，不同的算法会产生不同的效果和速度。
+                    </div>
+                    <div class="parameter-description">
+                        <li>Euler：基础算法，适合大多数场景，生成速度快</li>
+                        <li>DPM++ 2M：高质量算法，平衡速度和质量</li>
+                        <li>DPM++ 3M SDE：高质量算法，适合需要精细细节的场景</li>
+                        <li>DPM++ 3M SDE GPU：GPU优化版本，速度更快</li>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            <!-- 音频生成设置 -->
+            <div class="parameter-group collapsed">
+                <h3>音频生成设置</h3>
+                <div class="parameter-content">
+                <div class="slider-container">
+                    <label for="secondsSlider">音频时长（秒）</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="secondsSlider" class="slider" min="5" max="60" step="1" value="{{ default_params.seconds or 20 }}">
+                        <input type="number" id="seconds" name="seconds" min="5" max="60" step="1" value="{{ default_params.seconds or 20 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">音频时长，建议值：10-30秒</p>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="batchSizeSlider">生成数量</label>
+                    <div class="slider-input-group">
+                        <input type="range" id="batchSizeSlider" class="slider" min="1" max="5" step="1" value="{{ default_params.batch_size or 1 }}">
+                        <input type="number" id="batch_size" name="batch_size" min="1" max="5" step="1" value="{{ default_params.batch_size or 1 }}" class="slider-value">
+                    </div>
+                    <p class="parameter-description">生成的音频数量，最多5个，建议值：1</p>
+                </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="form-button" id="generateButton">生成音频</button>
+            <!-- 加载指示器 -->
+            <!-- <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                <div class="loading-spinner"></div>
+                <span>处理中...</span>
+            </div> -->
+        </form>
+        
+        <!-- 任务队列状态显示区域 -->
+        {% include 'components/task_queue_status.html' %}
+
+        <a href="{{ url_for('index') }}" class="back-link">← 返回首页</a>
+    </div>
+    
+    <!-- 引入公共组件 -->
+    {% include 'components/notification.html' %}
+    
+    <!-- 引入任务模态框 -->
+    {% include 'components/task_modal.html' %}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化数字输入框
+            const form = document.querySelector('form');
+            if (form) {
+                initNumberInputs(form);
+            }
+            
+            // 设置所有滑块的同步
+            setupSliderSync('stepsSlider', 'steps');
+            setupSliderSync('cfgSlider', 'cfg');
+            setupSliderSync('secondsSlider', 'seconds');
+            setupSliderSync('batchSizeSlider', 'batch_size');
+            
+            // 设置参数折叠功能
+            setupParameterFolding();
+            
+            // 表单提交处理
+            const promptTextarea = document.getElementById('prompt');
+            const generateButton = document.getElementById('generateButton');
+            const progressInfo = document.querySelector('.progress-info');
+            
+            // 表单提交前的处理
+            form.addEventListener('submit', function(e) {
+                // 先不阻止默认行为，让浏览器正常验证
+                // 但需要处理所有数字输入框的值
+                const numberInputs = document.querySelectorAll('input[type="number"]');
+                numberInputs.forEach(input => {
+                    if (input.value && !isNaN(parseFloat(input.value))) {
+                        const step = parseFloat(input.step) || 1;
+                        const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+                        input.value = parseFloat(input.value).toFixed(decimalPlaces);
+                    }
+                });
+                
+                e.preventDefault();
+                
+                // 表单验证
+                if (!promptTextarea.value.trim()) {
+                    showNotification('请输入提示词', 'error');
+                    return;
+                }
+                
+                // 构建JSON数据
+                const formData = {
+                    prompt: document.getElementById('prompt').value.trim(),
+                    negative_prompt: document.getElementById('negative_prompt').value,
+                    steps: document.getElementById('steps').value,
+                    cfg: document.getElementById('cfg').value,
+                    seconds: document.getElementById('seconds').value,
+                    batch_size: document.getElementById('batch_size').value,
+                };
+                
+                // 显示加载状态
+                generateButton.disabled = true;
+                generateButton.textContent = '生成中...';
+                loadingIndicator.style.display = 'block';
+
+                // 使用ajaxRequest发送JSON格式数据
+                ajaxRequest('/api/text_to_audio', { method: 'POST', body: formData })
+                    .then(function(data) {
+                        // 提交成功处理
+                        if (data && data.success) {
+                            showNotification('任务已提交到队列，请在"我的任务"中查看进度', 'success');
+                        } else {
+                            showNotification('任务提交失败:' + (data && data.message || '未知错误'), 'error');
+                        }
+                        
+                        // 恢复按钮状态
+                        generateButton.disabled = false;
+                        generateButton.textContent = '生成音频';
+                    })
+                    .catch(function(error) {
+                        // 提交失败处理
+                        showNotification('提交失败: ' + error.message, 'error');
+                        
+                        // 恢复按钮状态
+                        generateButton.disabled = false;
+                        generateButton.textContent = '生成音频';
+                        progressInfo.classList.remove('show');
+                    });
+            });
+            
+            // 启动任务队列状态轮询
+            if (typeof startQueueStatusPolling === 'function') {
+                startQueueStatusPolling();
+            } else {
+                console.warn('startQueueStatusPolling function not available');
+            }
+        });
+        </script>
+    
+    <!-- 引入页脚组件 -->
+    {% include 'components/footer.html' %}
+</body>
+</html>

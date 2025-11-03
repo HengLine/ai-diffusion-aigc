@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Flask应用启动脚本（优化版）
-
-功能：
-1. 检查Python环境是否安装
-2. 检查虚拟环境是否存在，不存在则创建
-3. 根据不同系统激活虚拟环境
-4. 安装项目依赖
-5. 启动Flask应用
-
-步骤严格按顺序执行，只有上一步成功才执行下一步
+@FileName: app_env.py
+@Description: 应用环境基类，负责检查Python环境、虚拟环境创建与激活、依赖安装等基础功能
+        功能：
+        1. 检查Python环境是否安装
+        2. 检查虚拟环境是否存在，不存在则创建
+        3. 根据不同系统激活虚拟环境
+        4. 安装项目依赖
+        5. 启动Flask应用
+    步骤严格按顺序执行，只有上一步成功才执行下一步
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
+
 import os
 import subprocess
 import sys
@@ -241,7 +243,8 @@ class AppBaseEnv:
         debug(f"使用虚拟环境pip安装项目依赖包（{REQUIREMENTS_FILE}）...")
 
         # 使用虚拟环境的pip安装项目依赖
-        result = self.run_command(f'"{pip_exe}" install -r "{REQUIREMENTS_FILE}"')
+        # result = self.run_command(f'"{pip_exe}" install -r "{REQUIREMENTS_FILE}"')
+        result = self.run_command(f'pip install -r requirements.txt"')
         if result and hasattr(result, 'returncode') and result.returncode == 0:
             debug("[成功] 依赖安装成功。")
             return True

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-文生视频路由模块
+@FileName: text_to_video_route.py
+@Description: 文生视频功能路由模块，提供文本到视频转换的Web接口
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import os
@@ -75,7 +78,8 @@ def api_text_to_video():
             steps=data.get('steps'),
             cfg=data.get('cfg'),
             fps=data.get('fps'),
-            batch_size=data.get('batch_size')
+            batch_size=data.get('batch_size'),
+            sampler_name=data.get('sampler_name')
         )
 
         if result:

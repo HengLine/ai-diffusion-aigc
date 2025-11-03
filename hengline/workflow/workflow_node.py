@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-运行ComfyUI工作流的主脚本
+@FileName: workflow_node.py
+@Description: 工作流节点处理模块，提供工作流文件加载、节点参数更新等功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 
 import json
@@ -199,3 +202,190 @@ def update_node_inputs(node_data: Dict[str, Any], params: Dict[str, Any],
         # 直接更新节点输入中存在的参数
         elif param_name in inputs:
             inputs[param_name] = param_value
+
+
+import uuid
+
+def wrap_workflow_for_comfyui(workflow_nodes: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    包装工作流以符合ComfyUI API的要求格式
+    
+    Args:
+        workflow_nodes: 工作流节点数据
+        
+    Returns:
+        Dict[str, Any]: 包装后的完整工作流结构，包含client_id、prompt和extra_data
+    """
+    # 检查工作流格式并转换为正确的prompt结构
+    prompt_nodes = {}
+    
+    # 如果workflow_nodes已经包含client_id、prompt等完整结构，直接返回
+    if isinstance(workflow_nodes, dict) and "client_id" in workflow_nodes and "prompt" in workflow_nodes:
+        debug("工作流已经是完整格式，无需转换")
+        return workflow_nodes
+    
+    # 处理已经是正确prompt节点格式的工作流（如用户提供的示例格式）
+    if isinstance(workflow_nodes, dict):
+        prompt_nodes = convert_comfyui_visual_to_executable(workflow_nodes)
+
+    # 如果无法识别格式或转换后prompt_nodes为空，尝试使用原始工作流
+    if not prompt_nodes and isinstance(workflow_nodes, dict):
+        prompt_nodes = workflow_nodes
+    
+    # 构建完整的工作流结构
+    wrapped_workflow = {
+        "client_id": str(uuid.uuid4()),
+        "prompt": prompt_nodes,
+        "extra_data": {
+            "extra_pnginfo": {
+                "workflow": workflow_nodes
+            }
+        }
+    }
+    
+    debug(f"已包装工作流，包含 {len(prompt_nodes)} 个节点")
+    return wrapped_workflow
+
+
+
+# 预定义常见节点的 widget 参数名（按 widgets_values 顺序）
+NODE_WIDGET_MAPPINGS = {
+    # === 图像生成 ===
+    "KSampler": ["seed", "control_after_generate", "steps", "cfg", "sampler_name", "scheduler", "denoise"],
+    "KSamplerAdvanced": ["add_noise", "noise_seed", "control_after_generate", "steps", "cfg", "sampler_name", "scheduler", "start_at_step", "end_at_step",
+                         "return_with_leftover_noise", "model"],
+    "EmptyLatentImage": ["width", "height", "batch_size"],
+    "CLIPTextEncode": ["text"],
+    "CheckpointLoaderSimple": ["ckpt_name"],
+    "VAEDecode": [],
+    "VAEEncode": [],
+    "SaveImage": ["filename_prefix"],
+    "PreviewImage": [],
+
+    # === ControlNet ===
+    "ControlNetLoader": ["control_net_name"],
+    "ControlNetApply": ["strength"],
+    "ControlNetApplyAdvanced": ["strength", "start_percent", "end_percent"],
+
+    # === IPAdapter ===
+    "IPAdapterModelLoader": ["ipadapter_file"],
+    "IPAdapterClipVisionLoader": ["clip_name"],
+    "IPAdapterApply": ["weight", "noise"],
+    "IPAdapterApplyEncoded": ["weight", "noise"],
+    "IPAdapterEncoder": ["weight", "noise"],
+
+    # === AnimateDiff (视频) ===
+    "AnimateDiffLoaderV1": ["model_name", "beta_schedule", "motion_scale", "apply_v2_models_properly"],
+    "AnimateDiffUniformContextOptions": ["context_length", "context_stride", "context_overlap", "closed_loop"],
+    "AnimateDiffSampler": ["noise_type", "seed"],
+
+    # === 音频 (ComfyUI-Audio) ===
+    "LoadAudio": ["audio_file"],
+    "SaveAudio": ["filename_prefix", "format"],
+    "AudioToMelSpectrogram": ["n_mels", "hop_length"],
+
+    # === 视频 (ComfyUI-VideoHelperSuite) ===
+    "VHS_VideoCombine": ["frame_rate", "loop_count", "filename_prefix", "format", "pix_fmt", "quality"],
+    "VHS_LoadVideo": ["video"],
+    "VHS_LoadImages": ["directory", "image_load_cap", "skip_first_images", "select_every_nth"],
+
+    # === 3D / Mesh ===
+    "LoadMesh": ["mesh_file"],
+    "SaveMesh": ["filename_prefix"],
+
+    # === 其他常用 ===
+    "ImageScale": ["upscale_method", "width", "height", "crop"],
+    "ImageScaleBy": ["upscale_method", "scale_by"],
+    "LoraLoader": ["lora_name", "strength_model", "strength_clip"],
+    "VAELoader": ["vae_name"],
+    "CLIPLoader": ["clip_name"],
+    "ConditioningZeroOut": [],
+    "ConditioningSetArea": ["width", "height", "x", "y", "strength"],
+    "ConditioningSetMask": ["strength", "set_cond_area"],
+    "FreeU_V2": ["b1", "b2", "s1", "s2"],
+    "Reroute": [],  # 透传节点
+}
+
+"""根据节点类型转换"""
+def convert_comfyui_visual_to_executable(visual_workflow: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    将 ComfyUI 可视化工作流 (含 nodes/links) 转换为可执行的 prompt JSON
+    支持图像、视频、音频、文本、ControlNet、AnimateDiff、IPAdapter 等常见节点
+    """
+    nodes = visual_workflow.get("nodes", [])
+    links = visual_workflow.get("links", [])
+
+    # 构建连接映射: (to_node_id, to_input_index) -> (from_node_id, from_output_index)
+    link_map = {}
+    for link in links:
+        # link = [link_id, from_node_id, from_output_idx, to_node_id, to_input_idx, type]
+        _, from_id, from_out_idx, to_id, to_in_idx, _ = link
+        link_map[(to_id, to_in_idx)] = (from_id, from_out_idx)
+
+    executable = {}
+
+    for node in nodes:
+        node_id = str(node["id"])
+        node_type = node["type"]
+        widgets = node.get("widgets_values", [])
+        inputs_list = node.get("inputs", [])
+        input_names = [inp["name"] for inp in inputs_list]
+
+        inputs_dict = {}
+        # ==============================
+        # 特殊处理：KSampler 及其变体
+        # ==============================
+        if node_type in ["KSampler", "KSamplerSelect", "KSamplerAdvanced"]:
+            if node_type == "KSampler":
+                if len(widgets) >= 7:
+                    inputs_dict.update({
+                        "seed": widgets[0],
+                        "control_after_generate": widgets[1],  # ← 关键！不要丢
+                        "steps": widgets[2],
+                        "cfg": widgets[3],
+                        "sampler_name": widgets[4],
+                        "scheduler": widgets[5],
+                        "denoise": widgets[6]
+                    })
+                # 处理连接输入（model, positive, negative, latent_image）
+                for idx, inp in enumerate(inputs_list):
+                    if (node["id"], idx) in link_map:
+                        from_id, from_out = link_map[(node["id"], idx)]
+                        inputs_dict[inp["name"]] = [str(from_id), from_out]
+
+            elif node_type == "KSamplerAdvanced":
+                # 类似处理，参数更多
+                pass  # 可按需扩展
+
+        # ==============================
+        # 其他节点：通用逻辑
+        # ==============================
+        else:
+            # 1. 处理连接
+            for idx, inp in enumerate(inputs_list):
+                if (node["id"], idx) in link_map:
+                    from_id, from_out = link_map[(node["id"], idx)]
+                    inputs_dict[inp["name"]] = [str(from_id), from_out]
+
+            # 2. 处理 widgets（按 NODE_WIDGET_MAPPINGS）
+            if node_type in NODE_WIDGET_MAPPINGS:
+                widget_names = NODE_WIDGET_MAPPINGS[node_type]
+                # 将 widgets 按顺序映射到 widget_names
+                for i, name in enumerate(widget_names):
+                    if i < len(widgets):
+                        inputs_dict[name] = widgets[i]
+            else:
+                # 未知节点：保守处理
+                for i, w in enumerate(widgets):
+                    if i < len(inputs_list):
+                        if inputs_list[i]["name"] not in inputs_dict:
+                            inputs_dict[inputs_list[i]["name"]] = w
+                    else:
+                        inputs_dict[f"param_{i}"] = w
+
+        executable[node_id] = {
+            "class_type": node_type,
+            "inputs": inputs_dict
+        }
+
+    return executable

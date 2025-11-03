@@ -1,3 +1,9 @@
+"""
+@FileName: singleton_meta.py
+@Description: 单例模式元类实现，确保类只有一个实例
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import threading
 
 class SingletonMeta(type):

@@ -364,4 +364,202 @@ function throttle(func, limit) {
         }
     };
 }
+
+/**
+ * 设置参数折叠/展开功能
+ */
+function setupParameterFolding() {
+    const parameterGroups = document.querySelectorAll('.parameter-group');
+    parameterGroups.forEach(group => {
+        const header = group.querySelector('h3');
+        header.addEventListener('click', () => {
+            group.classList.toggle('collapsed');
+        });
+    });
+}
+
+/**
+ * 同步滑块和输入框的值
+ * @param {string} sliderId - 滑块元素ID
+ * @param {string} inputId - 输入框元素ID
+ */
+function setupSliderSync(sliderId, inputId) {
+    const slider = document.getElementById(sliderId);
+    const input = document.getElementById(inputId);
+    
+    if (slider && input) {
+        // 当滑块值变化时更新输入框
+        slider.addEventListener('input', function() {
+            // 设置滑块值时，根据步长设置合适的小数位数
+            const step = parseFloat(input.step) || 1;
+            const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+            const value = parseFloat(this.value);
+            input.value = value.toFixed(decimalPlaces);
+        });
+        
+        // 当输入框值变化时更新滑块
+        input.addEventListener('input', function() {
+            // 允许空值
+            if (!this.value) {
+                return;
+            }
+            
+            // 处理纯小数点输入
+            if (this.value === '.') {
+                this.value = '0.';
+                return;
+            }
+            
+            // 验证是否是有效的数字格式
+            if (!/^\d*\.?\d*$/.test(this.value)) {
+                // 不是有效的数字格式，恢复之前的值
+                const currentValue = this.value;
+                setTimeout(() => {
+                    this.value = currentValue.replace(/[^\d.]/g, '');
+                }, 0);
+                return;
+            }
+            
+            // 限制小数点的数量
+            const parts = this.value.split('.');
+            if (parts.length > 2) {
+                this.value = parts[0] + '.' + parts.slice(1).join('');
+                return;
+            }
+            
+            // 确保值在有效范围内
+            const min = parseFloat(this.min);
+            const max = parseFloat(this.max);
+            const step = parseFloat(this.step);
+            let value = parseFloat(this.value);
+            
+            if (isNaN(value)) value = min;
+            if (value < min) value = min;
+            if (value > max) value = max;
+            
+            // 根据步长调整值
+            value = Math.round(value / step) * step;
+            
+            // 设置小数位数
+            const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+            this.value = value.toFixed(decimalPlaces);
+            slider.value = value;
+        });
+    }
+}
+
+/**
+ * 初始化数字输入框，支持小数输入和限制小数位数
+ * @param {HTMLFormElement} form - 表单元素（可选）
+ */
+function initNumberInputs(form) {
+    const numberInputs = form ? form.querySelectorAll('input[type="number"]') : document.querySelectorAll('input[type="number"]');
+    numberInputs.forEach(input => {
+        // 记录用户是否正在输入中
+        let isTyping = false;
+        let lastInputTime = 0;
+        
+        // 设置初始值的小数位数
+        if (input.value && !isNaN(parseFloat(input.value))) {
+            const step = parseFloat(input.step) || 1;
+            const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+            input.value = parseFloat(input.value).toFixed(decimalPlaces);
+        }
+        
+        // 添加keydown事件监听器，更好地支持键盘输入
+        input.addEventListener('keydown', function() {
+            isTyping = true;
+            lastInputTime = Date.now();
+        });
+        
+        // 添加focus事件监听器
+        input.addEventListener('focus', function() {
+            isTyping = true;
+        });
+        
+        // 添加blur事件监听器
+        input.addEventListener('blur', function() {
+            isTyping = false;
+            // 当失去焦点时，如果有值，则格式化显示
+            if (this.value && !isNaN(parseFloat(this.value))) {
+                const step = parseFloat(this.step) || 1;
+                const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+                this.value = parseFloat(this.value).toFixed(decimalPlaces);
+            }
+        });
+        
+        // 添加mouseleave事件监听器
+        input.addEventListener('mouseleave', function() {
+            // 延迟100毫秒，确保用户操作完成
+            setTimeout(() => {
+                if (!isTyping && this.value && !isNaN(parseFloat(this.value))) {
+                    const step = parseFloat(this.step) || 1;
+                    const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+                    this.value = parseFloat(this.value).toFixed(decimalPlaces);
+                }
+            }, 100);
+        });
+        
+        // 改进的input事件处理
+        input.addEventListener('input', function() {
+            // 允许空值
+            if (!this.value) {
+                return;
+            }
+            
+            // 处理纯小数点输入
+            if (this.value === '.') {
+                this.value = '0.';
+                return;
+            }
+            
+            // 验证是否是有效的数字格式
+            if (!/^\d*\.?\d*$/.test(this.value)) {
+                // 不是有效的数字格式，恢复之前的值
+                const currentValue = this.value;
+                setTimeout(() => {
+                    this.value = currentValue.replace(/[^\d.]/g, '');
+                }, 0);
+                return;
+            }
+            
+            // 限制小数点的数量
+            const parts = this.value.split('.');
+            if (parts.length > 2) {
+                this.value = parts[0] + '.' + parts.slice(1).join('');
+                return;
+            }
+            
+            // 判断是否为用户主动输入，还是滑块联动导致的输入
+            const isUserTyping = isTyping && (Date.now() - lastInputTime < 200);
+            
+            // 如果是用户主动输入，不进行实时格式化，只在输入完成后处理
+            if (isUserTyping) {
+                return;
+            }
+            
+            // 如果是滑块联动或增减按钮导致的输入，则进行实时格式化
+            if (!isNaN(parseFloat(this.value))) {
+                const step = parseFloat(this.step) || 1;
+                const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+                this.value = parseFloat(this.value).toFixed(decimalPlaces);
+            }
+        });
+    });
+    
+    // 如果提供了表单元素，添加表单提交前的处理
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // 处理所有数字输入框的值
+            const formNumberInputs = form.querySelectorAll('input[type="number"]');
+            formNumberInputs.forEach(input => {
+                if (input.value && !isNaN(parseFloat(input.value))) {
+                    const step = parseFloat(input.step) || 1;
+                    const decimalPlaces = step.toString().split('.')[1] ? step.toString().split('.')[1].length : 0;
+                    input.value = parseFloat(input.value).toFixed(decimalPlaces);
+                }
+            });
+        }, false);
+    }
+}
 </script>

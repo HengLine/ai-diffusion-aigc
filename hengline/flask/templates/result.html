@@ -58,6 +58,10 @@
             background-color: #fff3e0;
             color: #e65100;
         }
+        .badge-audio {
+            background-color: #f3e5f5;
+            color: #6a1b9a;
+        }
         .result-content {
             margin-bottom: 2rem;
         }
@@ -72,6 +76,12 @@
             max-height: 600px;
             border-radius: 4px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .result-audio {
+            width: 100%;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 1rem;
         }
         .action-buttons {
             display: flex;
@@ -204,6 +214,9 @@
             {% if is_video %}
                 <span class="result-type-badge badge-video">视频结果</span>
                 <h2>视频生成完成！</h2>
+            {% elif is_audio %}
+                <span class="result-type-badge badge-audio">音频结果</span>
+                <h2>音频生成完成！</h2>
             {% else %}
                 <span class="result-type-badge badge-image">图像结果</span>
                 <h2>图像生成完成！</h2>
@@ -217,6 +230,11 @@
                     <source src="{{ url_for('serve_output', filename=filename) }}" type="video/mp4">
                     您的浏览器不支持视频播放。
                 </video>
+            {% elif is_audio %}
+                <audio class="result-audio" controls>
+                    <source src="{{ url_for('serve_output', filename=filename) }}" type="audio/mpeg">
+                    您的浏览器不支持音频播放。
+                </audio>
             {% else %}
                 <img class="result-image" src="{{ url_for('serve_output', filename=filename) }}" alt="生成结果">
             {% endif %}
@@ -238,6 +256,10 @@
                 <a href="{{ url_for('image_to_video.image_to_video') }}" class="action-button new-task-button">
                     生成新视频
                 </a>
+                {% elif task_type == 'text_to_audio' %}
+                <a href="{{ url_for('text_to_audio.text_to_audio') }}" class="action-button new-task-button">
+                    生成新音频
+                </a>
             {% endif %}
             <a href="{{ url_for('index') }}" class="action-button back-button">
                 返回首页
@@ -252,6 +274,7 @@
                         {% if task_type == 'text_to_image' %}文生图
                         {% elif task_type == 'image_to_image' %}图生图
                         {% elif task_type == 'image_to_video' %}图生视频
+                        {% elif task_type == 'text_to_audio' %}文生音频
                         {% endif %}
                     </p>
                 </div>
@@ -287,7 +310,7 @@
             startQueueStatusPolling();
             
             // 预加载结果，避免白屏
-            const media = {% if is_video %}document.querySelector('.result-video'){% else %}document.querySelector('.result-image'){% endif %};
+            const media = {% if is_video %}document.querySelector('.result-video'){% elif is_audio %}document.querySelector('.result-audio'){% else %}document.querySelector('.result-image'){% endif %};
             const loadingSpinner = document.createElement('div');
             loadingSpinner.className = 'loading-spinner';
             

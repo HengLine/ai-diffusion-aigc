@@ -1,3 +1,9 @@
+"""
+@FileName: enum_encoder.py
+@Description: 增强的枚举JSON编码器，支持枚举类型的序列化
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 from enum import Enum
 from json import JSONEncoder
 from typing import Any

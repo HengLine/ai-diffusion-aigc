@@ -1,4 +1,10 @@
 # 配置工具模块，统一管理配置获取
+"""
+@FileName: config_utils.py
+@Description: 配置文件处理工具，负责加载、解析和获取配置信息
+@Author: HengLine
+@Time: 2025/08 - 2025/11
+"""
 import json
 import os
 
@@ -122,9 +128,11 @@ def get_comfyui_config():
         'auto_start_server': False
     })
 
+
 def get_comfyui_api_url():
     """获取ComfyUI的API URL"""
     return get_comfyui_config().get('api_url', 'http://127.0.0.1:8188')
+
 
 def save_comfyui_config(api_url=None, auto_start_server=None):
     """保存ComfyUI相关配置
@@ -139,25 +147,25 @@ def save_comfyui_config(api_url=None, auto_start_server=None):
     try:
         config_path = _get_config_path()
         config = load_config()
-        
+
         # 确保settings节点存在
         if 'settings' not in config:
             config['settings'] = {}
-        
+
         # 确保comfyui节点存在
         if 'comfyui' not in config['settings']:
             config['settings']['comfyui'] = {}
-        
+
         # 更新配置
         if api_url is not None:
             config['settings']['comfyui']['api_url'] = api_url
         if auto_start_server is not None:
             config['settings']['comfyui']['auto_start_server'] = auto_start_server
-        
+
         # 写回文件
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
-        
+
         # 重新加载配置
         reload_config()
         debug(f"成功保存ComfyUI配置: {config['settings']['comfyui']}")
@@ -196,7 +204,6 @@ def get_task_config() -> dict[str, int]:
 def get_max_concurrent_tasks():
     """获取最大并发任务数"""
     return get_task_config().get('task_max_concurrent', 2)
-
 
 
 # 输出设置
@@ -242,14 +249,14 @@ def get_task_settings(task_type, default=None):
     # 从工作流预设中获取默认参数，而不是从settings配置中获取
     if default is None:
         default = {}
-    
+
     # 优先从工作流预设的default节点获取参数
     preset_default = get_workflow_preset(task_type, 'default')
-    
+
     # 如果预设中有值，返回预设值；否则返回默认值
     if preset_default:
         return preset_default
-    
+
     # 作为后备，仍然从settings配置中尝试获取
     return get_settings_config().get(task_type, default)
 
@@ -277,65 +284,6 @@ def load_workflow_presets():
         error(f"加载工作流预设失败: {e}")
         # 返回默认预设
         return {
-            'text_to_image': {
-                'default': {
-                    'width': 512,
-                    'height': 512,
-                    'steps': 10,
-                    'cfg': 6,
-                    'prompt': '',
-                    'negative_prompt': '',
-                    'batch_size': 1,
-                    'seed': -1
-                },
-                'setting': {}
-            },
-            'image_to_image': {
-                'default': {
-                    'width': 512,
-                    'height': 512,
-                    'steps': 10,
-                    'cfg': 7.5,
-                    'batch_size': 1,
-                    'prompt': '',
-                    'negative_prompt': '',
-                    'seed': -1,
-                    'denoise': 0.75
-                },
-                'setting': {}
-            },
-            'image_to_video': {
-                'default': {
-                    'width': 512,
-                    'height': 384,
-                    'length': 121,
-                    'batch_size': 1,
-                    'shift': 8,
-                    'fps': 16,
-                    'prompt': '',
-                    'negative_prompt': '',
-                    'denoise': 1,
-                    'seed': -1,
-                    'cfg': 1
-                },
-                'setting': {}
-            },
-            'text_to_video': {
-                'default': {
-                    'width': 576,
-                    'height': 320,
-                    'length': 121,
-                    'fps': 16,
-                    'shift': 8,
-                    'batch_size': 1,
-                    'denoise': 1,
-                    'seed': -1,
-                    'cfg': 1,
-                    'negative_prompt': '',
-                    'prompt': ''
-                },
-                'setting': {}
-            }
         }
 
 

@@ -1,23 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-工作流工具模块，包含WorkflowManager类和配置加载功能
+@FileName: workflow_manage.py
+@Description: 工作流管理器基类，提供工作流的通用管理功能
+@Author: HengLine
+@Time: 2025/08 - 2025/11
 """
 import os
 import random
 from typing import Dict, Any
 
-from hengline.logger import info, error, debug
+from hengline.logger import info, error, debug, warning
 from hengline.task.task_manage import task_queue_manager
 from hengline.task.task_queue import TaskStatus
 # 导入配置工具
 from hengline.utils.config_utils import load_workflow_presets, get_comfyui_api_url, \
-    get_output_folder, get_effective_config, get_workflow_path
+    get_output_folder, get_effective_config, get_workflow_path, get_workflows_dir
 from hengline.utils.file_utils import generate_output_filename
 from hengline.utils.log_utils import print_log_exception
 from hengline.workflow.run_workflow import ComfyUIRunner
 from hengline.workflow.workflow_comfyui import comfyui_api
-from hengline.workflow.workflow_node import load_workflow, update_workflow_params
+from hengline.workflow.workflow_node import load_workflow, update_workflow_params, wrap_workflow_for_comfyui
 
 
 class WorkflowManager:
@@ -115,7 +118,24 @@ class WorkflowManager:
                 return {"success": False, "message": "无法连接到ComfyUI服务器，请确保服务器已启动"}
 
             # 获取工作流文件路径
-            workflow_path = get_workflow_path(task_type)
+            # 先检查workflow_presets.json的workflow节点是否有值
+            workflow_filename = self.workflow_presets.get(task_type, {}).get('workflow')
+            workflow_path = None
+
+            # 如果workflow节点有值，尝试使用该工作流文件
+            if workflow_filename:
+                preset_workflow_path = os.path.join(get_workflows_dir(), 'preset', workflow_filename)
+                if os.path.exists(preset_workflow_path):
+                    workflow_path = preset_workflow_path
+                    debug(f"使用预设工作流文件: {workflow_path}")
+                else:
+                    warning(f"预设工作流文件不存在: {preset_workflow_path}")
+            
+            # 如果workflow节点没有值或文件不存在，使用默认工作流文件
+            if not workflow_path:
+                workflow_path = get_workflow_path(task_type)
+                debug(f"使用默认工作流文件: {workflow_path}")
+                
             if not workflow_path:
                 error(f"未找到{task_type}工作流文件")
                 return {"success": False, "message": f"未找到{task_type}工作流文件"}
@@ -126,16 +146,21 @@ class WorkflowManager:
                 error("工作流加载失败")
                 return {"success": False, "message": "工作流加载失败"}
 
+            # 包装工作流以符合ComfyUI API的要求格式
+            # 我们的包装方法已经能够智能处理各种格式的工作流
+            wrapped_workflow = wrap_workflow_for_comfyui(workflow)
+            debug("工作流已包装完成")
+
             # 上传图片到ComfyUI服务器并更新工作流
             image_path = params.get('image_path', '')
-            updated_workflow = workflow
+            updated_workflow = wrapped_workflow
             if image_path and os.path.exists(image_path):
                 # 使用comfyui_api上传图片并将文件名填充到工作流中
                 updated_workflow = comfyui_api.upload_and_fill_image(image_path, updated_workflow)
                 if not updated_workflow:
                     error("图片上传失败，无法继续处理图生图任务")
                     return {"success": False, "message": "图片上传失败"}
-            elif task_type in ['image_to_image', 'image_to_video']:
+            elif task_type in ['image_to_image', 'image_to_video', 'change_clothes', 'change_hair_style', 'change_face']:
                 # 如果没有图片路径或图片文件不存在
                 error(f"无效的图片路径: {image_path}")
                 return {"success": False, "message": f"无效的图片路径: {image_path}"}
