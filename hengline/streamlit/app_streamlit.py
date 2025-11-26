@@ -23,7 +23,7 @@ from hengline.logger import debug
 # 导入启动任务监听器
 from hengline.task.task_init import StartupTaskListener
 # 导入配置工具
-from hengline.utils.config_utils import get_paths_config, get_comfyui_api_url, save_comfyui_config
+from utils.config_utils import get_paths_config, get_comfyui_api_url, save_comfyui_config
 
 # 导入工作流运行器
 from hengline.workflow.run_workflow import ComfyUIRunner

@@ -19,7 +19,7 @@ from hengline.task.task_base import TaskBase
 from hengline.task.task_email import async_send_failure_email, async_send_success_email
 from hengline.task.task_history import task_history
 from hengline.task.task_queue import Task, TaskStatus
-from hengline.utils.log_utils import print_log_exception
+from utils.log_utils import print_log_exception
 
 # 延迟导入SocketIO路由模块函数，避免循环依赖
 import hengline.flask.route.socketio_route
@@ -85,7 +85,7 @@ class TaskMonitor(TaskBase):
 
             debug("任务队列管理器已关闭，已保存所有排队任务到历史记录")
             
-    def get_queue_status(self):
+    def get_queue_status(self, task_type: Optional[str] = None) -> Dict[str, Any]:
         """获取当前任务队列状态
         
         Returns:

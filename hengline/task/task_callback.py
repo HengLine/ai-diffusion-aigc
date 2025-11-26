@@ -14,7 +14,7 @@ from hengline.task.task_email import async_send_failure_email
 from hengline.task.task_history import task_history
 from hengline.task.task_manage import task_queue_manager
 from hengline.task.task_queue import TaskStatus, Task
-from hengline.utils.log_utils import print_log_exception
+from utils.log_utils import print_log_exception
 
 
 class TaskCallbackHandler(TaskBase):

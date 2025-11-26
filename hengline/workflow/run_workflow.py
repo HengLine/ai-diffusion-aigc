@@ -15,8 +15,8 @@ import requests
 
 from hengline.logger import debug, info, error, warning
 from hengline.task.task_callback import task_callback_handler
-from hengline.utils.config_utils import get_task_config
-from hengline.utils.log_utils import print_log_exception
+from utils.config_utils import get_task_config
+from utils.log_utils import print_log_exception
 from hengline.workflow.workflow_comfyui import comfyui_api
 from hengline.workflow.workflow_status_checker import workflow_status_checker
 

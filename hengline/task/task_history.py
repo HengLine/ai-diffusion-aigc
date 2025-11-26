@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from hengline.logger import error, debug, warning
 from hengline.task.task_base import TaskBase
 from hengline.task.task_queue import TaskStatus
-from hengline.utils.log_utils import print_log_exception
+from utils.log_utils import print_log_exception
 
 
 class TaskHistoryManager(TaskBase):

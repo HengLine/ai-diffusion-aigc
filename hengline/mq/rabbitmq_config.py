@@ -7,7 +7,7 @@ from typing import Dict, Optional
 """
 import os
 
-from hengline.utils.config_utils import get_settings_config
+from utils.config_utils import get_settings_config
 from hengline.logger import debug
 
 

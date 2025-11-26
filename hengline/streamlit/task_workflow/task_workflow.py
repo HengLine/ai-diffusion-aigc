@@ -11,7 +11,7 @@ from typing import Dict, Any
 import requests
 
 from hengline.logger import debug, info, error, warning
-from hengline.utils.config_utils import get_task_config
+from utils.config_utils import get_task_config
 from hengline.workflow.workflow_comfyui import comfyui_api
 
 # 添加scripts目录到Python路径

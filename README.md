@@ -1,6 +1,6 @@
 # AIGC 创意平台
 
-这是一个功能丰富的AIGC（人工智能生成内容）平台，基于ComfyUI工作流，集成了多种先进的AI生成模型，实现了文生图、图生图、文生视频、图生视频等多种创意生成功能。
+一个功能丰富的 AIGC（人工智能生成内容）平台，基于 ComfyUI 工作流，集成了多种先进的AI生成模型，实现了文生图、图生图、文生视频、图生视频等多种创意生成功能。
 
 ## 1. 系统介绍
 
@@ -20,23 +20,6 @@
 - **双界面设计**：同时提供Streamlit和Flask两种Web界面，满足不同使用习惯
 - **模块化设计**：采用组件化架构，易于扩展新功能和场景
 - **任务队列**：支持异步任务处理和重试机制，提高系统稳定性
-
-### 项目结构
-
-```
-├── hengline/        # 核心代码目录
-│   ├── core/        # 核心队列处理
-│   ├── flask/       # Flask应用相关代码
-│   ├── streamlit/   # Streamlit界面组件
-│   ├── task/        # 任务管理
-│   └── utils/       # 工具函数库
-│   └── workflow/    # 工作流处理
-├── workflows/       # ComfyUI工作流配置文件
-├── configs/         # 系统配置文件
-├── start_app.py     # Streamlit应用启动脚本
-├── start_flask.py   # Flask应用启动脚本
-└── requirements.txt # 项目依赖文件
-```
 
 
 
@@ -109,7 +92,7 @@
    >
    >    
    >
-   > 6. 
+   > 6. 其他
 
 4. 启动 ComfyUI 
 
@@ -129,8 +112,8 @@
 
 1. 克隆或下载本项目到您的计算机：
    ```bash
-   git clone <项目仓库地址>
-   cd ai-diffusion-aigc
+   git clone https://github.com/HengLine/comfy-diffusion-aigc.git
+   cd comfy-diffusion-aigc
    ```
 
 2. 使用提供的启动脚本自动完成安装：

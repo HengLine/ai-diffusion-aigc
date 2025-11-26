@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入工作流管理器
 # 导入配置工具
-from hengline.utils.config_utils import get_config, get_comfyui_api_url, get_settings_config, \
+from utils.config_utils import get_config, get_comfyui_api_url, get_settings_config, \
     reload_config, get_user_configs, get_comfyui_config
 
 # 创建Blueprint
@@ -123,7 +123,7 @@ def configure():
             return redirect(url_for('config.configure'))
 
         # 处理文生图参数
-        from hengline.utils.config_utils import get_task_settings
+        from utils.config_utils import get_task_settings
         text_to_image_params = get_task_settings('text_to_image')
         # 添加设备参数
         text_to_image_params['device'] = comfyui_device
@@ -242,7 +242,7 @@ def configure():
                                                                     image_to_video_params.get('negative_prompt', ''))
 
         # 使用config_utils中的函数获取正确的配置路径
-        from hengline.utils.config_utils import _get_config_path
+        from utils.config_utils import _get_config_path
         config_path = _get_config_path()
         config_dir = os.path.dirname(config_path)
         
@@ -255,7 +255,7 @@ def configure():
             json.dump(current_config, f, ensure_ascii=False, indent=2)
 
         # 使用新的预设配置函数保存工作流预设
-        from hengline.utils.config_utils import save_workflow_preset
+        from utils.config_utils import save_workflow_preset
         
         # 保存文生图预设
         save_workflow_preset('text_to_image', text_to_image_params)
@@ -291,7 +291,7 @@ def configure():
     user_organization = user_config.get('organization', '')
 
     # 获取模型参数配置，使用get_workflow_preset函数确保优先使用setting节点的值
-    from hengline.utils.config_utils import get_workflow_preset
+    from utils.config_utils import get_workflow_preset
     
     # 获取配置，get_workflow_preset已经实现了setting节点优先的逻辑
     settings = {
@@ -347,19 +347,19 @@ def api_config():
                 }), 400
 
             # 保存用户信息配置
-            from hengline.utils.config_utils import get_user_config
+            from utils.config_utils import get_user_config
             user_config = get_user_config()
             user_config['email'] = data.get('email', '').strip()
             user_config['nickname'] = data.get('nickname', '').strip()
             # user_config['organization'] = data.get('organization', '').strip()
 
             # 保存ComfyUI配置
-            from hengline.utils.config_utils import get_comfyui_config
+            from utils.config_utils import get_comfyui_config
             comfyui_config = get_comfyui_config()
             comfyui_config['api_url'] = data.get('comfyui_api_url', '').strip()
 
             # 保存模型参数配置
-            from hengline.utils.config_utils import get_task_settings
+            from utils.config_utils import get_task_settings
 
             # 如果提交了设置数据，则更新
             if data.get('settings'):
@@ -460,7 +460,7 @@ def api_config():
 @config_bp.route('/config/reset/<preset_type>', methods=['GET'])
 def reset_preset(preset_type):
     """重置指定类型的工作流预设到初始值"""
-    from hengline.utils.config_utils import reset_workflow_preset
+    from utils.config_utils import reset_workflow_preset
     
     # 验证预设类型
     valid_types = ['text_to_image', 'image_to_image', 'text_to_video', 'image_to_video', 'text_to_audio']

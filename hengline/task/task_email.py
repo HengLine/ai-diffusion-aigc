@@ -10,8 +10,8 @@ from datetime import datetime
 
 from hengline.logger import error
 from hengline.common import get_name_by_type
-from hengline.utils.email_utils import email_sender
-from hengline.utils.log_utils import print_log_exception
+from utils.email_utils import email_sender
+from utils.log_utils import print_log_exception
 
 
 def async_send_failure_email(task_id: str, task_type: str, task_msg: str, max_retry_count: int):

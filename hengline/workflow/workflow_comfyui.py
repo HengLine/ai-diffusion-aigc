@@ -16,9 +16,9 @@ from typing import Dict, Any, Optional, Callable
 import requests
 
 from hengline.logger import debug, error, warning, info
-from hengline.utils.config_utils import get_task_config, get_comfyui_api_url
-from hengline.utils.file_utils import is_valid_image_file
-from hengline.utils.log_utils import print_log_exception
+from utils.config_utils import get_task_config, get_comfyui_api_url
+from utils.file_utils import is_valid_image_file
+from utils.log_utils import print_log_exception
 from hengline.workflow.workflow_node import fill_image_in_workflow
 from hengline.workflow.workflow_status_checker import workflow_status_checker
 

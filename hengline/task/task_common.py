@@ -15,9 +15,9 @@ from flask import json
 
 from hengline.logger import info, debug, error, warning
 from hengline.task.task_queue import Task, TaskStatus
-from hengline.utils.config_utils import get_task_config, get_comfyui_config, get_output_folder
-from hengline.utils.file_utils import file_exists
-from hengline.utils.log_utils import print_log_exception
+from utils.config_utils import get_task_config, get_comfyui_config, get_output_folder
+from utils.file_utils import file_exists
+from utils.log_utils import print_log_exception
 
 """
 @Description:

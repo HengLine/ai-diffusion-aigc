@@ -12,7 +12,7 @@ from hengline.logger import debug
 # 导入接口模块
 from hengline.streamlit.interfaces.text_to_video_interface import TextToVideoInterface
 # 导入配置工具
-from hengline.utils.config_utils import get_workflow_path
+from utils.config_utils import get_workflow_path
 
 class TextToVideoTab:
     def __init__(self, runner):

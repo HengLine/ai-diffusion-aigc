@@ -15,8 +15,8 @@ from typing import Callable
 import requests
 
 from hengline.logger import debug, error, warning
-from hengline.utils.config_utils import get_task_config
-from hengline.utils.log_utils import print_log_exception
+from utils.config_utils import get_task_config
+from utils.log_utils import print_log_exception
 
 # 导入SocketIO路由模块，用于实时推送任务状态
 from hengline.flask.route.socketio_route import emit_task_status_update
