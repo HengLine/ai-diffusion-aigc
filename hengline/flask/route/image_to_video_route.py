@@ -13,10 +13,10 @@ from flask import Blueprint, render_template, request, jsonify
 # 添加项目路径到系统路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from hengline.workflow.workflow_video import workflow_video_manager
-from hengline.utils.file_utils import save_uploaded_file
+from utils.file_utils import save_uploaded_file
 
 # 从配置工具获取页面显示的参数（setting节点优先于default节点）
-from hengline.utils.config_utils import get_workflow_preset, get_paths_config
+from utils.config_utils import get_workflow_preset, get_paths_config
 # 配置日志
 from hengline.logger import warning, error, debug
 

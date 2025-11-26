@@ -13,7 +13,7 @@ from hengline.logger import debug, error
 # 导入接口模块
 from hengline.streamlit.interfaces.image_to_video_interface import ImageToVideoInterface
 # 导入配置工具
-from hengline.utils.config_utils import get_workflow_path, get_paths_config
+from utils.config_utils import get_workflow_path, get_paths_config
 
 class ImageToVideoTab:
     def __init__(self, runner):

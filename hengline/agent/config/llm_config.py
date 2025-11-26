@@ -8,7 +8,7 @@ import json
 import os
 
 from hengline.logger import error, debug
-from hengline.utils.config_utils import reload_config
+from utils.config_utils import reload_config
 
 
 def _get_agent_config_path():

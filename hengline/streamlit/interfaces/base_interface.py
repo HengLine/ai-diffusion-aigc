@@ -3,7 +3,7 @@ import sys
 from typing import Dict, Any, Optional
 from hengline.workflow.run_workflow import ComfyUIRunner
 from hengline.logger import error, debug
-from hengline.utils.config_utils import get_task_settings, get_workflow_path, get_paths_config
+from utils.config_utils import get_task_settings, get_workflow_path, get_paths_config
 
 class BaseInterface:
     def __init__(self, runner: ComfyUIRunner, task_type: str):

@@ -13,8 +13,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from hengline.logger import debug, info, error, warning
-from hengline.utils.config_utils import get_email_config, get_user_configs
-from hengline.utils.env_utils import get_env_var
+from utils.config_utils import get_email_config, get_user_configs
+from utils.env_utils import get_env_var
 
 
 class EmailSender:

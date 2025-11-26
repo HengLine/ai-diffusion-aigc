@@ -19,7 +19,7 @@ from hengline.task.task_email import async_send_failure_email
 # 导入邮件发送模块
 from hengline.task.task_history import task_history
 from hengline.task.task_queue import Task, TaskStatus
-from hengline.utils.log_utils import print_log_exception
+from utils.log_utils import print_log_exception
 
 
 class TaskQueueManager(TaskBase):

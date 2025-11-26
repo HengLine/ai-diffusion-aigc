@@ -18,8 +18,8 @@ from hengline.task.task_base import TaskBase
 from hengline.task.task_callback import task_callback_handler
 from hengline.task.task_history import task_history
 from hengline.task.task_queue import Task, TaskStatus
-from hengline.utils.file_utils import generate_output_filename
-from hengline.utils.log_utils import print_log_exception
+from utils.file_utils import generate_output_filename
+from utils.log_utils import print_log_exception
 from hengline.workflow.workflow_manage import workflow_manager
 
 # 添加项目根目录到Python路径

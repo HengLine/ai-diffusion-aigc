@@ -25,7 +25,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 # 导入自定义日志模块
 from hengline.logger import debug, info
 # 导入配置工具模块
-from hengline.utils.config_utils import (
+from utils.config_utils import (
     get_flask_secret_key,
     get_temp_folder,
     get_output_folder,
@@ -116,7 +116,7 @@ app.register_blueprint(workflow_preset_bp)
 def index():
     """首页路由"""
     # 从配置工具获取完整配置传递给模板
-    from hengline.utils.config_utils import get_config
+    from utils.config_utils import get_config
     return render_template('index.html', config=get_config())
 
 

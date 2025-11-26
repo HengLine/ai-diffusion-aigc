@@ -8,8 +8,8 @@
 from typing import Any
 
 from hengline.logger import debug, error
-from hengline.utils.config_utils import get_workflow_preset
-from hengline.utils.log_utils import print_log_exception
+from utils.config_utils import get_workflow_preset
+from utils.log_utils import print_log_exception
 
 
 def get_name_by_type(task_type: str):

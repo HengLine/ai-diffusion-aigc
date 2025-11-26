@@ -24,7 +24,7 @@ from typing import final
 from flask import json
 
 from hengline.logger import debug, info, warning, error
-from hengline.utils.env_utils import print_large_ascii
+from utils.env_utils import print_large_ascii
 
 # 获取当前脚本所在目录（项目根目录的绝对路径）
 # PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))

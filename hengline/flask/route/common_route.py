@@ -15,7 +15,7 @@ from flask import Blueprint, render_template, request, jsonify, flash
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入工作流管理器
-from hengline.utils.file_utils import save_uploaded_file
+from utils.file_utils import save_uploaded_file
 
 
 class BaseRoute:
@@ -55,7 +55,7 @@ class BaseRoute:
 
     def get_default_params(self):
         """获取默认参数"""
-        from hengline.utils.config_utils import get_task_settings
+        from utils.config_utils import get_task_settings
         return get_task_settings(self.config_key)
 
     def handle_task_result(self, result, success_message=None, error_message=None):
@@ -128,7 +128,7 @@ class BaseRoute:
         :return: 文件保存路径或None（如果保存失败）
         """
         # 从配置工具获取上传目录
-        from hengline.utils.config_utils import get_paths_config
+        from utils.config_utils import get_paths_config
         upload_folder = get_paths_config().get('temp_folder', 'temp')
         return save_uploaded_file(file, upload_folder)
 

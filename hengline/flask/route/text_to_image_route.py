@@ -11,7 +11,7 @@ import time
 
 from flask import Blueprint, render_template, request, jsonify
 
-from hengline.utils.log_utils import print_log_exception
+from utils.log_utils import print_log_exception
 
 # 添加项目路径到系统路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,7 +19,7 @@ from hengline.logger import warning, error, debug
 # 导入工作流管理器
 from hengline.workflow.workflow_image import workflow_image_manager
 # 从配置工具获取页面显示的参数（setting节点优先于default节点）
-from hengline.utils.config_utils import get_workflow_preset
+from utils.config_utils import get_workflow_preset
 
 # 创建蓝图
 text_to_image_bp = Blueprint('text_to_image', __name__)

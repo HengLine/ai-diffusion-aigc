@@ -15,7 +15,7 @@ from logging.handlers import RotatingFileHandler
 from typing import Optional
 
 # 导入自定义的控制台颜色处理模块
-from hengline.utils.console_colors import colored_log_formatter_factory, init_console_colors, IS_WINDOWS, HAS_COLORAMA
+from utils.console_colors import colored_log_formatter_factory, init_console_colors, IS_WINDOWS, HAS_COLORAMA
 
 # 初始化控制台颜色支持
 init_console_colors()
@@ -164,7 +164,7 @@ class Logger:
         
         try:
             # 延迟导入以避免循环依赖
-            from hengline.utils.config_utils import get_settings_config
+            from utils.config_utils import get_settings_config
             
             # 获取日志配置
             settings_config = get_settings_config()
@@ -207,7 +207,7 @@ class Logger:
         
         try:
             # 获取配置以设置处理器级别
-            from hengline.utils.config_utils import get_settings_config
+            from utils.config_utils import get_settings_config
             settings_config = get_settings_config()
             logging_config = settings_config.get('logging', {})
             
@@ -248,7 +248,7 @@ class Logger:
         
         try:
             # 设置文件处理器级别
-            from hengline.utils.config_utils import get_settings_config
+            from utils.config_utils import get_settings_config
             settings_config = get_settings_config()
             logging_config = settings_config.get('logging', {})
             
